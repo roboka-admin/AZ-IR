@@ -1,0 +1,64 @@
+# Local/production-shaped stack: PostGIS + API + Web.
+#
+#   docker compose up --build          # everything, migrations and seed applied on API start
+#   docker compose up db               # database only (run the API on the host with `make dev-backend`)
+#
+# The fixtures driver needs no database at all: `make dev-backend` is the fastest loop.
+
+name: azir
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: azir
+      POSTGRES_PASSWORD: azir
+      POSTGRES_DB: azir
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - azir-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U azir -d azir"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      AZIR_ENV: development
+      AZIR_DB_DRIVER: postgis
+      AZIR_DB_URL: postgresql+psycopg2://azir:azir@db:5432/azir
+      AZIR_CORS_ORIGINS: '["http://localhost:3000"]'
+      AZIR_FIXTURES_DIR: /app/seeds
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    # Migrate, seed, then serve: a container that starts is a container whose schema is right.
+    command: >
+      sh -c "alembic upgrade head
+             && python -m azir.cli seed --fixtures-dir /app/seeds/fixtures
+             && exec python -m uvicorn azir.main:app --host 0.0.0.0 --port 8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        AZIR_BACKEND_URL: http://api:8000
+    environment:
+      AZIR_BACKEND_URL: http://api:8000
+      NODE_ENV: production
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+volumes:
+  azir-pgdata: {}

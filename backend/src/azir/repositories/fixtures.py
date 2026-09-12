@@ -650,6 +650,32 @@ class FixturesRepository:
             )
         self._entities = rebuilt
 
+    # ------------------------------------------------------------------ exports
+    #
+    # Used by the PostGIS seeder (`azir seed`): the fixtures loader is the *normalizer*, so the
+    # database is populated from exactly the same domain records the dev driver serves. That is
+    # what makes the two adapters behaviourally identical from row one (ADR-0014).
+
+    @property
+    def records(self) -> tuple[EntityRecord, ...]:
+        """Every loaded record, ranked, with derived geometries and names attached."""
+        return tuple(self._entities.values())
+
+    @property
+    def raw_documents(self) -> dict[str, list[dict[str, Any]]]:
+        """The parsed fixture documents, for the claim/link tables the seeder writes verbatim."""
+        return self._docs
+
+    @property
+    def source_records(self) -> dict[str, dict[str, Any]]:
+        """Raw source documents keyed by id (the seeder stores their native columns)."""
+        return {str(item["id"]): item for item in self._docs.get("sources", [])}
+
+    @property
+    def period_records(self) -> dict[str, dict[str, Any]]:
+        """Raw period documents keyed by id."""
+        return {str(item["id"]): item for item in self._docs.get("periods", [])}
+
     # ------------------------------------------------------------------ queries
 
     def features(self, query: AtlasQuery) -> FeaturePage:
@@ -929,7 +955,8 @@ def _label_for(predicates: dict[str, dict[str, str]], code: str, locale: str) ->
     return entry.get(locale, code.replace("_", " "))
 
 
-_INVERSE: dict[str, str] = {
+#: Public so the PostGIS seeder can persist the same inverse map (ADR-0014 parity).
+INVERSE_PREDICATES: dict[str, str] = {
     "born_in": "birthplace_of",
     "died_in": "death_place_of",
     "lived_in": "hosted",
@@ -949,9 +976,12 @@ _INVERSE: dict[str, str] = {
     "mentioned_in": "mentions",
 }
 
+_INVERSE = INVERSE_PREDICATES  # backwards-compatible internal alias
+build_temporal = _build_temporal  #: public alias used by the PostGIS seeder
+
 
 def _inverse(predicate: str) -> str:
-    return _INVERSE.get(predicate, f"is_{predicate}_of")
+    return INVERSE_PREDICATES.get(predicate, f"is_{predicate}_of")
 
 
 def _with_labels(relation: Relationship, entities: dict[str, EntityRecord]) -> Relationship:

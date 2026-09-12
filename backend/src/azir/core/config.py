@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, field_validator
@@ -60,10 +61,26 @@ class Settings(BaseSettings):
     timeline_buckets: list[int] = Field(default_factory=lambda: [1, 5, 25, 100, 500])
     circa_fuzz_years: int = 10
 
-    @field_validator("db_driver")
+    @field_validator("fixtures_dir")
     @classmethod
-    def _guard_production(cls, value: Driver, info: object) -> Driver:
-        return value
+    def _resolve_fixtures_dir(cls, value: str) -> str:
+        """Resolve a relative fixtures path against the CWD, then the repository root.
+
+        The default is written relative to the repo root because that reads well in
+        ``.env.example``, but the API is normally started from ``backend/``. Without this the dev
+        driver would boot or fail depending on where the command happened to be typed.
+        """
+        if not value.strip():  # an empty AZIR_FIXTURES_DIR means "use the default"
+            value = "backend/seeds/fixtures"
+        path = Path(value)
+        if path.is_absolute() or path.is_dir():
+            return str(path)
+        here = Path(__file__).resolve()
+        for base in (here.parents[3], here.parents[4], here.parents[5]):
+            candidate = base / path
+            if candidate.is_dir():
+                return str(candidate)
+        return str(path)
 
     def validate_consistency(self) -> None:
         """Fail fast on unsafe configuration instead of serving wrong data."""

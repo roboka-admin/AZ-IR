@@ -20,7 +20,7 @@ FIXTURES    ?= $(BACKEND)/seeds/fixtures
 UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help
-.PHONY: help install venv lint typecheck test test-postgis check clean \
+.PHONY: help install venv lint typecheck test test-postgis check clean smoke \
         migrate seed doctor dev-backend dev-web build db-up db-down db-logs
 
 help: ## Show this help
@@ -50,6 +50,9 @@ test-postgis: ## Contract suite against a real PostGIS database
 	cd $(BACKEND) && AZIR_TEST_DB_URL="$(TEST_DB_URL)" $(PYTHON) -m pytest tests -m postgis
 
 check: lint typecheck test ## Everything CI runs
+
+smoke: ## End-to-end contract check against a running API (AZIR_API=... to point elsewhere)
+	./scripts/smoke.sh
 
 build: ## Production frontend build (needs a reachable API for server-rendered pages)
 	cd $(FRONTEND) && $(NPM) run build

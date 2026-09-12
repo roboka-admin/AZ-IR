@@ -184,11 +184,19 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _logs_to_stderr() -> None:
+    """A CLI's stdout is data (``doctor`` prints JSON); diagnostics belong on stderr."""
+    for handler in logging.getLogger().handlers:
+        if isinstance(handler, logging.StreamHandler):
+            handler.setStream(sys.stderr)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     settings = get_settings()
     configure_logging(level=args.log_level, json_output=not args.human_logs)
+    _logs_to_stderr()
     logger.info("azir cli: %s", args.command)
     return int(args.func(args, settings))
 

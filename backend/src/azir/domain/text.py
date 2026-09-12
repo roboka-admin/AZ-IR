@@ -109,28 +109,44 @@ def build_search_text(*parts: str | None, drop_article: bool = True) -> str:
     return " ".join(chunks)
 
 
-def score(query: str, haystack: str) -> float:
-    """Cheap relevance score used by the fixtures driver and as a tie-breaker everywhere.
-
-    0.0 .. 1.0; the PostGIS adapter uses ``pg_trgm`` similarity plus ts_rank, but the ordering
-    contract (exact prefix > prefix > substring > token) is the same.
-    """
-    q = normalize_fa(query, drop_article=True)
-    if not q or not haystack:
-        return 0.0
-    h = normalize_fa(haystack, drop_article=True)
+def _score_folded(q: str, h: str) -> float:
+    """Ordering contract: exact > prefix > token > token-prefix > substring."""
     if h == q:
         return 1.0
     if h.startswith(q):
         return 0.9
     tokens = h.split()
-    if any(t == q for t in tokens):
+    if any(token == q for token in tokens):
         return 0.85
-    if any(t.startswith(q) for t in tokens):
+    if any(token.startswith(q) for token in tokens):
         return 0.75
     if q in h:
         return 0.6
     return 0.0
+
+
+def score(query: str, haystack: str) -> float:
+    """Cheap relevance score used by the fixtures driver and as a tie-breaker everywhere.
+
+    0.0 .. 1.0; the PostGIS adapter narrows with ``pg_trgm``/tsvector and then scores with this
+    same function, so both drivers order results identically (ADR-0014).
+
+    Both half-space spellings are compared (ADR-0007): readers type "صفیالدین" as often as
+    "صفی‌الدین", and a name indexed in one form must be findable in the other.
+    """
+    if not query or not haystack:
+        return 0.0
+    spaced = normalize_fa(query, drop_article=True)
+    if not spaced:
+        return 0.0
+    best = _score_folded(spaced, normalize_fa(haystack, drop_article=True))
+    # The half-space may be missing on either side -- the reader's keyboard or the stored name --
+    # so the joined folding is always compared too, and the better of the two wins.
+    glued_query = normalize_fa(query, drop_article=True, half_space="join")
+    if glued_query:
+        glued_haystack = normalize_fa(haystack, drop_article=True, half_space="join")
+        best = max(best, _score_folded(glued_query, glued_haystack))
+    return best
 
 
 def snippet(text: str, query: str, width: int = 140) -> str:

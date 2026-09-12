@@ -108,25 +108,60 @@
 - کنتراست AA؛ همه‌ی رنگ‌ها از tokenها (نه hard-code).
 - `prefers-reduced-motion` → انیمیشن play و transitionها خاموش.
 
-## ۹. ساختار frontend
+## ۹. ساختار frontend (پیاده‌سازی‌شده)
 
 ```
 frontend/src/
-├── app/[locale]/            fa (default, rtl) · en
-│   ├── layout.tsx           html lang/dir، فونت، توکن‌ها
-│   ├── page.tsx             AtlasPage (map + timeline + sidebar)
-│   ├── entity/[type]/[id]/  صفحه‌ی موجودیت
-│   ├── article/[slug]/      مقاله + «View on Map»
-│   └── list/                نمای فهرستی (a11y/low-bandwidth) — همان query
+├── middleware.ts                 توافق locale از Accept-Language؛ / → /fa (پیش‌فرض) یا /en
+├── app/
+│   ├── globals.css               توکن‌های طراحی + تمام کلاس‌های پوسته (بدون کتابخانهٔ UI)
+│   ├── [locale]/
+│   │   ├── layout.tsx            ریشهٔ <html lang dir>؛ تنها layout پروژه
+│   │   ├── page.tsx              اطلس: Suspense حول AtlasShell (state از URL)
+│   │   ├── about/page.tsx        اصول، وضعیت داده، میان‌برها (SSR از /meta)
+│   │   ├── articles/page.tsx     نمای فهرستی مقاله‌ها
+│   │   ├── sources/page.tsx      کتاب‌شناسی با reliability
+│   │   ├── article/[slug]/       مقاله + لینک خودکار موجودیت‌ها + «نمایش روی نقشه»
+│   │   └── entity/[type]/[slug]/ صفحهٔ موجودیت (نام‌ها، زمان، قطعیت، روابط، اختلاف‌ها، منابع)
 ├── components/
-│   ├── map/{AtlasMap,Layers,EntityPopup,Disclaimer}.tsx
-│   ├── timeline/{Timeline,TemporalZoomRuler,Histogram,PlayButton}.tsx
-│   ├── panel/{EntityCard,RelatedArticles,Disagreements,Sources}.tsx
-│   └── ui/{…}
-├── lib/{api.ts,atlasState.ts,format.ts,i18n.ts}
-├── messages/{fa,en}.json
-└── styles/{tokens.css,global.css}
+│   ├── AtlasShell.tsx            ارکستراتور: state، fetch، انتخاب، پخش، کلیدها
+│   ├── MapCanvas.tsx             میزبان MapLibre (کاوش basemap + fallback، رویدادها)
+│   ├── TimelinePanel.tsx         تایم‌لاین + temporal zoom + هیستوگرام + پخش
+│   ├── SidePanel.tsx             لایه‌ها (از /meta)، جست‌وجو، افسانهٔ قطعیت، پوشش/خلأها
+│   ├── EntityDrawer.tsx          کارت موجودیت روی نقشه
+│   └── OpenOnMap.tsx             «نمایش روی نقشه» از صفحه‌های سرور
+└── lib/
+    ├── api.ts                    تنها کلاینت /api/v1 (cache، abort، ProblemDetails)
+    ├── atlasState.ts             codec دوطرفهٔ MapState ⇄ URL (ADR-0015)
+    ├── mapStyle.ts               لایه‌ها/رنگ‌ها از properties سرویس؛ fallback + graticule
+    ├── i18n.ts                   fa/en، رقم فارسی، برچسب‌های certainty/precision/status
+    ├── markdown.tsx              MarkdownLite + لینک خودکار [[entity]]
+    ├── serverApi.ts              fetch سمت سرور (SSR) از همان contract
+    └── types.ts                  تایپ‌های دقیق payloadها
 ```
-`lib/api.ts` تنها جایی است که با `/api/v1` حرف می‌زند (typed, با abort و retry و ETag).
-`next.config.mjs` یک `rewrites()` دارد: `/api/:path* → http://backend:8000/api/:path*`
-→ مرورگر **هرگز** مستقیماً به localhost دیگری درخواست نمی‌دهد.
+
+`lib/api.ts` تنها جایی است که با `/api/v1` حرف می‌زند. `next.config.ts` یک `rewrites()` دارد:
+`/api/:path* → $AZIR_BACKEND_URL/api/:path*` → مرورگر **هرگز** مستقیماً به backend درخواست
+نمی‌دهد (قاعدهٔ ۱ حتی در سطح شبکه)، و preview روی هر host دیگری بدون CORS کار می‌کند.
+
+## ۱۰. وضعیت فاز ۱
+
+| قابلیت | وضعیت |
+|--------|-------|
+| نقشه + بزرگ‌نمایی + لایه‌ها از `/meta` | انجام |
+| تایم‌لاین با temporal zoom، هیستوگرام، پخش، سه تقویم | انجام |
+| Semantic zoom (rank/min_zoom از API، نه از فرانت) | انجام |
+| کلیک/هاور روی عارضه → کارت موجودیت | انجام |
+| صفحهٔ موجودیت ↔ مقاله ↔ نقشه (لینک دوطرفه) | انجام |
+| نمایش قطعیت (خط‌چین/توخالی/یادداشت) و اختلاف‌نظرها | انجام |
+| جدا بودن مرز امروزی (لایهٔ `modern_borders`، پیش‌فرض خاموش) | انجام |
+| جست‌وجوی دوزبانه با debounce (بدون hard-code داده) | انجام |
+| URL به‌عنوان state (اشتراک‌گذاری/بوک‌مارک/back) | انجام |
+| a11y: نمای فهرستی، `aria-live`، میان‌بر صفحه‌کلید، کنتراست | انجام |
+| fallback آفلاین (بدون basemap خارجی) | انجام |
+| PMTiles به‌جای GeoJSON (ADR-0011) | فاز ۲ |
+| پنل ویرایش/بازبینی (workflow نویسندگان) | فاز ۳ |
+
+قیدهای معماری که در کد رعایت شده‌اند: هیچ عدد/نام/تاریخ تاریخی در کامپوننت‌ها hard-code
+نیست (قاعدهٔ ۱۷)؛ همه‌چیز از `/meta` یا feature properties می‌آید؛ MapLibre هیچ منطق تاریخی
+ندارد (قاعدهٔ ۵)؛ و کل منطق نمایش در `lib/` تایپ‌شده است تا تست‌پذیر بماند.

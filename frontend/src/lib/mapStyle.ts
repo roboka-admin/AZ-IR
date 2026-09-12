@@ -10,6 +10,7 @@
  *     without opening a popup.
  */
 
+import type { FeatureCollection as GeoJSONCollection } from "geojson";
 import type { GeoJSONSource, Map as MaplibreMap, StyleSpecification } from "maplibre-gl";
 import type { FeatureCollection } from "./types";
 
@@ -17,6 +18,7 @@ import type { FeatureCollection } from "./types";
 export const BASEMAP_STYLE_URL = "https://tiles.openfreemap.io/styles/liberty";
 
 export const ATLAS_SOURCE = "azir-atlas";
+export const GRATICULE_SOURCE = "azir-graticule";
 export const DATA_LAYERS = ["azir-fill", "azir-fill-outline", "azir-line", "azir-point-halo", "azir-point", "azir-label"];
 
 /** Font stacks differ per basemap; both are presentation choices, not data. */
@@ -43,6 +45,48 @@ const DEFAULT_COLOR = "#3d4a5c";
 
 export function colorForLayer(layer: string): string {
   return PALETTE[layer] ?? DEFAULT_COLOR;
+}
+
+/**
+ * One-degree graticule for the offline fallback: without a basemap the reader still needs a sense
+ * of scale and position. Generated from the study area the API reports, never hard-coded.
+ */
+export function graticuleCollection(
+  bbox: [number, number, number, number],
+  step = 1,
+): GeoJSONCollection {
+  const [west, south, east, north] = bbox;
+  const features: GeoJSONCollection["features"] = [];
+  for (let lon = Math.ceil(west / step) * step; lon <= east; lon += step) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: [[lon, south], [lon, north]] },
+    });
+  }
+  for (let lat = Math.ceil(south / step) * step; lat <= north; lat += step) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: [[west, lat], [east, lat]] },
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
+/** Adds the graticule underneath the data layers. Only used with the local fallback style. */
+export function ensureFallbackLayers(map: MaplibreMap, bbox: [number, number, number, number]): void {
+  if (!map.getSource(GRATICULE_SOURCE)) {
+    map.addSource(GRATICULE_SOURCE, { type: "geojson", data: graticuleCollection(bbox) } as never);
+  }
+  if (!map.getLayer("azir-graticule")) {
+    map.addLayer({
+      id: "azir-graticule",
+      type: "line",
+      source: GRATICULE_SOURCE,
+      paint: { "line-color": "#c9c0ac", "line-width": 0.6, "line-opacity": 0.9 },
+    } as never);
+  }
 }
 
 export function fallbackStyle(): StyleSpecification {

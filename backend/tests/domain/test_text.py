@@ -31,6 +31,16 @@ def test_zwnj_variants_are_searchable_equivalents() -> None:
         assert score(normalize_fa(query), blob) > 0.5, query
 
 
+def test_glued_query_matches_the_raw_name_form() -> None:
+    """Repositories score against the stored name, not the search blob (ADR-0007).
+
+    A reader who never types the half-space must still find "صفی‌الدین اردبیلی".
+    """
+    name = "صفی‌الدین اردبیلی"
+    for query in ("صفی‌الدین", "صفی الدین", "صفیالدین", "اردبیلی", "صفی"):
+        assert score(query, name) > 0.5, query
+
+
 def test_build_search_text_covers_all_scripts() -> None:
     blob = build_search_text("تبریز", "Tabriz", "Təbriz", "تیریز")
     assert "تبریز" in blob and "tabriz" in blob and "təbriz" in blob

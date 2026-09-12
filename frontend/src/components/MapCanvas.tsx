@@ -18,6 +18,7 @@ import {
   FALLBACK_FONT,
   LIBERTY_FONT,
   ensureAtlasLayers,
+  ensureFallbackLayers,
   fallbackStyle,
   replayAtlasData,
 } from "@/lib/mapStyle";
@@ -43,16 +44,16 @@ const PROBE_TIMEOUT_MS = 4000;
  * (offline demo, blocked CDN) we fall back to a local blank style and the historical layers still
  * render. Transient tile errors later on never destroy a working basemap.
  */
-async function resolveBasemap(): Promise<{ style: string | object; font: string[] }> {
+async function resolveBasemap(): Promise<{ style: string | object; font: string[]; offline: boolean }> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
     const response = await fetch(BASEMAP_STYLE_URL, { signal: controller.signal });
     clearTimeout(timer);
     if (!response.ok) throw new Error(`basemap ${response.status}`);
-    return { style: BASEMAP_STYLE_URL, font: LIBERTY_FONT };
+    return { style: BASEMAP_STYLE_URL, font: LIBERTY_FONT, offline: false };
   } catch {
-    return { style: fallbackStyle(), font: FALLBACK_FONT };
+    return { style: fallbackStyle(), font: FALLBACK_FONT, offline: true };
   }
 }
 
@@ -111,6 +112,7 @@ export default function MapCanvas({
       };
 
       map.on("load", () => {
+        if (map && resolved.offline && maxBounds) ensureFallbackLayers(map, maxBounds);
         restore();
         map?.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
         map?.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");

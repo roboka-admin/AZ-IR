@@ -1,0 +1,239 @@
+# People. Ethnicity/religion/language are NOT columns here -- they are sourced assertions only
+# (AGENTS.md §6). Lifespans keep their real precision: `circa_year` stays circa.
+people:
+  - id: prs_sheikh_safi
+    kind: person
+    slug: sheikh-safi-al-din
+    status: published
+    importance: 0.95
+    temporal: {from: 1252, to: 1334, precision: range, calendar: gregorian_proleptic, confidence: high,
+               display_fa: "۶۵۰–۷۳۵ ق / ۱۲۵۲–۱۳۳۴ م"}
+    names:
+      - {lang: fa, form: "شیخ صفی‌الدین اردبیلی", kind: preferred}
+      - {lang: fa, form: "شیخ صفی‌الدین اسحاق", kind: alternative}
+      - {lang: en, form: "Sheikh Safi al-Din Ardabili", kind: preferred, transliteration: Common}
+      - {lang: azb-Latn, form: "Şeyx Səfiəddin Ərdəbili", kind: endonym}
+    summary_fa: "عارف و بنیان‌گذار طریقت صفویه که در اردبیل زیست و درگذشت؛ آرامگاهش هستهٔ مجموعهٔ شیخ صفی است."
+    summary_en: "A mystic and founder of the Safaviyya order who lived and died in Ardabil; his tomb is the core of the Sheikh Safi ensemble."
+    sources: [src_eir_ardabil, src_eir_safavid_dynasty, src_unesco_sheikh_safi]
+
+  - id: prs_sadr_al_din_musa
+    kind: person
+    slug: sadr-al-din-musa
+    status: published
+    importance: 0.6
+    temporal: {calendar: islamic_lunar, from: 700, to: 794, precision: range, confidence: medium,
+               display_fa: "? –۷۹۴ ق (سال تولد نامعلوم)"}
+    names:
+      - {lang: fa, form: "صدرالدین موسی", kind: preferred}
+      - {lang: en, form: "Sadr al-Din Musa", kind: preferred, transliteration: EI3}
+    summary_fa: "پسر و جانشین شیخ صفی‌الدین که خانقاه اردبیل را سازمان داد و نفوذ طریقت را گسترش داد."
+    summary_en: "Son and successor of Sheikh Safi al-Din, who organised the Ardabil khānegāh and expanded the order's influence."
+    sources: [src_eir_safavid_dynasty]
+
+  - id: prs_khwaja_ali
+    kind: person
+    slug: khwaja-ali-safavi
+    status: published
+    importance: 0.5
+    temporal: {calendar: islamic_lunar, from: 760, to: 832, precision: circa_year, confidence: low,
+               display_fa: "حدود ۷۶۰–۸۳۲ ق (تاریخ درگذشت در منابع ۱۴۲۷ یا ۱۴۲۹ م)"}
+    names:
+      - {lang: fa, form: "خواجه علی صفوی", kind: preferred}
+      - {lang: fa, form: "خواجه علی سیاه‌پوش", kind: alternative}
+      - {lang: en, form: "Khwāja ʿAlī Ṣafawī", kind: preferred, transliteration: EI3}
+    summary_fa: "رهبر طریقت صفویه که گرایش شیعی آن را تقویت کرد؛ تاریخ درگذشت او در منابع متفاوت آمده است."
+    summary_en: "Head of the Safaviyya who strengthened its Shiʿi orientation; sources differ on his death date."
+    sources: [src_eir_safavid_dynasty]
+    coverage_note_fa: "اختلاف تاریخ مرگ (۱۴۲۷ یا ۱۴۲۹ م) باید به‌صورت دو assertion با status=disputed ثبت شود."
+
+  - id: prs_shaykh_junayd
+    kind: person
+    slug: shaykh-junayd
+    status: published
+    importance: 0.65
+    temporal: {calendar: islamic_lunar, from: 830, to: 864, precision: circa_year, confidence: medium,
+               display_fa: "?–۸۶۴ ق / درگذشت ۱۴۶۰ م"}
+    names:
+      - {lang: fa, form: "شیخ جنید", kind: preferred}
+      - {lang: en, form: "Shaykh Junayd", kind: preferred, transliteration: EI3}
+    summary_fa: "رهبر طریقت صفویه که آن را به نیرویی نظامی-سیاسی تبدیل کرد و در نبرد با شروانشاهیان کشته شد."
+    summary_en: "Head of the Safaviyya who turned it into a military-political force and was killed fighting the Shirvanshahs."
+    sources: [src_eir_safavid_dynasty, src_chiran_vol6]
+
+  - id: prs_shaykh_haydar
+    kind: person
+    slug: shaykh-haydar
+    status: published
+    importance: 0.6
+    temporal: {from: 1460, to: 1488, precision: circa_year, confidence: medium, display_fa: "?–۱۴۸۸ م / ۸۹۳ ق"}
+    names:
+      - {lang: fa, form: "شیخ حیدر", kind: preferred}
+      - {lang: en, form: "Shaykh Ḥaydar", kind: preferred, transliteration: EI3}
+    summary_fa: "پسر شیخ جنید و پدر شاه اسماعیل؛ سازمان نظامی قزلباش را شکل داد و در ۱۴۸۸ میلادی کشته شد."
+    summary_en: "Son of Shaykh Junayd and father of Shah Ismail; shaped the Qizilbash military organisation and was killed in 1488."
+    sources: [src_eir_safavid_dynasty, src_hasan_rumlu_ahsan]
+
+  - id: prs_shah_ismail_i
+    kind: person
+    slug: shah-ismail-i
+    status: published
+    importance: 1.0
+    temporal: {from: 1487, to: 1524, precision: range, confidence: high, display_fa: "۸۹۲–۹۳۰ ق / ۱۴۸۷–۱۵۲۴ م"}
+    names:
+      - {lang: fa, form: "شاه اسماعیل یکم", kind: preferred}
+      - {lang: fa, form: "شاه اسماعیل صفوی", kind: alternative}
+      - {lang: en, form: "Shah Ismail I", kind: preferred, transliteration: Common}
+      - {lang: azb-Latn, form: "I Şah İsmayıl", kind: endonym}
+    summary_fa: "بنیان‌گذار دولت صفوی که در ۱۵۰۱ میلادی در تبریز تاج‌گذاری کرد و از اردبیل برخاست؛ به ترکی و فارسی شعر می‌سرود."
+    summary_en: "Founder of the Safavid state, crowned in Tabriz in 1501 and originating from Ardabil; composed poetry in Turkic and Persian."
+    sources: [src_savory_safavid_iran, src_hasan_rumlu_ahsan, src_eir_safavid_dynasty]
+
+  - id: prs_shah_tahmasp_i
+    kind: person
+    slug: shah-tahmasp-i
+    status: published
+    importance: 0.8
+    temporal: {from: 1514, to: 1576, precision: range, confidence: high, display_fa: "۹۲۰–۹۸۴ ق / ۱۵۱۴–۱۵۷۶ م"}
+    names:
+      - {lang: fa, form: "شاه طهماسب یکم", kind: preferred}
+      - {lang: en, form: "Shah Tahmasp I", kind: preferred, transliteration: Common}
+    summary_fa: "دومین شاه صفوی که پایتخت را در ۱۵۴۸ میلادی از تبریز به قزوین منتقل کرد."
+    summary_en: "The second Safavid shah, who moved the capital from Tabriz to Qazvin in 1548."
+    sources: [src_savory_safavid_iran, src_chiran_vol6]
+
+  - id: prs_nasir_al_din_tusi
+    kind: person
+    slug: nasir-al-din-tusi
+    status: published
+    importance: 0.85
+    temporal: {from: 1201, to: 1274, precision: range, confidence: high, display_fa: "۶۰۱–۶۷۲ ق / ۱۲۰۱–۱۲۷۴ م"}
+    names:
+      - {lang: fa, form: "خواجه نصیرالدین طوسی", kind: preferred}
+      - {lang: en, form: "Nasir al-Din al-Tusi", kind: preferred, transliteration: Common}
+    summary_fa: "دانشمند و فیلسوفی که مدیریت رصدخانهٔ مراغه و تدوین زیج ایلخانی را بر عهده داشت."
+    summary_en: "A scholar and philosopher who directed the Maragheh observatory and produced the Ilkhanid Zij."
+    sources: [src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: prs_rashid_al_din
+    kind: person
+    slug: rashid-al-din-hamadani
+    status: published
+    importance: 0.8
+    temporal: {from: 1247, to: 1318, precision: range, confidence: high, display_fa: "۶۴۵–۷۱۸ ق / ۱۲۴۷–۱۳۱۸ م"}
+    names:
+      - {lang: fa, form: "رشیدالدین فضل‌الله همدانی", kind: preferred}
+      - {lang: en, form: "Rashid al-Din Hamadani", kind: preferred, transliteration: Common}
+    summary_fa: "وزیر ایلخانی و مؤلف جامع‌التواریخ که مجموعهٔ ربع رشیدی را در حومهٔ تبریز بنیان نهاد و در تبریز کشته شد."
+    summary_en: "Ilkhanid vizier and author of the Jāmiʿ al-tawārīkh, founder of the Rabʿ-e Rashidi near Tabriz, executed in Tabriz."
+    sources: [src_rashid_al_din_jami, src_chiran_vol5]
+
+  - id: prs_hulagu
+    kind: person
+    slug: hulagu-khan
+    status: published
+    importance: 0.8
+    temporal: {from: 1218, to: 1265, precision: range, confidence: high, display_fa: "۱۲۱۸–۱۲۶۵ م / ۶۱۴–۶۶۳ ق"}
+    names:
+      - {lang: fa, form: "هولاکو خان", kind: preferred}
+      - {lang: en, form: "Hülegü Khan", kind: preferred, transliteration: Common}
+    summary_fa: "بنیان‌گذار ایلخانان که از پشتیبانان ساخت رصدخانهٔ مراغه بود؛ محل درگذشت او در منابع با اختلاف آمده است."
+    summary_en: "Founder of the Ilkhanate and patron of the Maragheh observatory; sources differ on where he died."
+    sources: [src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: prs_oljeitu
+    kind: person
+    slug: oljeitu
+    status: published
+    importance: 0.75
+    temporal: {from: 1280, to: 1316, precision: range, confidence: high, display_fa: "۱۲۸۰–۱۳۱۶ م / ۶۷۸–۷۱۶ ق"}
+    names:
+      - {lang: fa, form: "محمد خدابنده (الجایتو)", kind: preferred}
+      - {lang: en, form: "Öljaitü (Muhammad Khodabandeh)", kind: preferred, transliteration: Common}
+    summary_fa: "ایلخان سازندهٔ گنبد سلطانیه که شهر سلطانیه را به مرکز ساختمانی بزرگی تبدیل کرد."
+    summary_en: "The Ilkhan who built the Dome of Soltaniyeh and made Soltaniyeh a major building centre."
+    sources: [src_chiran_vol5, src_unesco_soltaniyeh]
+
+  - id: prs_jahan_shah
+    kind: person
+    slug: jahan-shah
+    status: published
+    importance: 0.6
+    temporal: {from: 1397, to: 1467, precision: circa_year, confidence: medium, display_fa: "حدود ۱۳۹۷–۱۴۶۷ م"}
+    names:
+      - {lang: fa, form: "جهان‌شاه قره‌قویونلو", kind: preferred}
+      - {lang: en, form: "Jahan Shah Qara Qoyunlu", kind: preferred, transliteration: Common}
+    summary_fa: "حاکم قره‌قویونلو و بانی مسجد کبود تبریز که در نبرد با آق‌قویونلو کشته شد."
+    summary_en: "Qara Qoyunlu ruler and patron of the Blue Mosque of Tabriz, killed fighting the Aq Qoyunlu."
+    sources: [src_bosworth_dynasties, src_blair_bloom_islam]
+
+  - id: prs_uzun_hasan
+    kind: person
+    slug: uzun-hasan
+    status: published
+    importance: 0.65
+    temporal: {from: 1423, to: 1478, precision: range, confidence: medium, display_fa: "۱۴۲۳–۱۴۷۸ م"}
+    names:
+      - {lang: fa, form: "اوزون حسن", kind: preferred}
+      - {lang: en, form: "Uzun Hasan", kind: preferred, transliteration: Common}
+    summary_fa: "حاکم آق‌قویونلو و پدربزرگ مادری شاه اسماعیل که قوانین مالیاتی موسوم به «قانون‌نامهٔ حسن پادشاه» به او منسوب است."
+    summary_en: "Aq Qoyunlu ruler and maternal grandfather of Shah Ismail, credited with a fiscal code known as the Qānūn-nāma-ye Ḥasan Pādshāh."
+    sources: [src_bosworth_dynasties, src_chiran_vol6]
+
+  - id: prs_babak
+    kind: person
+    slug: babak-khorramdin
+    status: published
+    importance: 0.75
+    temporal: {from: 795, to: 838, precision: circa_year, confidence: low,
+               display_fa: "?–۸۳۸ م (تاریخ تولد نامعلوم؛ درگذشت ۸۳۸ م در سامرا)"}
+    names:
+      - {lang: fa, form: "بابک خرمدین", kind: preferred}
+      - {lang: fa, form: "بابک", kind: alternative}
+      - {lang: en, form: "Bābak Khorramdin", kind: preferred, transliteration: Common}
+    summary_fa: "رهبر جنبش خرمدینان که حدود دو دهه در برابر خلافت عباسی ایستاد و سرانجام در ۸۳۸ میلادی اعدام شد."
+    summary_en: "Leader of the Khurramiyya movement who resisted the Abbasid caliphate for about two decades before being executed in 838."
+    sources: [src_tabari_tarikh, src_eir_babak]
+
+  - id: prs_sattar_khan
+    kind: person
+    slug: sattar-khan
+    status: published
+    importance: 0.7
+    temporal: {from: 1866, to: 1914, precision: circa_year, confidence: medium, display_fa: "حدود ۱۲۴۵–۱۲۹۳ ش / ۱۸۶۶–۱۹۱۴ م"}
+    names:
+      - {lang: fa, form: "ستارخان", kind: preferred}
+      - {lang: fa, form: "سردار ملی", kind: alternative, note: "لقب."}
+      - {lang: en, form: "Sattar Khan", kind: preferred, transliteration: Common}
+      - {lang: azb-Latn, form: "Səttar xan", kind: endonym}
+    summary_fa: "از رهبران مقاومت تبریز در دورهٔ مشروطه که به «سردار ملی» شناخته شد؛ زادهٔ منطقهٔ قره‌داغ."
+    summary_en: "A leader of the Tabriz resistance during the Constitutional era, known as Sardār-e Melli; born in the Qaradagh region."
+    sources: [src_kasravi_mashrute]
+
+  - id: prs_bagher_khan
+    kind: person
+    slug: baqer-khan
+    status: published
+    importance: 0.65
+    temporal: {from: 1865, to: 1916, precision: circa_year, confidence: medium, display_fa: "حدود ۱۸۶۵–۱۹۱۶ م"}
+    names:
+      - {lang: fa, form: "باقرخان", kind: preferred}
+      - {lang: fa, form: "سالار ملی", kind: alternative, note: "لقب."}
+      - {lang: en, form: "Baqer Khan", kind: preferred, transliteration: Common}
+      - {lang: azb-Latn, form: "Bağır xan", kind: endonym}
+    summary_fa: "همراه ستارخان در دفاع از تبریز که به «سالار ملی» شناخته شد."
+    summary_en: "Sattar Khan's companion in the defence of Tabriz, known as Sālār-e Melli."
+    sources: [src_kasravi_mashrute]
+
+  - id: prs_selim_i
+    kind: person
+    slug: selim-i
+    status: published
+    importance: 0.5
+    temporal: {from: 1470, to: 1520, precision: range, confidence: high, display_fa: "۱۴۷۰–۱۵۲۰ م"}
+    names:
+      - {lang: fa, form: "سلیم یکم (عثمانی)", kind: preferred}
+      - {lang: en, form: "Selim I (Ottoman)", kind: preferred}
+    summary_fa: "سلطان عثمانی و فرماندهٔ سپاه رقیب در نبرد چالدران؛ خارج از حوزهٔ جغرافیایی اطلس ولی شرکت‌کنندهٔ کلیدی یک رویداد مهم آن."
+    summary_en: "The Ottoman sultan commanding the opposing army at Chaldiran; outside the atlas' geography but a key participant in one of its major events."
+    sources: [src_ei_chaldiran, src_chiran_vol6]

@@ -191,6 +191,38 @@ def _build_geometry(spec: dict[str, Any] | None) -> GeometryRecord | None:
     )
 
 
+def _normalize_raw(raw: dict[str, Any], entity_type: EntityType) -> dict[str, Any]:
+    """Give the taxonomy-shaped collections the same fields as the narrative ones.
+
+    Periods carry ``label_fa``/``label_en`` and a flat ``from``/``to``; sources carry
+    ``title``/``title_fa``. Rather than special-casing every consumer, the loader lifts them into
+    the shared ``names``/``temporal``/``slug`` shape that the rest of the system expects.
+    """
+    if entity_type is EntityType.PERIOD:
+        raw.setdefault("names", _label_names(raw.get("label_fa"), raw.get("label_en")))
+        raw.setdefault("slug", raw.get("code"))
+        if not raw.get("temporal") and raw.get("from") is not None:
+            raw["temporal"] = {
+                "from": raw.get("from"),
+                "to": raw.get("to", raw.get("from")),
+                "precision": raw.get("precision", "range"),
+                "confidence": raw.get("confidence", "medium"),
+            }
+    if entity_type is EntityType.SOURCE:
+        raw.setdefault("names", _label_names(raw.get("title_fa"), raw.get("title") or raw.get("title_en")))
+        raw.setdefault("importance", 0.3)
+    return raw
+
+
+def _label_names(fa: str | None, en: str | None) -> list[dict[str, Any]]:
+    names: list[dict[str, Any]] = []
+    if fa:
+        names.append({"lang": "fa", "form": str(fa), "kind": "preferred"})
+    if en:
+        names.append({"lang": "en", "form": str(en), "kind": "preferred", "script": "Latn"})
+    return names
+
+
 def _build_names(spec: Iterable[dict[str, Any]] | None) -> tuple[NameVariant, ...]:
     if not spec:
         return ()
@@ -257,7 +289,10 @@ class FixturesRepository:
         for collection, entity_type in _COLLECTIONS.items():
             for raw in self._docs.get(collection, []):
                 record_id = str(raw["id"])
-                drafts[record_id] = {"raw": dict(raw), "entity_type": entity_type}
+                drafts[record_id] = {
+                    "raw": _normalize_raw(dict(raw), entity_type),
+                    "entity_type": entity_type,
+                }
 
         # Hand-drawn / reconstructed boundaries live in one reviewable file (09-geometries.yaml)
         # so every approximate polygon in the dataset can be audited in one place (ADR-0013).
@@ -300,11 +335,14 @@ class FixturesRepository:
                 extra={
                     key: raw[key]
                     for key in (
-                        "map_state", "entities", "author", "publisher", "year", "reliability",
-                        "citation", "url", "kind_fa", "kind_en", "lang", "published_at",
-                        "reading_time_min", "coverage_note", "parent", "capital", "title_fa",
-                        "title_en", "body_en_md", "participants", "places", "part_of",
-                        "scheme", "from", "to", "external_ids", "license",
+                        "map_state", "entities", "author", "author_fa", "publisher", "year",
+                        "origin_year", "reliability", "citation", "url", "kind_fa", "kind_en",
+                        "lang", "language", "published_at", "reading_time_min", "coverage_note",
+                        "coverage_note_fa", "coverage_note_en", "parent", "capital", "title",
+                        "title_fa", "title_en", "body_en_md", "participants", "places", "part_of",
+                        "scheme", "from", "to", "external_ids", "license", "code", "note_fa",
+                        "note_en", "needs_review", "led_to", "is_default", "name_fa", "name_en",
+                        "description_fa", "description_en", "owner",
                     )
                     if key in raw
                 },

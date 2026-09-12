@@ -16,7 +16,8 @@ FRONTEND    := frontend
 VENV        := .venv
 DB_URL      ?= postgresql+psycopg2://azir:azir@localhost:5432/azir
 TEST_DB_URL ?= postgresql+psycopg2://azir:azir@localhost:5432/azir_test
-FIXTURES    ?= $(BACKEND)/seeds/fixtures
+# Absolute, because several targets cd into $(BACKEND) before using it.
+FIXTURES    ?= $(CURDIR)/$(BACKEND)/seeds/fixtures
 UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint src --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:standalone": "AZIR_STANDALONE=1 next build"
   },
   "dependencies": {
     "maplibre-gl": "^4.7.1",

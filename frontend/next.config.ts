@@ -10,8 +10,10 @@ const backend = process.env.AZIR_BACKEND_URL ?? "http://127.0.0.1:8000";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Self-contained server bundle: the runtime image copies `.next/standalone` only (PaaS-friendly).
-  output: "standalone",
+  // Containers build a self-contained server bundle (the runtime image copies `.next/standalone`
+  // only). It must stay opt-in: `next start` refuses to run a standalone output, so a developer
+  // machine keeps the normal build. frontend/Dockerfile sets AZIR_STANDALONE=1.
+  ...(process.env.AZIR_STANDALONE === "1" ? { output: "standalone" as const } : {}),
   // Dev-server cross-origin checks: the sandbox preview is served from an *.e2b.app host.
   allowedDevOrigins: ["*.e2b.app", "localhost", "127.0.0.1"],
   async rewrites() {

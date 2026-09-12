@@ -7,7 +7,8 @@ RUN npm ci --no-audit --no-fund
 
 FROM node:22-alpine AS build
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    AZIR_STANDALONE=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ ./
 # The build talks to the API for the server-rendered pages; point it at a reachable backend.

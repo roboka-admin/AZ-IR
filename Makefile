@@ -20,7 +20,7 @@ FIXTURES    ?= $(BACKEND)/seeds/fixtures
 UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help
-.PHONY: help install venv lint typecheck test test-postgis check clean smoke \
+.PHONY: help install venv lint typecheck test test-postgis check clean smoke wsl-setup \
         migrate seed doctor dev-backend dev-web build db-up db-down db-logs
 
 help: ## Show this help
@@ -31,6 +31,9 @@ venv: ## Create .venv and install the backend with dev extras
 	@test -d $(VENV) || $(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip >/dev/null
 	$(VENV)/bin/pip install -e "$(BACKEND)[dev]"
+
+wsl-setup: ## Bootstrap a Linux/WSL2 machine (see scripts/wsl-setup.sh --help)
+	./scripts/wsl-setup.sh --with-apt
 
 install: venv ## Backend venv + frontend node modules
 	cd $(FRONTEND) && $(NPM) ci --no-audit --no-fund

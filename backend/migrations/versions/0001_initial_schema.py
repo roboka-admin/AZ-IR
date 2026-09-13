@@ -305,10 +305,9 @@ CREATE TABLE public.name_variant (
 	year_from INTEGER, 
 	year_to INTEGER, 
 	source_id TEXT, 
-	note TEXT, 
-	search_form TEXT DEFAULT '' NOT NULL, 
-	search_tsv TSVECTOR, 
-	CONSTRAINT pk_name_variant PRIMARY KEY (id), 
+	 note TEXT, 
+	 search_form TEXT DEFAULT '' NOT NULL, 
+	 CONSTRAINT pk_name_variant PRIMARY KEY (id), 
 	CONSTRAINT fk_name_variant_source_id_source FOREIGN KEY(source_id) REFERENCES public.source (id)
 );
 

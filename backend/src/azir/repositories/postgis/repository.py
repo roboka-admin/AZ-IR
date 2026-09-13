@@ -97,8 +97,8 @@ class PostgisRepository:
                 "south": bbox.min_lat,
                 "east": bbox.max_lon,
                 "north": bbox.max_lat,
-                "near_lon": query.near[1] if query.near else None,
-                "near_lat": query.near[0] if query.near else None,
+                "near_lon": query.near[0] if query.near else None,
+                "near_lat": query.near[1] if query.near else None,
                 "radius_m": (query.radius_km or 0.0) * 1000.0,
                 "tolerance": query.lod_tolerance,
                 "rep_year": window.representative_year,
@@ -107,64 +107,7 @@ class PostgisRepository:
                 "cursor_id": query.cursor.id if query.cursor else None,
             }
         )
-        sql = text(
-            """
-            WITH candidate AS (
-                SELECT erm.id AS id, erm.entity_type AS entity_type, erm.rank AS rank,
-                       (
-                         SELECT g.geom
-                         FROM entity_geometry g
-                         WHERE g.entity_id = erm.id
-                         ORDER BY (g.validity @> :rep_year::int)::int DESC,
-                                  CASE g.kind
-                                      WHEN 'footprint' THEN 0
-                                      WHEN 'extent_reconstructed' THEN 1
-                                      WHEN 'point' THEN 2
-                                      WHEN 'route_alignment' THEN 3
-                                      ELSE 4
-                                  END,
-                                  g.id
-                         LIMIT 1
-                       ) AS geom
-                FROM entity_read_model erm
-                WHERE erm.entity_type = ANY(:narrative_types::text[])
-                  AND (:include_unpublished::boolean OR erm.status = 'published')
-                  AND erm.layer = ANY(:layers::text[])
-                  AND (cardinality(:kinds::text[]) = 0 OR erm.kind = ANY(:kinds::text[]))
-                  AND erm.rank >= :min_rank::numeric
-                  AND (erm.year_from IS NULL OR erm.year_to IS NULL
-                       OR (:temporal_mode = 'during'
-                           AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
-                       OR (:temporal_mode <> 'during'
-                           AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
-            ),
-            located AS (
-                SELECT c.id, c.entity_type, c.rank, c.geom, count(*) OVER () AS total
-                FROM candidate c
-                WHERE c.geom IS NOT NULL
-                  AND ST_Intersects(c.geom, ST_MakeEnvelope(
-                        :west::float, :south::float, :east::float, :north::float, 4326))
-                  AND (:near_lon::float IS NULL OR ST_DWithin(
-                        c.geom::geography,
-                        ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
-                        :radius_m::float))
-            )
-            SELECT id, entity_type, rank::float AS rank,
-                   ST_AsGeoJSON(CASE
-                       WHEN :tolerance::float > 0
-                            AND GeometryType(geom) NOT IN ('POINT', 'MULTIPOINT')
-                       THEN ST_SimplifyPreserveTopology(geom, :tolerance::float)
-                       ELSE geom
-                   END)::json AS geojson,
-                   total
-            FROM located
-            WHERE (:cursor_rank::numeric IS NULL
-                   OR rank < :cursor_rank::numeric
-                   OR (rank = :cursor_rank::numeric AND id > :cursor_id::text))
-            ORDER BY rank DESC, id ASC
-            LIMIT :limit_plus_one
-            """
-        )
+        sql = text(_FEATURES_SQL)
         with self._engine.connect() as connection:
             rows = [dict(row) for row in connection.execute(sql, params).mappings().all()]
             gaps = connection.execute(text(_GAPS_SQL), self._common_params(query)).scalars().all()
@@ -419,41 +362,12 @@ class PostgisRepository:
             "temporal_mode": window.mode if window else "overlaps",
             "year_from": window.year_from if window else 0,
             "year_to": window.year_to if window else 0,
-            "near_lon": near[1] if near else None,
-            "near_lat": near[0] if near else None,
+            "near_lon": near[0] if near else None,
+            "near_lat": near[1] if near else None,
             "radius_m": (radius_km or 0.0) * 1000.0,
             "candidate_limit": 500,
         }
-        sql = text(
-            """
-            SELECT DISTINCT erm.id AS id
-            FROM entity_read_model erm
-            JOIN name_variant nv ON nv.entity_id = erm.id AND nv.entity_type = erm.entity_type
-            WHERE erm.status = 'published'
-              AND erm.entity_type = ANY(:types::text[])
-              AND (nv.search_form %% :folded
-                   OR strpos(nv.search_form, :folded) > 0
-                   OR strpos(nv.search_form, :raw) > 0
-                   OR nv.search_tsv @@ plainto_tsquery('simple', :folded)
-                   OR strpos(public.azir_search_form(coalesce(erm.summary_fa, '')), :folded) > 0
-                   OR strpos(public.azir_search_form(coalesce(erm.extra ->> 'title_fa', '')), :folded) > 0)
-              AND (:temporal_off::boolean
-                   OR erm.year_from IS NULL OR erm.year_to IS NULL
-                   OR (:temporal_mode = 'during'
-                       AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
-                   OR (:temporal_mode <> 'during'
-                       AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
-              AND (:near_lon::float IS NULL OR EXISTS (
-                    SELECT 1 FROM entity_geometry g
-                    WHERE g.entity_id = erm.id
-                      AND ST_DWithin(
-                            ST_PointOnSurface(g.geom)::geography,
-                            ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
-                            :radius_m::float)))
-            ORDER BY erm.id
-            LIMIT :candidate_limit
-            """
-        )
+        sql = text(_SEARCH_SQL)
         with self._engine.connect() as connection:
             ids = [str(row[0]) for row in connection.execute(sql, params).all()]
             if not ids:
@@ -535,8 +449,8 @@ class PostgisRepository:
                         sql,
                         {
                             "narrative_types": list(NARRATIVE_TYPES),
-                            "lon": point[1],
-                            "lat": point[0],
+                            "lon": point[0],
+                            "lat": point[1],
                             "radius_m": radius_km * 1000.0,
                         },
                     ).mappings().all()
@@ -812,6 +726,92 @@ class PostgisRepository:
             grouped[str(row["owner_id"])].append(mappers.relationship_from(row, labels=labels))
         return {key: tuple(value) for key, value in grouped.items()}
 
+
+_FEATURES_SQL = """
+            WITH candidate AS (
+                SELECT erm.id AS id, erm.entity_type AS entity_type, erm.rank AS rank,
+                       (
+                         SELECT g.geom
+                         FROM entity_geometry g
+                         WHERE g.entity_id = erm.id
+                         ORDER BY (g.validity @> :rep_year::int)::int DESC,
+                                  CASE g.kind
+                                      WHEN 'footprint' THEN 0
+                                      WHEN 'extent_reconstructed' THEN 1
+                                      WHEN 'point' THEN 2
+                                      WHEN 'route_alignment' THEN 3
+                                      ELSE 4
+                                  END,
+                                  g.id
+                         LIMIT 1
+                       ) AS geom
+                FROM entity_read_model erm
+                WHERE erm.entity_type = ANY(:narrative_types::text[])
+                  AND (:include_unpublished::boolean OR erm.status = 'published')
+                  AND erm.layer = ANY(:layers::text[])
+                  AND (cardinality(:kinds::text[]) = 0 OR erm.kind = ANY(:kinds::text[]))
+                  AND erm.rank >= :min_rank::numeric
+                  AND (erm.year_from IS NULL OR erm.year_to IS NULL
+                       OR (:temporal_mode = 'during'
+                           AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
+                       OR (:temporal_mode <> 'during'
+                           AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
+            ),
+            located AS (
+                SELECT c.id, c.entity_type, c.rank, c.geom, count(*) OVER () AS total
+                FROM candidate c
+                WHERE c.geom IS NOT NULL
+                  AND ST_Intersects(c.geom, ST_MakeEnvelope(
+                        :west::float, :south::float, :east::float, :north::float, 4326))
+                  AND (:near_lon::float IS NULL OR ST_DWithin(
+                        c.geom::geography,
+                        ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
+                        :radius_m::float))
+            )
+            SELECT id, entity_type, rank::float AS rank,
+                   ST_AsGeoJSON(CASE
+                       WHEN :tolerance::float > 0
+                            AND GeometryType(geom) NOT IN ('POINT', 'MULTIPOINT')
+                       THEN ST_SimplifyPreserveTopology(geom, :tolerance::float)
+                       ELSE geom
+                   END)::json AS geojson,
+                   total
+            FROM located
+            WHERE (:cursor_rank::numeric IS NULL
+                   OR rank < :cursor_rank::numeric
+                   OR (rank = :cursor_rank::numeric AND id > :cursor_id::text))
+            ORDER BY rank DESC, id ASC
+            LIMIT :limit_plus_one
+"""
+
+_SEARCH_SQL = """
+            SELECT DISTINCT erm.id AS id
+            FROM entity_read_model erm
+            JOIN name_variant nv ON nv.entity_id = erm.id AND nv.entity_type = erm.entity_type
+            WHERE erm.status = 'published'
+              AND erm.entity_type = ANY(:types::text[])
+              AND (nv.search_form % :folded
+                   OR strpos(nv.search_form, :folded) > 0
+                   OR strpos(nv.search_form, :raw) > 0
+                   OR nv.search_tsv @@ plainto_tsquery('simple', :folded)
+                   OR strpos(public.azir_search_form(coalesce(erm.summary_fa, '')), :folded) > 0
+                   OR strpos(public.azir_search_form(coalesce(erm.extra ->> 'title_fa', '')), :folded) > 0)
+              AND (:temporal_off::boolean
+                   OR erm.year_from IS NULL OR erm.year_to IS NULL
+                   OR (:temporal_mode = 'during'
+                       AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
+                   OR (:temporal_mode <> 'during'
+                       AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
+              AND (:near_lon::float IS NULL OR EXISTS (
+                    SELECT 1 FROM entity_geometry g
+                    WHERE g.entity_id = erm.id
+                      AND ST_DWithin(
+                            ST_PointOnSurface(g.geom)::geography,
+                            ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
+                            :radius_m::float)))
+            ORDER BY erm.id
+            LIMIT :candidate_limit
+"""
 
 _GAPS_SQL = """
 SELECT erm.entity_type || ':' || erm.id || ':no-geometry' AS gap

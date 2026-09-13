@@ -11,6 +11,12 @@ concurrency:
 
 permissions:
   contents: read
+  # The failure-report step comments the failing log back on the pull request: the Actions log
+  # endpoint is not reachable from every network, and a red check without a traceback is useless.
+  pull-requests: write
+
+env:
+  CI_LOG_DIR: /tmp/azir-ci
 
 jobs:
   backend:
@@ -50,28 +56,53 @@ jobs:
           cache: pip
           cache-dependency-path: backend/pyproject.toml
 
+      - name: Log directory
+        run: mkdir -p "$CI_LOG_DIR"
+
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev]" 2>&1 | tee "$CI_LOG_DIR/10-install.log"
 
       - name: Lint (ruff)
-        run: python -m ruff check src tests
+        run: python -m ruff check src tests 2>&1 | tee "$CI_LOG_DIR/20-lint.log"
 
       - name: Types (mypy --strict)
-        run: python -m mypy src
+        run: python -m mypy src 2>&1 | tee "$CI_LOG_DIR/30-types.log"
 
       - name: Migrate
-        run: python -m alembic upgrade head
+        run: python -m alembic upgrade head 2>&1 | tee "$CI_LOG_DIR/40-migrate.log"
 
       - name: Seed
-        run: python -m azir.cli seed
+        run: python -m azir.cli seed 2>&1 | tee "$CI_LOG_DIR/50-seed.log"
 
       - name: Data health
-        run: AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs doctor
+        run: AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs doctor 2>&1 | tee "$CI_LOG_DIR/55-doctor.log"
 
       # With AZIR_TEST_DB_URL set, the repository contract suite runs against *both* drivers, so a
       # behavioural difference between fixtures and PostGIS fails the build (ADR-0014).
       - name: Tests
-        run: python -m pytest tests
+        run: python -m pytest tests 2>&1 | tee "$CI_LOG_DIR/60-tests.log"
+
+      # The same contract, over HTTP, against the real database: shapes, budgets, error format.
+      - name: Smoke test on PostGIS
+        run: |
+          AZIR_DB_DRIVER=postgis nohup python -m uvicorn azir.main:app --app-dir src \
+            --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-postgis.log" 2>&1 &
+          for _ in $(seq 1 40); do
+            curl -sf http://127.0.0.1:8000/readyz > /dev/null && break
+            sleep 1
+          done
+          curl -sS http://127.0.0.1:8000/readyz || cat "$CI_LOG_DIR/api-postgis.log"
+          bash "$GITHUB_WORKSPACE/scripts/smoke.sh" 2>&1 | tee "$CI_LOG_DIR/70-smoke.log"
+
+      - name: Report failure to the PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/ci-report.sh" \
+            "${{ github.event.pull_request.number }}" "${{ github.job }}" "$CI_LOG_DIR" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
   frontend:
     name: frontend (types, lint, production build)
@@ -80,6 +111,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Log directory
+        run: mkdir -p "$CI_LOG_DIR"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -87,7 +121,7 @@ jobs:
           cache-dependency-path: backend/pyproject.toml
 
       - name: Install the API (the build renders pages from it)
-        run: pip install ./backend
+        run: pip install ./backend 2>&1 | tee "$CI_LOG_DIR/10-install-api.log"
 
       - uses: actions/setup-node@v4
         with:
@@ -96,30 +130,40 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install
-        run: npm ci --no-audit --no-fund
+        run: npm ci --no-audit --no-fund 2>&1 | tee "$CI_LOG_DIR/20-npm-ci.log"
         working-directory: frontend
 
       - name: Types (tsc)
-        run: npm run typecheck
+        run: npm run typecheck 2>&1 | tee "$CI_LOG_DIR/30-types.log"
         working-directory: frontend
 
       - name: Lint (eslint)
-        run: npm run lint
+        run: npm run lint 2>&1 | tee "$CI_LOG_DIR/40-lint.log"
         working-directory: frontend
 
       - name: Start the API on the fixtures driver
         run: |
           cd backend
           AZIR_FIXTURES_DIR=seeds/fixtures nohup python -m uvicorn azir.main:app \
-            --app-dir src --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+            --app-dir src --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-fixtures.log" 2>&1 &
           for _ in $(seq 1 40); do
             curl -sf http://127.0.0.1:8000/healthz > /dev/null && exit 0
             sleep 1
           done
-          echo "API did not become healthy:"; cat /tmp/api.log; exit 1
+          echo "API did not become healthy:"; cat "$CI_LOG_DIR/api-fixtures.log"; exit 1
 
       - name: Production build
-        run: npm run build
+        run: npm run build 2>&1 | tee "$CI_LOG_DIR/50-build.log"
         working-directory: frontend
         env:
           AZIR_BACKEND_URL: http://127.0.0.1:8000
+
+      - name: Report failure to the PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/ci-report.sh" \
+            "${{ github.event.pull_request.number }}" "${{ github.job }}" "$CI_LOG_DIR" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

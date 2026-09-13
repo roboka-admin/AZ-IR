@@ -11,7 +11,6 @@ database exactly as it was.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -141,7 +140,10 @@ def _geometry_rows(record: EntityRecord) -> list[dict[str, Any]]:
                 "entity_id": record.id,
                 "kind": geometry.kind.value,
                 "certainty": geometry.certainty.value,
-                "geom_json": json.dumps(geometry.geojson, ensure_ascii=False),
+                # A dict, never a JSON string: the column is JSONB and SQLAlchemy serializes it.
+                # A pre-encoded string would be stored as a JSON *scalar* and ST_GeomFromGeoJSON
+                # below would then fail on every geometry (found by the real-PostGIS CI run).
+                "geom_json": dict(geometry.geojson),
                 "year_from": geometry.year_from,
                 "year_to": geometry.year_to,
                 "lod_min_zoom": geometry.lod_min_zoom,

@@ -7,24 +7,32 @@ PostgreSQL+PostGIS lives in ``test_postgis_contract.py`` (marker ``postgis``, ru
 
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import psycopg2 as pg_psycopg2
 from sqlalchemy.schema import CreateTable
 
 from azir.domain import text as textnorm
 from azir.repositories.postgis import METADATA, schema
 from azir.repositories.postgis.repository import (
     _DISAGREEMENT_SQL,
+    _FEATURES_SQL,
     _GAPS_SQL,
     _RELATIONSHIP_SQL,
+    _SEARCH_SQL,
 )
 
 BACKEND = Path(__file__).resolve().parents[1]
 VERSIONS = BACKEND / "migrations" / "versions"
 DIALECT = postgresql.dialect()
+# psycopg2 is the driver production uses; its pyformat paramstyle is what makes `%` dangerous.
+PSYCOPG2 = pg_psycopg2.dialect()
+POSTGIS_PACKAGE = BACKEND / "src" / "azir" / "repositories" / "postgis"
 
 
 def migration_text() -> str:
@@ -39,6 +47,13 @@ def table_block(sql: str, name: str) -> str:
     match = re.search(rf"CREATE TABLE public\.{name} \((.*?)\n\);", sql, re.DOTALL)
     assert match, f"migration does not create public.{name}"
     return match.group(1)
+
+
+def altered_columns(sql: str, name: str) -> set[str]:
+    """Columns a later migration adds with ALTER TABLE (generated columns live in 0002+)."""
+    return set(
+        re.findall(rf"ALTER TABLE public\.{name}\s+ADD COLUMN (?:IF NOT EXISTS )?(\w+)", sql)
+    )
 
 
 def columns_of(name: str) -> set[str]:
@@ -63,10 +78,31 @@ def test_every_table_in_the_mirror_is_created_by_a_migration(name: str) -> None:
 @pytest.mark.parametrize("name", REAL_TABLES)
 def test_every_column_in_the_mirror_exists_in_the_ddl(name: str) -> None:
     """The mirror is what the repository queries; a missing column is a runtime explosion."""
-    block = table_block(migration_text(), name)
+    sql = migration_text()
+    block = table_block(sql, name)
     declared = {line.strip().split(" ")[0] for line in block.splitlines() if line.strip()}
+    declared |= altered_columns(sql, name)
     missing = columns_of(name) - declared
     assert not missing, f"public.{name}: migration DDL is missing {sorted(missing)}"
+
+
+def test_no_column_is_declared_twice_across_migrations() -> None:
+    """0001 must not pre-declare a column that a later migration adds (real-PostGIS CI caught this).
+
+    ``name_variant.search_tsv`` is a generated column created by 0002; 0001 used to declare a plain
+    column of the same name, so ``alembic upgrade head`` died with "column already exists" the
+    moment it met a real server.
+    """
+    sql = migration_text()
+    for name in REAL_TABLES:
+        created = {
+            line.strip().split(" ")[0]
+            for line in table_block(sql, name).splitlines()
+            if line.strip()
+        }
+        added_later = altered_columns(sql, name)
+        twice = created & added_later
+        assert not twice, f"public.{name}: {sorted(twice)} is both created and ALTERed in"
 
 
 def test_no_table_exists_in_ddl_without_a_mirror_entry() -> None:
@@ -159,6 +195,65 @@ def test_metadata_compiles_against_the_postgresql_dialect() -> None:
     for name in REAL_TABLES:
         ddl = str(CreateTable(METADATA.tables[f"public.{name}"]).compile(dialect=DIALECT))
         assert f"public.{name}" in ddl
+
+
+# ------------------------------------------------------------------ what actually reaches the server
+
+
+def _percent_offenders(source: str) -> list[str]:
+    """Every string literal in a module that contains `%%`."""
+    tree = ast.parse(source)
+    found = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and "%%" in node.value:
+            found.append(node.value.strip().splitlines()[0][:80])
+    return found
+
+
+@pytest.mark.parametrize("path", sorted(POSTGIS_PACKAGE.glob("*.py")), ids=lambda p: p.name)
+def test_no_module_writes_a_double_percent(path: Path) -> None:
+    """SQLAlchemy escapes `%` for the pyformat paramstyle itself; `%%` arrives as `%%` and is a
+    syntax error on a real server (this is how the pg_trgm operator in search slipped through)."""
+    offenders = _percent_offenders(path.read_text(encoding="utf-8"))
+    assert not offenders, f"{path.name} contains %%: {offenders}"
+
+
+ALL_SQL = {
+    "features": _FEATURES_SQL,
+    "search": _SEARCH_SQL,
+    "gaps": _GAPS_SQL,
+    "relationships": _RELATIONSHIP_SQL,
+    "disagreements": _DISAGREEMENT_SQL,
+}
+
+
+def mogrify(sql: str) -> str:
+    """The exact string PostgreSQL receives: SQLAlchemy compiles it, psycopg2 substitutes params."""
+    compiled = text(sql).compile(dialect=PSYCOPG2)
+    return str(compiled) % dict.fromkeys(compiled.params, "'x'")
+
+
+@pytest.mark.parametrize("name", sorted(ALL_SQL))
+def test_sql_survives_the_paramstyle_round_trip(name: str) -> None:
+    sent = mogrify(ALL_SQL[name])
+    assert "%%" not in sent
+    assert " %(" not in sent, "an unbound parameter survived compilation"
+
+
+def test_the_trgm_similarity_operator_reaches_postgres_intact() -> None:
+    assert "nv.search_form % 'x'" in mogrify(_SEARCH_SQL)
+
+
+def test_radius_parameters_are_lon_then_lat() -> None:
+    """The codebase speaks (lon, lat) everywhere -- GeoJSON order, `?near=lon,lat`, `point=`.
+
+    A swapped pair compiles fine and silently queries the wrong hemisphere, so pin the binding.
+    """
+    source = (POSTGIS_PACKAGE / "repository.py").read_text(encoding="utf-8")
+    assert '"near_lon": query.near[0]' in source
+    assert '"near_lat": query.near[1]' in source
+    assert '"lon": point[0]' in source
+    assert '"lat": point[1]' in source
 
 
 # ------------------------------------------------------------------ search parity (ADR-0007)

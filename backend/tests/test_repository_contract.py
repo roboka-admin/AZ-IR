@@ -226,6 +226,34 @@ def test_articles_link_to_entities_and_carry_map_state(repo: AtlasRepository) ->
 
 
 @driver
+def test_radius_queries_read_longitude_then_latitude(repo: AtlasRepository) -> None:
+    """Every coordinate pair in this codebase is (lon, lat): GeoJSON order, `?near=lon,lat`.
+
+    Swapping them compiles, runs, and quietly queries a point 1200 km away -- which is exactly why
+    the real-PostGIS CI run is worth its weight. Ardabil is (48.2934, 38.2464).
+    """
+    ardabil = (48.2934, 38.2464)
+    swapped = (ardabil[1], ardabil[0])
+
+    def around(point: tuple[float, float]) -> int:
+        page = repo.features(
+            AtlasQuery(
+                bbox=STUDY_BBOX, zoom=8.0, window=TimeWindow.at(1500), layers=ALL_LAYERS,
+                near=point, radius_km=30.0, limit=50,
+            )
+        )
+        return len(page.rows)
+
+    assert around(ardabil) > 0, "a 30 km radius around Ardabil must find Ardabil"
+    assert around(swapped) == 0, "the swapped pair points at empty steppe north of the Caucasus"
+
+    assert repo.search("اردبیل", types=("place",), locale="fa", limit=10, near=ardabil, radius_km=30.0)
+    assert not repo.search(
+        "اردبیل", types=("place",), locale="fa", limit=10, near=swapped, radius_km=30.0
+    )
+
+
+@driver
 def test_context_answers_what_was_here(repo: AtlasRepository) -> None:
     rels = repo.context(place_id="plc_ardabil", point=None, radius_km=50.0, locale="fa", limit=25)
     assert rels

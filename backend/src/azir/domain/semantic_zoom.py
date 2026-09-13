@@ -203,3 +203,46 @@ def layer_for(entity_type: EntityType, kind: str | None) -> str:
         return "buildings"
     return "places"
 
+
+
+@dataclass(frozen=True, slots=True)
+class Presentation:
+    """The four derived columns every write must set: rank, layer and the zoom band."""
+
+    rank: float
+    layer: str
+    min_zoom: float
+    max_zoom: float
+
+
+def presentation_for(
+    *,
+    importance: float,
+    kind: str | None,
+    entity_type: EntityType,
+    source_count: int = 0,
+    assertion_count: int = 0,
+    article_count: int = 0,
+    period_coverage: int = 0,
+    kind_weight: float | None = None,
+) -> Presentation:
+    """One place that turns editorial input into presentation columns.
+
+    Both write adapters call this, so a draft created through the panel is ranked exactly like a
+    seeded record -- presentation is derived, never hand-typed (AGENTS.md rule 10).
+    """
+    rank = compute_rank(
+        importance=importance,
+        kind=kind,
+        source_count=source_count,
+        assertion_count=assertion_count,
+        article_count=article_count,
+        period_coverage=period_coverage,
+        kind_weight=kind_weight,
+    )
+    return Presentation(
+        rank=rank,
+        layer=layer_for(entity_type, kind),
+        min_zoom=min_zoom_for(rank, entity_type, kind),
+        max_zoom=max_zoom_for(kind),
+    )

@@ -10,7 +10,7 @@ from functools import lru_cache
 from ..core.config import get_settings
 from ..core.errors import UnavailableError
 from ..repositories.fixtures import FixturesRepository
-from ..repositories.ports import AtlasRepository
+from ..repositories.ports import AtlasRepository, EditorialRepository
 
 
 @lru_cache(maxsize=1)
@@ -27,5 +27,20 @@ def get_repository() -> AtlasRepository:
     return repository
 
 
+@lru_cache(maxsize=1)
+def get_editorial_repository() -> EditorialRepository:
+    """The write side. Both adapters implement it, so this mirrors :func:`get_repository`.
+
+    The two caches return the *same object* for a given driver: reads and writes must share one
+    connection pool (PostGIS) and one in-memory corpus (fixtures), otherwise a draft published
+    through the panel would not appear on the map until the process restarted.
+    """
+    repository = get_repository()
+    if not isinstance(repository, EditorialRepository):  # pragma: no cover - both adapters implement it
+        raise UnavailableError(f"the {repository.driver_name} driver has no write side")
+    return repository
+
+
 def reset_repository_cache() -> None:
     get_repository.cache_clear()
+    get_editorial_repository.cache_clear()

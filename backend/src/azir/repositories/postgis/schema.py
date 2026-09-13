@@ -329,6 +329,10 @@ assertion = sa.Table(
     sa.Column("role", sa.Text),
     sa.Column("created_by", sa.Text),
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    # Review outcome metadata (ADR-0010): who accepted/rejected/disputed a claim, and why.
+    sa.Column("reviewed_by", sa.Text),
+    sa.Column("reviewed_at", sa.DateTime(timezone=True)),
+    sa.Column("review_note", sa.Text),
 )
 
 evidence = sa.Table(
@@ -352,6 +356,54 @@ app_user = sa.Table(
     sa.Column("display_name", sa.Text, nullable=False),
     sa.Column("role", sa.Text, nullable=False, server_default="editor"),
     sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.true()),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    # argon2id. NULL means "cannot log in" (an account created for attribution only).
+    sa.Column("password_hash", sa.Text),
+    sa.Column("last_login_at", sa.DateTime(timezone=True)),
+)
+
+#: Opaque session tokens. The primary key is the SHA-256 digest of the cookie value, so a leaked
+#: database does not leak usable sessions (core/security.py).
+app_session = sa.Table(
+    "app_session", METADATA,
+    sa.Column("id", sa.Text, primary_key=True),
+    sa.Column("user_id", sa.Text, sa.ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False),
+    sa.Column("csrf_hash", sa.Text, nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+    sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("revoked_at", sa.DateTime(timezone=True)),
+    sa.Column("user_agent", sa.Text),
+)
+
+#: Workflow metadata + the reviewed-copy link. ``status`` deliberately lives on the entity tables
+#: only: one source of truth for where a record is in the loop, one for who moved it and when.
+editorial_state = sa.Table(
+    "editorial_state", METADATA,
+    sa.Column("entity_type", sa.Text, primary_key=True),
+    sa.Column("entity_id", sa.Text, primary_key=True),
+    sa.Column("revision", sa.Integer, nullable=False, server_default="1"),
+    sa.Column("head_id", sa.Text),
+    sa.Column("submitted_by", sa.Text, sa.ForeignKey("app_user.id")),
+    sa.Column("submitted_at", sa.DateTime(timezone=True)),
+    sa.Column("reviewed_by", sa.Text, sa.ForeignKey("app_user.id")),
+    sa.Column("reviewed_at", sa.DateTime(timezone=True)),
+    sa.Column("review_note", sa.Text),
+    sa.Column("published_by", sa.Text, sa.ForeignKey("app_user.id")),
+    sa.Column("published_at", sa.DateTime(timezone=True)),
+    sa.Column("archived_by", sa.Text, sa.ForeignKey("app_user.id")),
+    sa.Column("archived_at", sa.DateTime(timezone=True)),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+)
+
+#: Data-lint reports (docs/07 §3): "we checked" becomes a row with a timestamp and the findings.
+lint_run = sa.Table(
+    "lint_run", METADATA,
+    sa.Column("id", sa.BigInteger, sa.Identity(), primary_key=True),
+    sa.Column("scope", sa.Text, nullable=False, server_default="corpus"),
+    sa.Column("actor_id", sa.Text, sa.ForeignKey("app_user.id")),
+    sa.Column("errors", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("warnings", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("findings", JSONB, nullable=False, server_default="[]"),
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
 )
 
@@ -428,10 +480,12 @@ __all__ = [
     "ENTITY_TABLES",
     "METADATA",
     "TABLES",
+    "app_session",
     "article",
     "article_entity",
     "assertion",
     "audit_log",
+    "editorial_state",
     "entity_geometry",
     "entity_kind",
     "entity_read_model",
@@ -440,6 +494,7 @@ __all__ = [
     "event_participant",
     "event_place",
     "evidence",
+    "lint_run",
     "name_variant",
     "period",
     "period_scheme",

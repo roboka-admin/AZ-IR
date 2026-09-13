@@ -79,6 +79,20 @@ class UnavailableError(AzirError):
     title = "Service unavailable"
 
 
+class UnauthorizedError(AzirError):
+    """No (or an expired) session. Distinct from 403: here we do not know who you are."""
+
+    status_code = 401
+    error_type = "unauthorized"
+    title = "Authentication required"
+
+
+class TooManyRequestsError(AzirError):
+    status_code = 429
+    error_type = "rate-limited"
+    title = "Too many requests"
+
+
 class RepositoryError(AzirError):
     status_code = 503
     error_type = "repository"
@@ -91,7 +105,17 @@ def _problem_response(
     request_id = getattr(request.state, "request_id", None)
     if request_id and "request_id" not in payload:
         payload["request_id"] = request_id
-    return JSONResponse(status_code=status_code, content=payload, media_type="application/problem+json")
+    headers: dict[str, str] = {}
+    retry_after = payload.get("retry_after_seconds")
+    if status_code == 429 and isinstance(retry_after, int | float) and retry_after > 0:
+        # RFC 9110: a throttle the client cannot read is a throttle the client will hammer.
+        headers["Retry-After"] = str(int(retry_after))
+    return JSONResponse(
+        status_code=status_code,
+        content=payload,
+        media_type="application/problem+json",
+        headers=headers or None,
+    )
 
 
 def install_error_handlers(app: FastAPI) -> None:

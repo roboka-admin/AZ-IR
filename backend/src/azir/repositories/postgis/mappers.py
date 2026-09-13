@@ -233,6 +233,7 @@ def relationship_from(row: Row, *, labels: Mapping[str, tuple[str, str]]) -> Rel
         certainty=_text(row.get("certainty")),
         temporal=temporal_from(row),
         confidence=_enum(Confidence, row.get("confidence"), Confidence.MEDIUM),
+        is_claim=bool(row.get("is_claim")),
         status=_enum(AssertionStatus, row.get("status"), AssertionStatus.ACCEPTED),
         evidence=evidence_from(evidence) if isinstance(evidence, Iterable) and not isinstance(evidence, str) else (),
         note=_text(row.get("note_fa")) or _text(row.get("note")),

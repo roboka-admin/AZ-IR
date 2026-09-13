@@ -29,6 +29,8 @@ people:
       - {lang: en, form: "Sadr al-Din Musa", kind: preferred, transliteration: EI3}
     summary_fa: "پسر و جانشین شیخ صفی‌الدین که خانقاه اردبیل را سازمان داد و نفوذ طریقت را گسترش داد."
     summary_en: "Son and successor of Sheikh Safi al-Din, who organised the Ardabil khānegāh and expanded the order's influence."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_eir_safavid_dynasty]
 
   - id: prs_khwaja_ali
@@ -59,6 +61,8 @@ people:
       - {lang: en, form: "Shaykh Junayd", kind: preferred, transliteration: EI3}
     summary_fa: "رهبر طریقت صفویه که آن را به نیرویی نظامی-سیاسی تبدیل کرد و در نبرد با شروانشاهیان کشته شد."
     summary_en: "Head of the Safaviyya who turned it into a military-political force and was killed fighting the Shirvanshahs."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_eir_safavid_dynasty, src_chiran_vol6]
 
   - id: prs_shaykh_haydar
@@ -72,6 +76,8 @@ people:
       - {lang: en, form: "Shaykh Ḥaydar", kind: preferred, transliteration: EI3}
     summary_fa: "پسر شیخ جنید و پدر شاه اسماعیل؛ سازمان نظامی قزلباش را شکل داد و در ۱۴۸۸ میلادی کشته شد."
     summary_en: "Son of Shaykh Junayd and father of Shah Ismail; shaped the Qizilbash military organisation and was killed in 1488."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_eir_safavid_dynasty, src_hasan_rumlu_ahsan]
 
   - id: prs_shah_ismail_i
@@ -100,6 +106,8 @@ people:
       - {lang: en, form: "Shah Tahmasp I", kind: preferred, transliteration: Common}
     summary_fa: "دومین شاه صفوی که پایتخت را در ۱۵۴۸ میلادی از تبریز به قزوین منتقل کرد."
     summary_en: "The second Safavid shah, who moved the capital from Tabriz to Qazvin in 1548."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_savory_safavid_iran, src_chiran_vol6]
 
   - id: prs_nasir_al_din_tusi
@@ -165,6 +173,8 @@ people:
       - {lang: en, form: "Jahan Shah Qara Qoyunlu", kind: preferred, transliteration: Common}
     summary_fa: "حاکم قره‌قویونلو و بانی مسجد کبود تبریز که در نبرد با آق‌قویونلو کشته شد."
     summary_en: "Qara Qoyunlu ruler and patron of the Blue Mosque of Tabriz, killed fighting the Aq Qoyunlu."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_bosworth_dynasties, src_blair_bloom_islam]
 
   - id: prs_uzun_hasan
@@ -178,6 +188,8 @@ people:
       - {lang: en, form: "Uzun Hasan", kind: preferred, transliteration: Common}
     summary_fa: "حاکم آق‌قویونلو و پدربزرگ مادری شاه اسماعیل که قوانین مالیاتی موسوم به «قانون‌نامهٔ حسن پادشاه» به او منسوب است."
     summary_en: "Aq Qoyunlu ruler and maternal grandfather of Shah Ismail, credited with a fiscal code known as the Qānūn-nāma-ye Ḥasan Pādshāh."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_bosworth_dynasties, src_chiran_vol6]
 
   - id: prs_babak
@@ -236,4 +248,6 @@ people:
       - {lang: en, form: "Selim I (Ottoman)", kind: preferred}
     summary_fa: "سلطان عثمانی و فرماندهٔ سپاه رقیب در نبرد چالدران؛ خارج از حوزهٔ جغرافیایی اطلس ولی شرکت‌کنندهٔ کلیدی یک رویداد مهم آن."
     summary_en: "The Ottoman sultan commanding the opposing army at Chaldiran; outside the atlas' geography but a key participant in one of its major events."
+    coverage_note_fa: "به این رکورد شخص هندسه‌ای اختصاص نیافته است: اشخاص روی نقشه از راه مکان‌ها و رویدادهای مرتبطشان دیده می‌شوند، نه با یک نقطهٔ تنها (قاعدهٔ D9، docs/07 §3)."
+    coverage_note_en: "No geometry is attached to this person record: people appear on the map through the places and events linked to them, not as a lone point (rule D9, docs/07 §3)."
     sources: [src_ei_chaldiran, src_chiran_vol6]

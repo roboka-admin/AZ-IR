@@ -30,26 +30,49 @@ draft ──┤          ├──────────►│ in_review ├�
 - `reviewer|admin` تأیید می‌کند → `accepted`/`published`.
 - ویرایش entity منتشرشده یک **کپی draft با revision جدید** می‌سازد؛ نسخه‌ی عمومی دست‌نخورده می‌ماند.
 - هر تغییر: `audit_log` + `revision_snapshot`.
+- رکورد `in_review` **قابل ویرایش نیست** (`EDITABLE_STATUSES` در `domain/editorial.py`): بازبین
+  هرگز متنی را تأیید نمی‌کند که زیر دستش جابه‌جا شده باشد. برای ادامهٔ ویرایش، بازبین آن را با
+  `request_changes` به draft برمی‌گرداند.
+- `publish` فقط از `in_review` ممکن است، و فقط اگر gateهای lint پاک باشند (بخش ۳).
+
+### هویت و نشست (پیاده‌سازی‌شده در ADR-0017)
+
+| موضوع | تصمیم |
+|-------|-------|
+| رمز عبور | argon2id (`argon2-cffi`)؛ هرگز در log، پاسخ API یا مخزن |
+| نشست | کوکی `azir_session` با `HttpOnly`؛ در DB فقط **sha256(token)** نگه داشته می‌شود |
+| CSRF | کوکی خوانا `azir_csrf` + هدر `X-CSRF-Token` (double-submit) روی هر نوشتن |
+| SameSite | `lax` به‌طور پیش‌فرض؛ وقتی دامنهٔ frontend جداست `none` + `secure` |
+| throttle | ۵ تلاش ناموفق در ۵ دقیقه برای هر «ایمیل + IP» → `429` با `Retry-After` |
+| حساب‌ها | `azir user add` (رمز از stdin، نه argv) و `azir user sync-dev` |
+| خاموش‌کردن | `AZIR_EDITORIAL_ENABLED`؛ در `production` به‌طور پیش‌فرض **خاموش** است |
+| audit | هر نوشتن، از جمله `login`/`login_failed`/`logout`، با `request_id` همان درخواست |
 
 ## ۳. Data Lint (در CI روی fixtureها، و قبل از publish در UI)
 
-| # | قاعده | سطح |
-|---|-------|-----|
-| D1 | `death_year_from >= birth_year_from` | error |
-| D2 | هر هندسه داخل `study_area.bbox` (مگر `modern_admin` یا flag صریح) | error |
-| D3 | هر `assertion.status=accepted` ≥ ۱ evidence با `stance=supports` | error |
-| D4 | هر entity با `status=published` ≥ ۱ source مرتبط | error |
-| D5 | هر entity منتشرشده ≥ ۱ `name_variant(kind=preferred)` در `fa` | error |
-| D6 | `place_link(contains)` بدون دور | error |
-| D7 | همه‌ی `kind`/`predicate`/`locator_type` از taxonomy | error |
-| D8 | تاریخ‌های `unknown` باید `confidence ∈ {low, disputed}` داشته باشند | warn |
-| D9 | entity بدون geometry → در نقشه دیده نمی‌شود؛ باید `coverage_note` داشته باشد | warn |
-| D10 | دو entity با نام یکسان در یک مکان → احتمال تکراری (identity review) | warn |
-| D11 | رویداد با `attestation=legendary` باید `confidence=low` و برچسب UI داشته باشد | error |
-| D12 | منبع بدون سال/نویسنده/ناشر → کتاب‌شناسی ناقص | warn |
-| D13 | assertionهای متضاد accepted → باید `status=disputed` شوند | error |
+اجرا: `azir lint` روی کل پیکره یا یک رکورد، `GET|POST /api/v1/editorial/lint` در پنل، و
+**gate قبل از publish** در `services/editorial.py`. خروجی یک گزارش JSON است که همیشه
+`not_evaluated` را هم دارد — قاعده‌ای که ماشین بررسی نمی‌کند **پنهان نمی‌شود**، اعلام می‌شود.
 
-خروجی lint یک گزارش JSON است که در پنل editorial هم نشان داده می‌شود (نه فقط CI).
+| # | قاعده | سطح | وضعیت اجرا |
+|---|-------|-----|------------|
+| D1 | `death_year_from >= birth_year_from` | error | ⏳ ماشینی نشده: تولد/مرگ در `assertion` است و به query claim‑شکل نیاز دارد |
+| D2 | هر هندسه داخل `corpus_bbox`؛ داخل `study_area_bbox` بهتر است | error / warn | ✅ دو حلقه: بیرونِ پیکره = error؛ بیرونِ حوزهٔ مطالعه ولی داخل پیکره = warn («زمینه»، مثل قزوین) |
+| D3 | هر claim پذیرفته‌شده evidence کافی دارد | error | ✅ `stance ∈ {supports, qualifies}` کافی است؛ فقط روی edgeهایی که `is_claim` (لینک ساختاری claim نیست) |
+| D4 | هر entity با `status=published` ≥ ۱ source مرتبط | error | ✅ gate انتشار؛ در پنل هم به editor نشان داده می‌شود |
+| D5 | هر entity منتشرشده ≥ ۱ `name_variant(kind=preferred)` در `fa` | error | ✅ gate انتشار + هنگام create/patch (نام فارسی اجباری است) |
+| D6 | `place_link(contains)` بدون دور | error | ⏳ تستِ fixtureها دور را می‌گیرد؛ بررسی per-record نوشته نشده |
+| D7 | همه‌ی `kind`/`predicate`/`locator_type` از taxonomy | error | ⏳ نسبی: enumها (`status`, `precision`, …) در دامنه اجباری‌اند؛ کدهای آزاد `kind`/`predicate` هنوز مقابل taxonomy چک نمی‌شوند |
+| D8 | تاریخ‌های `unknown` باید `confidence ∈ {low, disputed}` داشته باشند | warn | ✅ دو لایه: `TemporalInterval.__post_init__` خودش تنزل می‌دهد، lint هم گزارش می‌کند |
+| D9 | entity بدون geometry → باید `coverage_note` داشته باشد | warn | ✅ (`article` معاف است: متن، feature نیست) |
+| D10 | دو entity با نام یکسان در یک مکان → احتمال تکراری | warn | ⏳ به index شباهت نام (pg_trgm) روی کل پیکره نیاز دارد |
+| D11 | رویداد با `attestation=legendary` باید `confidence=low` | error | ✅ gate انتشار |
+| D12 | منبع بدون سال/نویسنده/ناشر → کتاب‌شناسی ناقص | warn | ⏳ روی fixture منبع‌ها تست شده، نه per-entity |
+| D13 | assertionهای متضاد accepted → باید `disputed` شوند | error | ⏳ نیمه: هنگام `disputed` کردن، نوشتنِ `topic_fa` **اجباری** است؛ تشخیص خودکار تضاد به گروه‌بندی topic در read model نیاز دارد |
+
+قاعدهٔ عملیاتی: `make lint-data` باید با **صفر error** تمام شود (پیکرهٔ seed امروز ۰ error و
+۲ warning دارد — هر دو رکوردهای «زمینه»ی قزوین). چیزی که CI نگذارد، در `lint_run` هم ثبت می‌شود
+تا روندِ کیفیت داده در زمان دیده شود.
 
 ## ۴. Ingestion (چون گلوگاه واقعی پروژه، ورود داده است)
 

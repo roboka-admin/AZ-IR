@@ -12,6 +12,10 @@ set -uo pipefail
 
 API="${AZIR_API:-http://127.0.0.1:8000}"
 PREFIX="${AZIR_API_PREFIX:-/api/v1}"
+# The editorial write path signs in with a development identity (ADR-0017). Override both when
+# smoke-testing a staging deployment that has real accounts.
+SMOKE_EDITOR_EMAIL="${AZIR_SMOKE_EMAIL:-admin@atlas.local}"
+SMOKE_EDITOR_PASSWORD="${AZIR_DEV_PASSWORD:-atlas-dev-password}"
 FAILURES=0
 CHECKS=0
 
@@ -157,10 +161,108 @@ get "an empty search query is rejected" "$PREFIX/search?q=" "
 status == 422 and 'problem+json' in ctype
 "
 
-# The API is read-only in Phase 1: writes must be refused, not silently accepted.
+# The public corpus is read-only: writes to it must be refused, not silently accepted.
 STATUS="$(curl -sS -m 10 -o /dev/null -w '%{http_code}' -X POST "$API$PREFIX/meta")"
 CTYPE=""; RAW=""
-assert_py "POST is refused (read-only API)" "status in (405, 403)"
+assert_py "POST to the public API is refused" "status in (405, 403)"
+
+# ------------------------------------------------------------------ editorial write path
+#
+# The whole loop over HTTP: session cookie, CSRF, roles, the lint gate, publication, audit.
+# Skipped when the panel is off -- which is the correct state for a production URL (ADR-0017).
+# Accounts come from `azir user sync-dev`; the password from $AZIR_DEV_PASSWORD.
+
+req() {  # req <name> <method> <path> [json] [--no-csrf]
+  local name="$1" method="$2" path="$3" json="${4:-}" flags="${5:-}"
+  local head_file body_file args=(-sS -m 30 -b "$JAR" -c "$JAR" -X "$method")
+  head_file="$(mktemp)"; body_file="$(mktemp)"
+  [[ -n "$json" ]] && args+=(-H 'Content-Type: application/json' -d "$json")
+  [[ "$flags" != "--no-csrf" ]] && args+=(-H "$CSRF_HEADER: $CSRF")
+  STATUS="$(curl "${args[@]}" -D "$head_file" -o "$body_file" -w '%{http_code}' "$API$path" 2>/dev/null)" || {
+    fail "$name (request to $API$path failed)"; rm -f "$head_file" "$body_file"; return
+  }
+  CTYPE="$(awk 'tolower($1)=="content-type:"{print tolower($2)}' "$head_file" | tr -d '\r;' | head -1)"
+  RAW="$(cat "$body_file")"
+  rm -f "$head_file" "$body_file"
+  assert_py "$name" "$EXPRESSION"
+}
+
+echo "editorial write path"
+JAR="$(mktemp)"
+LOGIN_STATUS="$(curl -sS -m 20 -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$SMOKE_EDITOR_EMAIL\",\"password\":\"$SMOKE_EDITOR_PASSWORD\"}" \
+  "$API$PREFIX/auth/login")"
+if [[ "$LOGIN_STATUS" != "200" ]]; then
+  printf '  \033[33mskip\033[0m editorial write path (login returned %s: panel off or no dev users)\n' "$LOGIN_STATUS"
+else
+  CSRF="$(awk '$6=="azir_csrf"{print $7}' "$JAR")"
+  CSRF_HEADER="${AZIR_CSRF_HEADER:-X-CSRF-Token}"
+  SLUG="smoke-$(date +%s)"
+
+  EXPRESSION="status == 403"
+  req "a write without a CSRF token is refused" POST "$PREFIX/editorial/place" \
+    "{\"slug\":\"$SLUG\",\"names\":[{\"form\":\"دودکش\",\"lang\":\"fa\"}]}" --no-csrf
+
+  EXPRESSION="status == 201 and data['data']['status'] == 'draft' and data['data']['slug'] == '$SLUG'"
+  req "an editor can create a draft" POST "$PREFIX/editorial/place" "{
+    \"kind\": \"city\", \"slug\": \"$SLUG\",
+    \"names\": [{\"form\": \"شهر دودکش\", \"lang\": \"fa\", \"kind\": \"preferred\"},
+                {\"form\": \"Smoke Town\", \"lang\": \"en\", \"kind\": \"preferred\"}],
+    \"temporal\": {\"from\": 1600, \"to\": 1700, \"precision\": \"range\", \"display\": \"۱۶۰۰–۱۷۰۰ م\"},
+    \"geometries\": [{\"geojson\": {\"type\": \"Point\", \"coordinates\": [48.35, 38.25]},
+                      \"kind\": \"point\", \"certainty\": \"uncertain\"}],
+    \"summary\": \"رکوردی که smoke test می‌سازد.\",
+    \"source_ids\": [\"src_tabari_tarikh\"]
+  }"
+  CREATED_ID="$(printf '%s' "$RAW" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["id"])' 2>/dev/null || echo "")"
+
+  EXPRESSION="status == 409 and data.get('status') == 'draft'"
+  req "a draft cannot skip review" POST "$PREFIX/editorial/place/$CREATED_ID/transition" \
+    "{\"action\": \"approve\"}"
+
+  # A second record with no source: the lint gate must stop it, and say which rule.
+  EXPRESSION="status == 201"
+  req "a sourceless draft can be created" POST "$PREFIX/editorial/place" "{
+    \"kind\": \"village\", \"slug\": \"$SLUG-nosource\",
+    \"names\": [{\"form\": \"روستای بی‌منبع\", \"lang\": \"fa\", \"kind\": \"preferred\"}]
+  }"
+  BARE_ID="$(printf '%s' "$RAW" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["id"])' 2>/dev/null || echo "")"
+  EXPRESSION="status == 200"
+  req "it can be submitted for review" POST "$PREFIX/editorial/place/$BARE_ID/transition" \
+    "{\"action\": \"submit\"}"
+  EXPRESSION="status == 422 and 'D4' in str(data.get('rules')) and data.get('findings')"
+  req "publishing it is blocked by lint rule D4" POST "$PREFIX/editorial/place/$BARE_ID/transition" \
+    "{\"action\": \"approve\"}"
+
+  EXPRESSION="status == 200 and data['data']['status'] == 'in_review'"
+  req "submit moves it into review" POST "$PREFIX/editorial/place/$CREATED_ID/transition" \
+    "{\"action\": \"submit\"}"
+
+  EXPRESSION="status == 200 and data['data']['status'] == 'published' and data['data']['revision'] == 1"
+  req "approve publishes it" POST "$PREFIX/editorial/place/$CREATED_ID/transition" \
+    "{\"action\": \"approve\"}"
+
+  # Publishing a live record forks it: the public version must not move while the copy is edited.
+  EXPRESSION="status == 200 and data['meta']['forked'] is True and data['data']['id'] != '$CREATED_ID'"
+  req "editing a published record forks a reviewed copy" PATCH "$PREFIX/editorial/place/$CREATED_ID" \
+    "{\"summary\": \"ویرایشِ بعد از انتشار.\"}"
+  COPY_ID="$(printf '%s' "$RAW" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["id"])' 2>/dev/null || echo "")"
+  EXPRESSION="status == 200 and data['summary'] != 'ویرایشِ بعد از انتشار.'"
+  req "the public version is untouched by the fork" GET "$PREFIX/entities/place/$CREATED_ID"
+  EXPRESSION="status == 200 and data['data']['pending_revision'] == '$COPY_ID'"
+  req "the panel shows the open revision" GET "$PREFIX/editorial/place/$CREATED_ID/state"
+
+  EXPRESSION="status == 200 and data.get('slug') == '$SLUG' and data.get('status') == 'published'"
+  req "the published record is now public" GET "$PREFIX/entities/place/$CREATED_ID"
+
+  EXPRESSION="status == 200 and {e.get('action') for e in data.get('data', [])} >= {'create','submit','approve'}"
+  req "every step is in the audit trail" GET "$PREFIX/editorial/audit?entity_id=$CREATED_ID"
+
+  EXPRESSION="status == 200 and data.get('data', {}).get('actor', {}).get('role')"
+  req "the session says who is signed in" GET "$PREFIX/auth/me"
+fi
+rm -f "$JAR"
 
 printf '\n%d checks, %d failures\n' "$CHECKS" "$FAILURES"
 test "$FAILURES" -eq 0

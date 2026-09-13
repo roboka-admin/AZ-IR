@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .editorial import EDITABLE_TYPES, PostgisEditorialMixin
 from .repository import NARRATIVE_TYPES, PostgisRepository
 from .schema import METADATA
 from .seeder import SeedReport, seed_database
@@ -36,8 +37,10 @@ def build_engine(db_url: str, settings: Settings | None = None) -> Engine:
 
 
 __all__ = [
+    "EDITABLE_TYPES",
     "METADATA",
     "NARRATIVE_TYPES",
+    "PostgisEditorialMixin",
     "PostgisRepository",
     "SeedReport",
     "build_engine",

@@ -21,13 +21,19 @@ class EntityService:
         self._repo = repository
         self._settings = settings
 
-    def get(self, entity_type: str, id_or_slug: str, locale: str) -> dict[str, Any]:
+    def get(
+        self, entity_type: str, id_or_slug: str, locale: str, *, include_unpublished: bool = False
+    ) -> dict[str, Any]:
         record = self._repo.entity(entity_type, id_or_slug)
         if record is None:
             raise NotFoundError(f"no {entity_type} with id or slug {id_or_slug!r}")
         if record.status.value == "archived":
             # Tombstone: the id stays resolvable, the content is gone (ADR-0008).
             raise GoneError(f"{entity_type} {id_or_slug} has been archived", id=record.id)
+        if not record.is_public and not include_unpublished:
+            # An unpublished record is indistinguishable from a missing one on the public API.
+            # Only the authenticated editorial panel passes include_unpublished=True (ADR-0010).
+            raise NotFoundError(f"no {entity_type} with id or slug {id_or_slug!r}")
         return self.detail(record, locale)
 
     def detail(self, record: EntityRecord, locale: str) -> dict[str, Any]:
@@ -291,7 +297,9 @@ class ArticleService:
             briefs.append(brief)
         return briefs
 
-    def get(self, id_or_slug: str, locale: str) -> dict[str, Any]:
+    def get(
+        self, id_or_slug: str, locale: str, *, include_unpublished: bool = False
+    ) -> dict[str, Any]:
         """Article payload = the shared entity shape plus an ``article`` block with the prose.
 
         Bodies live inside ``article`` so the frontend can tell "entity facts" (which must come
@@ -302,6 +310,8 @@ class ArticleService:
             raise NotFoundError(f"no article with id or slug {id_or_slug!r}")
         if record.status.value == "archived":
             raise GoneError(f"article {id_or_slug} has been archived", id=record.id)
+        if not record.is_public and not include_unpublished:
+            raise NotFoundError(f"no article with id or slug {id_or_slug!r}")
         payload = self._entities.detail(record, locale)
         body = payload.pop("body_md", None)
         article = dict(payload.get("article") or {})

@@ -3,6 +3,8 @@
 #   make install     # python venv + node modules
 #   make check       # lint + types + tests (backend and frontend)
 #   make dev-backend # API on :8000 with the fixtures driver (no database needed)
+#   make dev-users   # the four dev logins on PostgreSQL (fixtures has them built in)
+#   make lint-data   # the data-quality rules over the fixture corpus
 #   make dev-web     # Next.js on :3000
 #   make db-up       # PostGIS in Docker, then `make migrate seed`
 #
@@ -22,7 +24,8 @@ UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help
 .PHONY: help install venv lint typecheck test test-postgis check clean smoke wsl-setup \
-        migrate seed doctor dev-backend dev-web build db-up db-down db-logs
+        migrate seed doctor dev-backend dev-web build db-up db-down db-logs \
+        dev-users users lint-data
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -77,6 +80,19 @@ dev-backend: ## API with reload, fixtures driver (no database required)
 
 dev-web: ## Next.js dev server
 	cd $(FRONTEND) && $(NPM) run dev
+
+dev-users: ## Create the four development logins in PostgreSQL (idempotent)
+	@echo "password comes from $$AZIR_DEV_PASSWORD (default: atlas-dev-password)"
+	cd $(BACKEND) && AZIR_DB_DRIVER=postgis AZIR_DB_URL="$(DB_URL)" AZIR_FIXTURES_DIR="$(FIXTURES)" \
+	  $(PYTHON) -m azir.cli --human-logs user sync-dev
+
+users: ## List editorial accounts (PostgreSQL)
+	cd $(BACKEND) && AZIR_DB_DRIVER=postgis AZIR_DB_URL="$(DB_URL)" \
+	  $(PYTHON) -m azir.cli --human-logs user list
+
+lint-data: ## Data-quality rules over the corpus (docs/07 §3); exit 1 if anything blocks
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" \
+	  $(PYTHON) -m azir.cli --human-logs lint
 
 db-up: ## PostGIS in Docker
 	docker compose up -d db

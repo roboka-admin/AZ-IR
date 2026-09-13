@@ -188,6 +188,8 @@ events:
       - {lang: en, form: "Ottoman–Safavid wars (1514–1555)", kind: preferred}
     summary_fa: "زنجیرهٔ درگیری‌های عثمانی و صفوی که با نبرد چالدران آغاز شد؛ این رویداد یک «جنگ» است و نبردهای آن با part_of به آن متصل‌اند."
     summary_en: "The chain of Ottoman–Safavid hostilities opening with Chaldiran; modelled as a War Event with battles linked through part_of."
+    coverage_note_fa: "رویدادی چندمکانی است: خودِ جنگ هندسهٔ واحدی ندارد و مکان‌هایش در نبردهای جزئی‌تر (مانند چالدران) مدل شده‌اند که با part_of به این رویداد متصل‌اند."
+    coverage_note_en: "A multi-site event: the war itself has no single geometry, and its sites are modelled in the finer-grained battles linked to it through part_of."
     sources: [src_chiran_vol6, src_ei_chaldiran]
 
   - id: evt_battle_chaldiran

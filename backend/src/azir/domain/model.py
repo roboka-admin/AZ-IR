@@ -84,6 +84,12 @@ class Relationship:
     confidence: Confidence = Confidence.MEDIUM
     status: AssertionStatus = AssertionStatus.ACCEPTED
     evidence: tuple[EvidenceRef, ...] = ()
+    #: True when the edge comes from the ``assertion`` table -- a claim somebody made, with a
+    #: status, a reviewer and evidence. False for structural links (place containment, event
+    #: participants, article references), which are part of the record's shape rather than an
+    #: argument about the world. Rule D3 only applies to claims: asking a containment edge for a
+    #: citation would be asking the wrong question, and 183 false positives would hide the real ones.
+    is_claim: bool = False
     note: str | None = None
 
     @property

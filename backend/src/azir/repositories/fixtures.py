@@ -48,6 +48,7 @@ from ..domain.model import (
 )
 from ..domain.semantic_zoom import compute_rank, layer_for, max_zoom_for, min_zoom_for
 from ..domain.temporal import RESEARCH_CEIL, RESEARCH_FLOOR, TemporalInterval, TimeWindow
+from .fixtures_editorial import FixturesEditorialMixin
 from .ports import AtlasQuery, FeaturePage, SearchHit, TimelineBucket
 
 __all__ = ["FixturesRepository", "load_fixtures"]
@@ -251,8 +252,13 @@ def _build_names(spec: Iterable[dict[str, Any]] | None) -> tuple[NameVariant, ..
 # --------------------------------------------------------------------- repository
 
 
-class FixturesRepository:
-    """In-memory implementation of :class:`azir.repositories.ports.AtlasRepository`."""
+class FixturesRepository(FixturesEditorialMixin):
+    """In-memory implementation of both repository ports (read model + editorial write side).
+
+    Writes are process-local by design: this is the development driver (ADR-0014), and production
+    refuses to boot on it. Everything it does, the PostGIS adapter does identically -- the same
+    domain rules, the same audit entries -- which the shared contract suite enforces.
+    """
 
     driver_name = "fixtures"
 
@@ -272,6 +278,7 @@ class FixturesRepository:
         self._article_links: dict[str, list[dict[str, Any]]] = defaultdict(list)
         self._counts: dict[str, EntityCounts] = defaultdict(EntityCounts)
         self._load()
+        self._editorial_init()
 
     # ------------------------------------------------------------------ loading
 
@@ -552,6 +559,7 @@ class FixturesRepository:
                 status=status,
                 evidence=evidence,
                 note=raw.get("note"),
+                is_claim=True,
             )
             if status in (AssertionStatus.ACCEPTED, AssertionStatus.DISPUTED, AssertionStatus.PROPOSED):
                 self._relations[subject_id].append(edge)
@@ -570,6 +578,7 @@ class FixturesRepository:
                             status=status,
                             evidence=evidence,
                             note=raw.get("note"),
+                            is_claim=True,
                         )
                     )
                     assertion_count[object_id] += 1

@@ -47,8 +47,30 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     public_base_url: str = "http://localhost:8000"
 
+    # --- editorial panel (ADR-0010) ----------------------------------------
+    #: None means "auto": the write API is on in development/staging and off in production, so a
+    #: deploy never exposes it by accident. Set AZIR_EDITORIAL_ENABLED=1 to opt in explicitly.
+    editorial_enabled: bool | None = None
+    session_ttl_hours: int = 12
+    session_cookie_name: str = "azir_session"
+    csrf_cookie_name: str = "azir_csrf"
+    csrf_header_name: str = "x-csrf-token"
+    #: None means "auto": Secure cookies in production, plain ones on http://localhost.
+    session_cookie_secure: bool | None = None
+    #: "lax" for a same-site panel; "none" (with secure cookies) when the frontend is on another
+    #: registrable domain than the API.
+    session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    login_max_attempts: int = 5
+    login_window_seconds: int = 300
+
     # --- study area (the atlas viewport default) ---------------------------
     study_area_bbox: tuple[float, float, float, float] = (44.0, 35.5, 49.5, 39.8)
+    #: The wider area the corpus may legitimately reach into: places and events that Iranian
+    #: Azerbaijan cannot be told without (Qazvin, where the Safavid capital moved in 1548; the
+    #: Caucasus; eastern Anatolia). A geometry outside ``study_area_bbox`` is *context* and is
+    #: reported as a warning; a geometry outside this box is a mistake and blocks publication
+    #: (data lint rule D2, docs/07 §3).
+    corpus_bbox: tuple[float, float, float, float] = (42.5, 34.0, 51.0, 41.3)
     study_area_center: tuple[float, float] = (47.0, 38.0)
     study_area_default_zoom: float = 6.4
     study_area_name_fa: str = "آذربایجان ایران"
@@ -82,6 +104,24 @@ class Settings(BaseSettings):
                 return str(candidate)
         return str(path)
 
+    @property
+    def editorial_on(self) -> bool:
+        """Is the write API available at all in this environment?"""
+        if self.editorial_enabled is None:
+            return self.env != "production"
+        return self.editorial_enabled
+
+    @property
+    def session_ttl_seconds(self) -> int:
+        return max(300, int(self.session_ttl_hours) * 3600)
+
+    @property
+    def cookie_secure(self) -> bool:
+        """Secure flag for session cookies: always on in production, off for http://localhost."""
+        if self.session_cookie_secure is None:
+            return self.env == "production"
+        return self.session_cookie_secure
+
     def validate_consistency(self) -> None:
         """Fail fast on unsafe configuration instead of serving wrong data."""
         if self.env == "production" and self.db_driver == "fixtures":
@@ -93,6 +133,27 @@ class Settings(BaseSettings):
             raise RuntimeError("AZIR_DB_DRIVER=postgis requires AZIR_DB_URL")
         if self.default_locale not in self.supported_locales:
             raise RuntimeError("AZIR_DEFAULT_LOCALE must be listed in AZIR_SUPPORTED_LOCALES")
+        if self.editorial_on and self.env == "production" and not self.cookie_secure:
+            raise RuntimeError(
+                "the editorial API in production requires secure session cookies "
+                "(AZIR_SESSION_COOKIE_SECURE=1)"
+            )
+        if not _contains(self.corpus_bbox, self.study_area_bbox):
+            raise RuntimeError("AZIR_CORPUS_BBOX must contain AZIR_STUDY_AREA_BBOX")
+        if self.editorial_on and self.session_ttl_hours > 24 * 30:
+            raise RuntimeError("AZIR_SESSION_TTL_HOURS must be at most 720 (30 days)")
+
+
+def _contains(
+    outer: tuple[float, float, float, float], inner: tuple[float, float, float, float]
+) -> bool:
+    """Does one (min_lon, min_lat, max_lon, max_lat) box contain another?"""
+    return (
+        outer[0] <= inner[0]
+        and outer[1] <= inner[1]
+        and outer[2] >= inner[2]
+        and outer[3] >= inner[3]
+    )
 
 
 @lru_cache(maxsize=1)

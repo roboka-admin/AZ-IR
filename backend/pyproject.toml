@@ -14,6 +14,10 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "shapely>=2.0",
     "pyyaml>=6.0",
+    # Password hashing for the editorial panel (ADR-0017). The one dependency the write layer adds,
+    # and a deliberate one: argon2id is the OWASP-recommended hash and this is its reference
+    # implementation. Rolling our own on hashlib.scrypt would save a wheel and cost an audit.
+    "argon2-cffi>=23.1",
 ]
 
 [project.optional-dependencies]

@@ -31,6 +31,7 @@ from ...domain.model import Disagreement, EntityCounts, EntityRecord, NameVarian
 from ...domain.temporal import TimeWindow
 from ..ports import AtlasQuery, FeaturePage, SearchHit, TimelineBucket
 from . import mappers
+from .editorial import PostgisEditorialMixin
 from .mappers import Row
 
 #: Reference data is addressable through the same read model but never drawn on the map.
@@ -43,8 +44,12 @@ def _pair(
     return list(zip(rows[: len(page_rows)], page_rows, strict=True))
 
 
-class PostgisRepository:
-    """Read-only PostGIS implementation of :class:`AtlasRepository`."""
+class PostgisRepository(PostgisEditorialMixin):
+    """PostGIS implementation of :class:`AtlasRepository` and :class:`EditorialRepository`.
+
+    Reads and writes share one engine and one settings object; the write side lives in
+    ``postgis.editorial`` so this file stays about querying (AGENTS.md rule 4).
+    """
 
     driver_name = "postgis"
 
@@ -865,6 +870,10 @@ WHERE a.status = 'disputed' AND a.subject_id = ANY(:ids::text[])
 ORDER BY a.subject_id, a.topic_fa, a.id
 """
 
+#: Sort key of the assertion branches in ``_RELATIONSHIP_SQL``. Structural links are 0-4; claims
+#: are 5. The outer SELECT turns that into the ``is_claim`` column the mapper reads.
+_CLAIM_SORT_KEY = 5
+
 #: One query for the whole graph around a set of entities. `owner_id` is the entity the edge is
 #: attached to; `direction` says whether it points out of or into that entity. Inverse edges are
 #: produced by the same query, exactly as the fixtures driver produces them at load time.
@@ -931,15 +940,15 @@ WITH edges AS (
     FROM article_entity ae JOIN entity_read_model erm ON erm.id = ae.entity_id
     WHERE ae.article_id = ANY(:ids::text[])
     UNION ALL
-    -- 5: assertions, outgoing
-    SELECT 5, 0, a.subject_id, 'out', a.predicate, a.object_type, a.object_id,
+    -- {_CLAIM_SORT_KEY}: assertions, outgoing
+    SELECT {_CLAIM_SORT_KEY}, 0, a.subject_id, 'out', a.predicate, a.object_type, a.object_id,
            a.value, a.role, NULL::text, NULL::text, a.year_from, a.year_to, a.precision,
            a.confidence, a.calendar, a.temporal_display_fa, a.status, a.topic_fa, a.note_fa,
            {_EVIDENCE_AGG}
     FROM assertion a WHERE a.subject_id = ANY(:ids::text[]) AND a.status <> 'rejected'
     UNION ALL
-    -- 5: assertions, incoming (predicate inverted, exactly as the domain does)
-    SELECT 5, 0, a.object_id, 'in',
+    -- {_CLAIM_SORT_KEY}: assertions, incoming (predicate inverted, exactly as the domain does)
+    SELECT {_CLAIM_SORT_KEY}, 0, a.object_id, 'in',
            coalesce(p.inverse_code, 'is_' || a.predicate || '_of'),
            a.subject_type, a.subject_id,
            a.value, a.role, NULL, NULL, a.year_from, a.year_to, a.precision,
@@ -963,7 +972,10 @@ SELECT e.owner_id AS owner_id, e.sort_key AS sort_key, e.edge_id AS edge_id,
        e.year_from AS year_from, e.year_to AS year_to, e.precision AS precision,
        e.confidence AS confidence, e.calendar AS calendar,
        e.temporal_display_fa AS temporal_display_fa, e.status AS status, e.topic_fa AS topic_fa,
-       e.note_fa AS note_fa, e.evidence AS evidence
+       e.note_fa AS note_fa, e.evidence AS evidence,
+       -- Branch 5 is the assertion table; every other branch is a structural link. The mapper
+       -- turns this into Relationship.is_claim, which is what rule D3 keys on.
+       (e.sort_key = {_CLAIM_SORT_KEY}) AS is_claim
 FROM edges e
 ORDER BY e.owner_id, e.sort_key, e.edge_id, e.object_id
 """

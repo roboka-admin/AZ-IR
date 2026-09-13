@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import sqlalchemy as sa
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
@@ -28,8 +29,9 @@ from . import schema
 TRUNCATE_ORDER = (
     "evidence", "assertion", "article_entity", "event_link", "event_participant", "event_place",
     "place_link", "entity_geometry", "name_variant", "revision_snapshot", "audit_log",
-    "slug_redirect", "article", "political_entity", "event", "person", "place", "source", "period",
-    "period_scheme", "predicate", "entity_kind", "app_user",
+    "slug_redirect", "lint_run", "editorial_state", "app_session", "article", "political_entity",
+    "event", "person", "place", "source", "period", "period_scheme", "predicate", "entity_kind",
+    "app_user",
 )
 
 
@@ -347,6 +349,23 @@ def seed_database(
                 }
             )
         _insert(connection, schema.article, article_rows, counts)
+
+        # -- editorial state ------------------------------------------------
+        # Every editable record gets a workflow row, so the review queue and the audit trail have
+        # somewhere to hang metadata even for corpus that arrived through the seeder (ADR-0010).
+        editable = {"place", "person", "event", "political_entity", "article"}
+        state_rows = [
+            {
+                "entity_type": record.entity_type.value,
+                "entity_id": record.id,
+                "revision": record.revision,
+                "head_id": None,
+                "published_at": sa.func.now() if record.status.value == "published" else None,
+            }
+            for record in records
+            if record.entity_type.value in editable
+        ]
+        _insert(connection, schema.editorial_state, state_rows, counts)
 
         # -- facets --------------------------------------------------------
         name_rows = [row for record in records for row in _name_rows(record)]

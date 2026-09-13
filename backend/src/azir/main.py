@@ -39,13 +39,16 @@ def create_app(settings: Any | None = None) -> FastAPI:
     app.add_middleware(
         RequestContextMiddleware, driver_provider=lambda: get_repository().driver_name
     )
+    # Credentialed on purpose: the editorial panel authenticates with an HttpOnly session cookie
+    # (ADR-0010), which a wildcard origin could never carry. Origins therefore come from settings,
+    # and the write verbs are allowed only for those origins. The public corpus stays open data.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "OPTIONS"],
-        allow_headers=["*"],
-        expose_headers=["X-Request-Id", "X-AZIR-Driver", "ETag"],
+        allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PATCH", "DELETE"],
+        allow_headers=["*", "X-CSRF-Token", "Content-Type"],
+        expose_headers=["X-Request-Id", "X-AZIR-Driver", "ETag", "Retry-After"],
         max_age=600,
     )
     install_error_handlers(app)

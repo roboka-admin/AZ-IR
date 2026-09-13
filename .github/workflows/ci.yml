@@ -77,14 +77,29 @@ jobs:
       - name: Data health
         run: AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs doctor 2>&1 | tee "$CI_LOG_DIR/55-doctor.log"
 
+      # The corpus must pass its own gates: a blocking finding (D2-D5, D11) fails the build, and the
+      # report says which rules were *not* machine-checked, so coverage never looks better than it is.
+      - name: Data lint
+        shell: bash
+        run: |
+          set -o pipefail
+          AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs lint --json \
+            2>&1 | tee "$CI_LOG_DIR/57-lint.log"
+
       # With AZIR_TEST_DB_URL set, the repository contract suite runs against *both* drivers, so a
-      # behavioural difference between fixtures and PostGIS fails the build (ADR-0014).
+      # behavioural difference between fixtures and PostGIS fails the build (ADR-0014). The
+      # editorial write suite is part of that: it creates, submits, publishes and forks records on
+      # the real database, then deletes exactly what its own audit trail says it touched.
       - name: Tests
         run: python -m pytest tests 2>&1 | tee "$CI_LOG_DIR/60-tests.log"
 
       # The same contract, over HTTP, against the real database: shapes, budgets, error format.
       - name: Smoke test on PostGIS
         run: |
+          # Development identities for the editorial half of the smoke test (ADR-0017). The
+          # password comes from AZIR_DEV_PASSWORD and is never stored in the repository.
+          AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs user sync-dev \
+            2>&1 | tee "$CI_LOG_DIR/65-dev-users.log"
           AZIR_DB_DRIVER=postgis nohup python -m uvicorn azir.main:app --app-dir src \
             --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-postgis.log" 2>&1 &
           for _ in $(seq 1 40); do

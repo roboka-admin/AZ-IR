@@ -3,6 +3,7 @@
 #   make install     # python venv + node modules
 #   make check       # lint + types + tests (backend and frontend)
 #   make dev-backend # API on :8000 with the fixtures driver (no database needed)
+#   make tiles       # build the static PMTiles archive the map serves (ADR-0018)
 #   make dev-users   # the four dev logins on PostgreSQL (fixtures has them built in)
 #   make lint-data   # the data-quality rules over the fixture corpus
 #   make dev-web     # Next.js on :3000
@@ -20,12 +21,17 @@ DB_URL      ?= postgresql+psycopg2://azir:azir@localhost:5432/azir
 TEST_DB_URL ?= postgresql+psycopg2://azir:azir@localhost:5432/azir_test
 # Absolute, because several targets cd into $(BACKEND) before using it.
 FIXTURES    ?= $(CURDIR)/$(BACKEND)/seeds/fixtures
+TILES_DIR   ?= $(CURDIR)/$(BACKEND)/tiles
+# z0..z10 is 1010 tiles / ~850 kB per locale for the pilot corpus; raise it as the data grows.
+TILES_MAX_ZOOM ?= 10
+# Labels are baked into tiles, so every locale the atlas ships needs its own archive (ADR-0018).
+TILES_LOCALES ?= fa en
 UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help
 .PHONY: help install venv lint typecheck test test-postgis check clean smoke wsl-setup \
         migrate seed doctor dev-backend dev-web build db-up db-down db-logs \
-        dev-users users lint-data
+        dev-users users lint-data tiles tiles-verify tiles-inspect
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -75,7 +81,7 @@ doctor: ## Configuration + data health report
 	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" $(PYTHON) -m azir.cli --human-logs doctor
 
 dev-backend: ## API with reload, fixtures driver (no database required)
-	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_DEBUG=true \
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_TILES_DIR="$(TILES_DIR)" AZIR_DEBUG=true \
 	  $(UVICORN) azir.main:app --app-dir src --host 0.0.0.0 --port 8000 --reload
 
 dev-web: ## Next.js dev server
@@ -94,6 +100,26 @@ lint-data: ## Data-quality rules over the corpus (docs/07 §3); exit 1 if anythi
 	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" \
 	  $(PYTHON) -m azir.cli --human-logs lint
 
+tiles: ## Build the static tile archives, one per locale (PostgreSQL when configured)
+	@for locale in $(TILES_LOCALES); do \
+	  echo "→ locale $$locale"; \
+	  (cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_TILES_DIR="$(TILES_DIR)" \
+	    $(PYTHON) -m azir.cli --human-logs tiles build --locale $$locale \
+	      --max-zoom $(TILES_MAX_ZOOM)) || exit 1; \
+	done
+	@echo "the API and the map pick them up on the next request; verify with \`make tiles-verify\`"
+
+tiles-verify: ## Re-read every built archive with the reference (browser) PMTiles reader
+	@ARCHIVES=$$(ls -t $(TILES_DIR)/*.pmtiles 2>/dev/null); \
+	if [ -z "$$ARCHIVES" ]; then echo "no archive in $(TILES_DIR) -- run \`make tiles\` first"; exit 1; fi; \
+	node scripts/verify-pmtiles.mjs $$ARCHIVES
+
+tiles-inspect: ## Report the contents of the built archive, per zoom level
+	@ARCHIVE=$$(ls -t $(TILES_DIR)/*.pmtiles 2>/dev/null | head -1); \
+	if [ -z "$$ARCHIVE" ]; then echo "no archive in $(TILES_DIR) -- run \`make tiles\` first"; exit 1; fi; \
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" \
+	  $(PYTHON) -m azir.cli --human-logs tiles inspect "$$ARCHIVE"
+
 db-up: ## PostGIS in Docker
 	docker compose up -d db
 	@echo "waiting for postgres..."; sleep 5; docker compose ps db
@@ -105,6 +131,6 @@ db-logs: ## Tail the API logs
 	docker compose logs -f api
 
 clean: ## Remove build artefacts (never touches data)
-	rm -rf $(FRONTEND)/.next $(FRONTEND)/tsconfig.tsbuildinfo
+	rm -rf $(FRONTEND)/.next $(FRONTEND)/tsconfig.tsbuildinfo $(TILES_DIR)
 	find . -name '__pycache__' -type d -prune -exec rm -rf {} +
 	find . -name '.pytest_cache' -o -name '.mypy_cache' -o -name '.ruff_cache' | xargs rm -rf 2>/dev/null || true

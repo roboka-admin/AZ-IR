@@ -133,6 +133,13 @@ export interface FeatureProperties {
   source_count?: number;
   assertion_count?: number;
   has_disagreements?: boolean;
+  importance?: number;
+  /** Tile-only: which geometry variant this feature is, and the years that variant covers. */
+  g_index?: number;
+  g_from?: number;
+  g_to?: number;
+  g_lod_min_zoom?: number;
+  g_lod_max_zoom?: number;
   summary?: string | null;
   certainty_note?: string | null;
   needs_digitisation?: boolean;
@@ -183,8 +190,82 @@ export interface TimelineBucket {
 
 export interface TimelineResponse {
   data: TimelineBucket[];
-  meta: { bucket: number; from: number; to: number; driver: string };
+  meta: { bucket: number; mode: TemporalMode; driver: string; calendar: CalendarCode };
 }
+
+/* ------------------------------------------------------------------ tiles (ADR-0018) */
+
+/** What the API says about how to fetch tiles. `archive` is null until one has been built. */
+export interface TilesArchivePointer {
+  url: string;
+  filename: string;
+  tileset_version: string;
+  data_revision: string;
+  generated_at: string;
+  bytes: number;
+  tiles: number;
+  min_zoom: number;
+  max_zoom: number;
+  bounds: number[];
+  center: number[];
+  driver: string;
+  locale: string;
+}
+
+export interface TilesIndex {
+  mode: "pmtiles" | "dynamic";
+  dynamic_enabled: boolean;
+  dynamic_template: string | null;
+  archive: TilesArchivePointer | null;
+  /**
+   * Locales that have a built archive. Labels are baked into tiles at build time, so an archive
+   * belongs to one language: this list is why the map may fall back to GeoJSON in *this* language.
+   */
+  archive_locales: string[];
+  tileset_version: string;
+  /** MVT source-layers, in paint order. */
+  layers: string[];
+  /** Tile property names and their TileJSON types: the contract the style is written against. */
+  properties: Record<string, string>;
+  min_zoom: number;
+  max_zoom: number;
+  locale: string;
+  bounds: number[];
+  center: number[];
+}
+
+export type VectorSourceSpec =
+  | { type: "vector"; url: string; minzoom?: number; maxzoom?: number }
+  | { type: "vector"; tiles: string[]; minzoom?: number; maxzoom?: number };
+
+/** The timeline as a filter. `from`/`to` null means "every period". */
+export interface TemporalFilter {
+  from: number | null;
+  to: number | null;
+  mode: TemporalMode;
+}
+
+/** What `/api/v1/atlas/window` answers: the years a calendar selection really means. */
+export interface NormalizedWindow {
+  from: number;
+  to: number;
+  mode: TemporalMode;
+  calendar: CalendarCode;
+  normalized_calendar: CalendarCode;
+}
+
+/**
+ * The reader's choice of delivery.
+ *
+ * `auto` is the default and means "PMTiles if an archive has been built, otherwise GeoJSON": a built
+ * archive is a deliberate operator action, so it changes the default; the on-demand render endpoint
+ * stays an explicit choice because it costs a request per tile.
+ */
+export type TilesPreference = "auto" | "tiles" | "geojson";
+
+/** Which delivery the map ended up using -- shown in the status bar, because it is not cosmetic:
+ *  in tiles mode the timeline filters locally and the coverage panel has no viewport payload. */
+export type TilesDelivery = "pmtiles" | "dynamic" | "geojson";
 
 /* ------------------------------------------------------------------ entities */
 

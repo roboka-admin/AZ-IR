@@ -16,6 +16,7 @@ from ..services.entity import ArticleService, EntityService
 from ..services.lint import DataLinter
 from ..services.registry import get_editorial_repository, get_repository
 from ..services.search import SearchService
+from ..services.tiles import TileService
 
 
 def request_settings(request: Request) -> Settings:
@@ -65,12 +66,20 @@ def get_linter(repo: RepositoryDep, settings: SettingsDep) -> DataLinter:
     return DataLinter(repo, settings)
 
 
+def get_tile_service(
+    atlas: AtlasDep, repo: RepositoryDep, settings: SettingsDep
+) -> TileService:
+    """Tiles reuse the atlas service so that "what is visible at zoom z" has one definition."""
+    return TileService(atlas, repo, settings)
+
+
 AtlasDep = Annotated[AtlasService, Depends(get_atlas_service)]
 EntityDep = Annotated[EntityService, Depends(get_entity_service)]
 ArticleDep = Annotated[ArticleService, Depends(get_article_service)]
 SearchDep = Annotated[SearchService, Depends(get_search_service)]
 EditorialDep = Annotated[EditorialService, Depends(get_editorial_service)]
 LinterDep = Annotated[DataLinter, Depends(get_linter)]
+TilesDep = Annotated[TileService, Depends(get_tile_service)]
 
 
 def get_locale(request: Request, locale: str | None = None) -> str:

@@ -6,7 +6,7 @@
  * historical is stored here -- only view state (AGENTS.md rule 15).
  */
 
-import type { CalendarCode, MetaResponse, TemporalMode } from "./types";
+import type { CalendarCode, MetaResponse, TemporalMode, TilesPreference } from "./types";
 
 export interface AtlasState {
   center: [number, number]; // [lat, lon] -- MapLibre order used by the UI
@@ -19,10 +19,13 @@ export interface AtlasState {
   entity: string | null;
   query: string | null;
   playing: boolean;
+  /** How the map gets its features. View state, not data: it changes nothing about what is true. */
+  source: TilesPreference;
 }
 
 const CALENDARS: CalendarCode[] = ["gregorian_proleptic", "julian", "islamic_lunar", "persian_solar"];
 const MODES: TemporalMode[] = ["at", "during", "overlaps"];
+const SOURCES: TilesPreference[] = ["auto", "tiles", "geojson"];
 
 function pair(raw: string | null): [number, number] | null {
   if (!raw) return null;
@@ -64,6 +67,9 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
     entity: search.get("entity"),
     query: search.get("q"),
     playing: search.get("play") === "1",
+    source: SOURCES.includes(search.get("src") as TilesPreference)
+      ? (search.get("src") as TilesPreference)
+      : "auto",
   };
 }
 
@@ -83,6 +89,7 @@ export function serializeAtlasState(state: AtlasState, meta: MetaResponse | null
   if (state.entity) params.set("entity", state.entity);
   if (state.query) params.set("q", state.query);
   if (state.playing) params.set("play", "1");
+  if (state.source !== "auto") params.set("src", state.source);
   void meta;
   return params.toString();
 }

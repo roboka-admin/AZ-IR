@@ -156,16 +156,50 @@ jobs:
         run: npm run lint 2>&1 | tee "$CI_LOG_DIR/40-lint.log"
         working-directory: frontend
 
+      # The tile archive is written by our own encoder (backend/src/azir/tiles) and read by somebody
+      # else's library, in a browser. Both halves are checked: build it, then let `pmtiles` -- the
+      # JavaScript reader MapLibre uses -- open it from disk *and* over HTTP, where it issues range
+      # requests the way the map does (ADR-0018). A proxy that swallows `Range` fails here.
+      - name: Build the tile archives (one per locale)
+        run: |
+          # Labels are baked into tiles at build time, so every shipped language needs its own
+          # archive; serving the Persian file to an English reader would be a silent lie.
+          for locale in fa en; do
+            echo "--- locale $locale"
+            AZIR_FIXTURES_DIR=seeds/fixtures AZIR_TILES_DIR=/tmp/azir-tiles \
+              python -m azir.cli --human-logs tiles build --locale "$locale" --max-zoom 10 \
+              2>&1 | tee -a "$CI_LOG_DIR/52-tiles-build.log"
+          done
+        working-directory: backend
+
       - name: Start the API on the fixtures driver
         run: |
           cd backend
-          AZIR_FIXTURES_DIR=seeds/fixtures nohup python -m uvicorn azir.main:app \
+          AZIR_FIXTURES_DIR=seeds/fixtures AZIR_TILES_DIR=/tmp/azir-tiles \
+            nohup python -m uvicorn azir.main:app \
             --app-dir src --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-fixtures.log" 2>&1 &
           for _ in $(seq 1 40); do
             curl -sf http://127.0.0.1:8000/healthz > /dev/null && exit 0
             sleep 1
           done
           echo "API did not become healthy:"; cat "$CI_LOG_DIR/api-fixtures.log"; exit 1
+
+      - name: Verify the archive with the reference reader
+        run: |
+          # Both locales from disk, and one of them over HTTP through the running API: that is the
+          # path the browser takes, range requests and all.
+          FIRST=$(ls /tmp/azir-tiles/*.pmtiles | head -1)
+          node "$GITHUB_WORKSPACE/scripts/verify-pmtiles.mjs" --tiles 4 \
+            /tmp/azir-tiles/*.pmtiles \
+            "http://127.0.0.1:8000/api/v1/tiles/archive/$(basename "$FIRST")" \
+            2>&1 | tee "$CI_LOG_DIR/54-tiles-verify.log"
+        working-directory: frontend
+
+      # The same contract the backend job checks against PostGIS, here against the fixtures driver
+      # *with* archives built: it adds the tile checks that need an archive (range requests, the
+      # reference reader over HTTP, and "never hand a locale another locale's archive").
+      - name: Smoke test on the fixtures driver
+        run: bash "$GITHUB_WORKSPACE/scripts/smoke.sh" 2>&1 | tee "$CI_LOG_DIR/56-smoke.log"
 
       - name: Production build
         run: npm run build 2>&1 | tee "$CI_LOG_DIR/50-build.log"

@@ -5,11 +5,13 @@
 #   AZIR_API=https://staging.example scripts/smoke.sh
 #
 # It asserts the *contract*, not the data: shapes, byte budget, problem details, temporal filtering,
-# search in both scripts and the read-only guarantee. Exits non-zero on any failure, so CI and a
-# human get the same answer. Requires curl and python3 only.
+# search in both scripts, the tile delivery path and the read-only guarantee. Exits non-zero on any
+# failure, so CI and a human get the same answer. Requires curl and python3; `node` plus the
+# frontend dependencies add one more check (the reference PMTiles reader over HTTP) and are optional.
 
 set -uo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API="${AZIR_API:-http://127.0.0.1:8000}"
 PREFIX="${AZIR_API_PREFIX:-/api/v1}"
 # The editorial write path signs in with a development identity (ADR-0017). Override both when
@@ -64,6 +66,35 @@ body() {
   STATUS="$(curl -sS -m 30 -D "$head_file" -o "$body_file" -w '%{http_code}' "$API$path" 2>/dev/null)"
   CTYPE="$(awk 'tolower($1)=="content-type:"{print tolower($2)}' "$head_file" | tr -d '\r;' | head -1)"
   RAW="$(cat "$body_file")"
+  rm -f "$head_file" "$body_file"
+}
+
+# binreq <name> <path> <expression> [extra curl args...]
+#   Like `get`, for payloads that are not text: the body lands in a file and the expression sees
+#   `blob` (bytes), `status`, `ctype`, `headers` (lower-cased) and `size`.
+binreq() {
+  local name="$1" path="$2" expression="$3"; shift 3
+  local head_file body_file
+  head_file="$(mktemp)"; body_file="$(mktemp)"
+  STATUS="$(curl -sS -m 30 "$@" -D "$head_file" -o "$body_file" -w '%{http_code}' "$API$path" 2>/dev/null)" || {
+    fail "$name (request to $API$path failed)"; rm -f "$head_file" "$body_file"; return
+  }
+  CTYPE="$(awk 'tolower($1)=="content-type:"{print tolower($2)}' "$head_file" | tr -d '\r;' | head -1)"
+  CHECKS=$((CHECKS + 1))
+  if AZIR_STATUS="$STATUS" AZIR_CTYPE="$CTYPE" AZIR_FILE="$body_file" \
+     AZIR_HEADERS="$(tr 'A-Z' 'a-z' < "$head_file")" python3 -c "
+import gzip, os, sys
+blob = open(os.environ['AZIR_FILE'], 'rb').read()
+status = int(os.environ['AZIR_STATUS'])
+ctype = os.environ['AZIR_CTYPE']
+headers = os.environ['AZIR_HEADERS']
+size = len(blob)
+sys.exit(0 if ($expression) else 1)
+" 2>/dev/null; then
+    pass "$name"
+  else
+    fail "$name  [status=$STATUS ctype=$CTYPE bytes=$(wc -c < "$body_file" | tr -d ' ')]"
+  fi
   rm -f "$head_file" "$body_file"
 }
 
@@ -186,6 +217,87 @@ req() {  # req <name> <method> <path> [json] [--no-csrf]
   rm -f "$head_file" "$body_file"
   assert_py "$name" "$EXPRESSION"
 }
+
+# Tiles: the delivery path a browser actually uses. These are asserted over HTTP because that is
+# where they break -- a missing Content-Encoding, a proxy that swallows Range, or an archive only our
+# own reader can open all pass a unit test and still render a blank map (ADR-0018).
+echo "tiles"
+get "the tile index publishes how to fetch tiles" "$PREFIX/tiles/index.json" "
+status == 200
+and data.get('data', {}).get('mode') in ('pmtiles', 'dynamic')
+and data.get('data', {}).get('layers')
+and data.get('data', {}).get('properties', {}).get('certainty') == 'String'
+and data.get('data', {}).get('tileset_version')
+"
+# Labels are baked into tiles at build time, so an archive belongs to one locale. Handing the
+# Persian file to an English visitor is a silent lie: no error anywhere, just the wrong language.
+for LOC in fa en; do
+  get "the tile index for $LOC never serves another locale's archive" \
+    "$PREFIX/tiles/index.json?locale=$LOC" "
+status == 200
+and (not data['data'].get('archive') or data['data']['archive'].get('locale') == '$LOC')
+and all(loc in ('fa', 'en') for loc in data['data'].get('archive_locales', []))
+"
+done
+TILES_DYNAMIC="$(printf '%s' "$RAW" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["dynamic_enabled"])' 2>/dev/null || echo "")"
+ARCHIVE_URL="$(printf '%s' "$RAW" | python3 -c 'import json,sys; print((json.load(sys.stdin)["data"].get("archive") or {}).get("url",""))' 2>/dev/null || echo "")"
+ARCHIVE_PATH=""
+[[ -n "$ARCHIVE_URL" ]] && ARCHIVE_PATH="$PREFIX/tiles/archive/$(basename "$ARCHIVE_URL")"
+
+if [[ "$TILES_DYNAMIC" == "True" ]]; then
+  # gzip magic, then the first byte of the payload: MVT field 3 (layers), wire type 2 -> 0x1a.
+  binreq "a rendered tile is gzipped MVT" "$PREFIX/tiles/7/81/49.pbf" "
+status == 200
+and ctype.startswith('application/vnd.mapbox-vector-tile')
+and 'content-encoding: gzip' in headers
+and blob[:2] == b'\x1f\x8b' and gzip.decompress(blob)[0] == 0x1a
+and 'x-azir-tile-bytes: 0' not in headers
+"
+  ETAG="$(curl -sS -m 20 -D - -o /dev/null "$API$PREFIX/tiles/7/81/49.pbf" 2>/dev/null \
+    | awk 'tolower($1)=="etag:"{print $2}' | tr -d '\r' | head -1)"
+  if [[ -n "$ETAG" ]]; then
+    binreq "a tile revalidates with its ETag" "$PREFIX/tiles/7/81/49.pbf" "status == 304" \
+      -H "if-none-match: $ETAG"
+  else
+    fail "a rendered tile carries an ETag"; CHECKS=$((CHECKS + 1))
+  fi
+  binreq "an empty tile is a 200 that says so" "$PREFIX/tiles/3/1/1.pbf" "
+status == 200 and size == 0 and 'x-azir-empty: 1' in headers
+"
+fi
+
+get "a tile outside the pyramid is a 404 problem, not a 500" "$PREFIX/tiles/7/999/49.pbf" "
+status == 404 and data.get('type', '').startswith('https://errors.azir.dev/')
+"
+get "a crafted archive filename cannot escape the tiles directory" \
+  "$PREFIX/tiles/archive/..%2F..%2Fpyproject.toml" "status == 404"
+
+if [[ -n "$ARCHIVE_PATH" ]]; then
+  # The PMTiles reader asks for the 127-byte header first: a proxy that ignores Range answers 200
+  # with the whole file, and the reader fails. So the status code is the assertion.
+  binreq "the archive answers a range request with its header" "$ARCHIVE_PATH" "
+status == 206
+and blob[:7] == b'PMTiles' and blob[7] == 3
+and 'content-range: bytes 0-126/' in headers
+and 'accept-ranges: bytes' in headers
+" -r 0-126
+
+  # The strongest check available: the JavaScript library MapLibre uses in the browser reads the
+  # archive over HTTP. Skipped (not failed) when node or the frontend dependencies are absent.
+  if [[ "${AZIR_VERIFY_TILES:-1}" != "0" ]] && command -v node >/dev/null 2>&1 \
+     && node -e "require('node:module').createRequire('$REPO_ROOT/frontend/').resolve('pmtiles')" >/dev/null 2>&1; then
+    CHECKS=$((CHECKS + 1))
+    if node "$REPO_ROOT/scripts/verify-pmtiles.mjs" --tiles 3 "$API$ARCHIVE_PATH" >/dev/null 2>&1; then
+      pass "the reference PMTiles reader can serve the archive over HTTP"
+    else
+      fail "the reference PMTiles reader could not read the archive (run it directly for details)"
+    fi
+  else
+    printf '  \033[33mskip\033[0m the reference reader (needs node + frontend/node_modules)\n'
+  fi
+else
+  printf '  \033[33mskip\033[0m archive checks (no archive built; run `make tiles`)\n'
+fi
 
 echo "editorial write path"
 JAR="$(mktemp)"

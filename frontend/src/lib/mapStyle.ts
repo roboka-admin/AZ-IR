@@ -1,24 +1,29 @@
 /**
  * MapLibre style construction.
  *
- * The basemap is decoration; every historical mark on the map comes from the API. Two rules shape
+ * The basemap is decoration; every historical mark on the map comes from the API. Three rules shape
  * this file:
  *   - the map contains no historical logic (AGENTS.md rule 5): styling keys are `layer`,
  *     `certainty`, `rank` and `geometry_kind`, all of which the API supplies;
  *   - certainty drives the visual language (ADR-0013): a reconstructed extent is dashed and
  *     transparent, a surveyed footprint is solid. The reader must be able to tell them apart
- *     without opening a popup.
+ *     without opening a popup;
+ *   - one styling vocabulary for both deliveries. Whether the features arrive as a GeoJSON viewport
+ *     or as vector tiles, the *same* layer specs draw them, because the tile carries the same
+ *     properties (ADR-0018). The only difference is where the features come from: a single GeoJSON
+ *     source, or one style layer per MVT source-layer.
  */
 
 import type { FeatureCollection as GeoJSONCollection } from "geojson";
 import type { GeoJSONSource, Map as MaplibreMap, StyleSpecification } from "maplibre-gl";
-import type { FeatureCollection } from "./types";
+import type { FeatureCollection, TemporalFilter, VectorSourceSpec } from "./types";
 
 /** Free, keyless basemap; probed at runtime and replaced by `fallbackStyle()` if unreachable. */
 export const BASEMAP_STYLE_URL = "https://tiles.openfreemap.io/styles/liberty";
 
 export const ATLAS_SOURCE = "azir-atlas";
 export const GRATICULE_SOURCE = "azir-graticule";
+/** The paint stack, bottom to top. Ids on the map are these, or `<id>@<source-layer>` for tiles. */
 export const DATA_LAYERS = ["azir-fill", "azir-fill-outline", "azir-line", "azir-point-halo", "azir-point", "azir-label"];
 
 /** Font stacks differ per basemap; both are presentation choices, not data. */
@@ -144,7 +149,7 @@ interface LayerSpec {
   minzoom?: number;
 }
 
-function atlasLayers(font: string[]): LayerSpec[] {
+function atlasLayerSpecs(font: string[]): LayerSpec[] {
   return [
     {
       id: "azir-fill",
@@ -238,31 +243,167 @@ function atlasLayers(font: string[]): LayerSpec[] {
   ];
 }
 
-export function ensureAtlasLayers(map: MaplibreMap, font: string[] = LIBERTY_FONT): void {
+/** What a vector source needs: the MapLibre source spec plus the MVT layers it contains. */
+export interface VectorBinding {
+  spec: VectorSourceSpec;
+  sourceLayers: string[];
+}
+
+interface Registration {
+  /** The id on the map: `azir-fill` for GeoJSON, `azir-fill@places` for a vector source-layer. */
+  id: string;
+  /** The spec id, so callers can find "all the label layers" without parsing strings. */
+  specId: string;
+  base: unknown[];
+  /** null for the GeoJSON source, where every layer shares one source. */
+  sourceLayer: string | null;
+}
+
+/** Everything this module has put on the map, so filters can be recomposed instead of guessed. */
+let registry: Registration[] = [];
+let activeLayers: string[] | null = null;
+let activeWindow: TemporalFilter = { from: null, to: null, mode: "overlaps" };
+let lastFont: string[] = LIBERTY_FONT;
+let lastBinding: VectorBinding | null = null;
+
+/**
+ * Add the atlas source and its layers.
+ *
+ * `binding` decides the delivery: omit it for the GeoJSON viewport (one source, filters by
+ * property), pass it for tiles (one style layer per MVT source-layer, visibility by source-layer).
+ * Calling it again after a basemap swap replays the same choice -- MapLibre drops custom layers
+ * whenever the style is replaced.
+ */
+export function ensureAtlasLayers(
+  map: MaplibreMap,
+  font: string[] = LIBERTY_FONT,
+  binding: VectorBinding | null = null,
+): void {
+  lastFont = font;
+  lastBinding = binding;
   if (!map.getSource(ATLAS_SOURCE)) {
-    map.addSource(ATLAS_SOURCE, {
-      type: "geojson",
-      data: { type: "FeatureCollection", features: [] },
-      // The API already clips and simplifies; a small buffer keeps labels near the edge stable.
-      buffer: 64,
-      maxzoom: 16,
-    } as never);
+    if (binding) {
+      map.addSource(ATLAS_SOURCE, binding.spec as never);
+    } else {
+      map.addSource(ATLAS_SOURCE, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+        // The API already clips and simplifies; a small buffer keeps labels near the edge stable.
+        buffer: 64,
+        maxzoom: 16,
+      } as never);
+    }
   }
-  for (const spec of atlasLayers(font)) {
-    if (map.getLayer(spec.id)) continue;
-    map.addLayer({
-      id: spec.id,
-      type: spec.type,
-      source: ATLAS_SOURCE,
-      filter: spec.filter,
-      layout: spec.layout,
-      paint: spec.paint,
-      minzoom: spec.minzoom,
-    } as never);
+
+  registry = [];
+  const specs = atlasLayerSpecs(font);
+  const sourceLayers = binding ? binding.sourceLayers : [null];
+  for (const spec of specs) {
+    // MapLibre paints in the order layers were added, so the outer loop is the paint stack (areas,
+    // then lines, then points, then labels) and the inner loop is the tile's own layer order, which
+    // the archive was written in: `modern_borders` underneath, `places` and `buildings` above it.
+    for (const sourceLayer of sourceLayers) {
+      const id = sourceLayer ? `${spec.id}@${sourceLayer}` : spec.id;
+      if (!map.getLayer(id)) {
+        map.addLayer({
+          id,
+          type: spec.type,
+          source: ATLAS_SOURCE,
+          ...(sourceLayer ? { "source-layer": sourceLayer } : {}),
+          filter: spec.filter,
+          layout: spec.layout,
+          paint: spec.paint,
+          minzoom: spec.minzoom,
+        } as never);
+      }
+      registry.push({ id, specId: spec.id, base: spec.filter, sourceLayer });
+    }
+  }
+  reapplyFilters(map);
+}
+
+/** Ids of the data layers actually on the map -- what clicks and queries should look at. */
+export function dataLayerIds(map: MaplibreMap | null): string[] {
+  if (!map) return [];
+  return registry
+    .filter((entry) => entry.specId !== "azir-selected" && Boolean(map.getLayer(entry.id)))
+    .map((entry) => entry.id);
+}
+
+/** Which of the atlas layers a rendered feature came from, for the "hide this layer" affordance. */
+export function layerKeyOf(layerId: string): string {
+  const at = layerId.indexOf("@");
+  return at >= 0 ? layerId.slice(at + 1) : "";
+}
+
+export function setLayerVisibility(map: MaplibreMap, visibleLayers: string[]): void {
+  activeLayers = [...new Set(visibleLayers)];
+  reapplyFilters(map);
+}
+
+/**
+ * The timeline, applied as a filter.
+ *
+ * With tiles this *is* the temporal mechanism: the archive holds every period at once and the
+ * client narrows it, which is why scrubbing the timeline costs no request (ADR-0018). With GeoJSON
+ * it is a no-op safety net -- the server has already filtered, and the client predicate is the same
+ * one, so nothing that was legitimately returned can disappear.
+ *
+ * A feature with no years at all is always shown: absence means "we do not know when", not "never"
+ * (AGENTS.md rule 5 -- no fake precision, in either direction).
+ */
+export function setTemporalWindow(map: MaplibreMap | null, window: TemporalFilter): void {
+  activeWindow = window;
+  if (map) reapplyFilters(map);
+}
+
+/**
+ * The temporal predicate: `g_from`/`g_to` (this geometry variant's own years) win over
+ * `t_from`/`t_to` (the entity's), because a boundary can be narrower in time than the thing it
+ * belongs to. `coalesce` handles the absent case, which MVT cannot represent as null.
+ */
+function temporalFilter(window: TemporalFilter): unknown[] | null {
+  if (window.from === null && window.to === null) return null;
+  const from = ["coalesce", ["get", "g_from"], ["get", "t_from"], -ALWAYS];
+  const to = ["coalesce", ["get", "g_to"], ["get", "t_to"], ALWAYS];
+  const low = window.from ?? (window.to as number);
+  const high = window.to ?? (window.from as number);
+  if (window.mode === "during") {
+    // Contained in the window: the reader asked for "only what fits inside these years".
+    return ["all", [">=", from, low], ["<=", to, high]];
+  }
+  return ["all", ["<=", from, high], [">=", to, low]];
+}
+
+/** A year count larger than any date in the corpus, standing in for "unknown" in comparisons. */
+const ALWAYS = 1_000_000;
+
+function reapplyFilters(map: MaplibreMap): void {
+  const temporal = temporalFilter(activeWindow);
+  for (const entry of registry) {
+    if (entry.specId === "azir-selected" || !map.getLayer(entry.id)) continue;
+    if (entry.sourceLayer) {
+      // Vector mode: one style layer per source-layer, so hiding a layer is a layout property.
+      const visible = activeLayers === null || activeLayers.includes(entry.sourceLayer);
+      map.setLayoutProperty(entry.id, "visibility", visible ? "visible" : "none");
+      if (!visible) continue;
+      map.setFilter(entry.id, combine(entry.base, temporal));
+      continue;
+    }
+    const clauses: unknown[] = [entry.base];
+    if (activeLayers && activeLayers.length > 0) {
+      clauses.push(["in", ["get", "layer"], ["literal", activeLayers]]);
+    }
+    if (temporal) clauses.push(temporal);
+    map.setFilter(entry.id, ["all", ...clauses] as never);
   }
 }
 
-/** Last payload, so a basemap swap can replay it without another round-trip. */
+function combine(base: unknown[], temporal: unknown[] | null): never {
+  return (temporal ? ["all", base, temporal] : ["all", base]) as never;
+}
+
+/** Last payload, so a basemap swap can replay it without another round-trip (GeoJSON mode only). */
 let lastCollection: FeatureCollection | null = null;
 
 export function updateAtlasData(map: MaplibreMap, collection: FeatureCollection): void {
@@ -272,22 +413,58 @@ export function updateAtlasData(map: MaplibreMap, collection: FeatureCollection)
 }
 
 export function replayAtlasData(map: MaplibreMap): void {
-  if (lastCollection) updateAtlasData(map, lastCollection);
+  if (lastCollection && !lastBinding) updateAtlasData(map, lastCollection);
+}
+
+/** Re-add everything after a style swap, in the delivery mode that was chosen. */
+export function restoreAtlasLayers(map: MaplibreMap, font: string[] = lastFont): void {
+  ensureAtlasLayers(map, font, lastBinding);
+  replayAtlasData(map);
+}
+
+/**
+ * Change the delivery between GeoJSON and tiles on a live map.
+ *
+ * MapLibre will not let a source change type, so the switch is: take the layers off, take the source
+ * off, put them back the other way. It costs one re-render, not a new map -- which is what makes the
+ * reader-facing "data source" switch cheap enough to offer at all.
+ */
+export function setDelivery(
+  map: MaplibreMap,
+  binding: VectorBinding | null,
+  font: string[] = lastFont,
+): void {
+  if (sameDelivery(binding, lastBinding)) {
+    ensureAtlasLayers(map, font, binding);
+    return;
+  }
+  for (const entry of [...registry].reverse()) {
+    if (map.getLayer(entry.id)) map.removeLayer(entry.id);
+  }
+  if (map.getSource(ATLAS_SOURCE)) map.removeSource(ATLAS_SOURCE);
+  registry = [];
+  ensureAtlasLayers(map, font, binding);
+  replayAtlasData(map); // a no-op in tiles mode, and the reason switching back is instant
+}
+
+function sameDelivery(a: VectorBinding | null, b: VectorBinding | null): boolean {
+  if (a === null || b === null) return a === b;
+  return JSON.stringify(a.spec) === JSON.stringify(b.spec);
 }
 
 export function setSelectedFeature(map: MaplibreMap | null, id: string | null): void {
-  if (!map || !map.getLayer("azir-selected")) return;
-  map.setFilter("azir-selected", [
+  if (!map) return;
+  const filter = [
     "all",
     ["==", ["geometry-type"], "Point"],
     ["==", ["get", "id"], id ?? "__none__"],
-  ] as never);
-}
-
-export function setLayerVisibility(map: MaplibreMap, visibleLayers: string[]): void {
-  const allowed = [...new Set(visibleLayers)];
-  for (const spec of atlasLayers(LIBERTY_FONT)) {
-    if (spec.id === "azir-selected" || !map.getLayer(spec.id)) continue;
-    map.setFilter(spec.id, ["all", spec.filter, ["in", ["get", "layer"], ["literal", allowed]]] as never);
+  ] as never;
+  for (const entry of registry) {
+    if (entry.specId !== "azir-selected" || !map.getLayer(entry.id)) continue;
+    map.setFilter(entry.id, filter);
+  }
+  // A map whose layers were added before this module tracked them (older code paths, tests).
+  if (registry.length === 0 && map.getLayer("azir-selected")) {
+    map.setFilter("azir-selected", filter);
   }
 }

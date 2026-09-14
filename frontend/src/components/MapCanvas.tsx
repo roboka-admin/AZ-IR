@@ -14,19 +14,23 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
   BASEMAP_STYLE_URL,
-  DATA_LAYERS,
   FALLBACK_FONT,
   LIBERTY_FONT,
+  dataLayerIds,
   ensureAtlasLayers,
   ensureFallbackLayers,
   fallbackStyle,
-  replayAtlasData,
+  restoreAtlasLayers,
+  setDelivery,
+  type VectorBinding,
 } from "@/lib/mapStyle";
 import type { FeatureProperties } from "@/lib/types";
 
 export interface MapCanvasProps {
   center: [number, number]; // [lat, lon]
   zoom: number;
+  /** Tiles, when the API offers them. `null` keeps the GeoJSON viewport delivery. */
+  tiles?: VectorBinding | null;
   maxBounds?: [number, number, number, number]; // [w, s, e, n]
   onReady: (map: maplibregl.Map) => void;
   onViewChange: (view: { center: [number, number]; zoom: number; bbox: [number, number, number, number] }) => void;
@@ -60,6 +64,7 @@ async function resolveBasemap(): Promise<{ style: string | object; font: string[
 export default function MapCanvas({
   center,
   zoom,
+  tiles = null,
   maxBounds,
   onReady,
   onViewChange,
@@ -70,6 +75,8 @@ export default function MapCanvas({
   const container = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const fontRef = useRef<string[]>(LIBERTY_FONT);
+  const tilesRef = useRef<VectorBinding | null>(tiles);
+  tilesRef.current = tiles;
   const handlers = useRef({ onViewChange, onFeatureClick, onBackgroundClick, onFeatureHover });
   handlers.current = { onViewChange, onFeatureClick, onBackgroundClick, onFeatureHover };
 
@@ -106,19 +113,21 @@ export default function MapCanvas({
 
       const restore = () => {
         if (!map) return;
-        // A style swap drops every custom source/layer: put them back and replay the last data.
-        ensureAtlasLayers(map, fontRef.current);
-        replayAtlasData(map);
+        // A style swap drops every custom source and layer: put them back, in the delivery mode
+        // that was chosen, and replay the last GeoJSON payload if there was one.
+        restoreAtlasLayers(map, fontRef.current);
       };
 
       map.on("load", () => {
-        if (map && resolved.offline && maxBounds) ensureFallbackLayers(map, maxBounds);
-        restore();
-        map?.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
-        map?.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
-        for (const layer of DATA_LAYERS) {
-          if (!map?.getLayer(layer)) continue;
-          map.on("click", layer, ((event: maplibregl.MapLayerMouseEvent) => {
+        const ready = map;
+        if (!ready) return;
+        if (resolved.offline && maxBounds) ensureFallbackLayers(ready, maxBounds);
+        // The first add decides the delivery; later swaps go through setDelivery below.
+        ensureAtlasLayers(ready, fontRef.current, tilesRef.current);
+        ready.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+        ready.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
+        for (const layer of dataLayerIds(ready)) {
+          ready.on("click", layer, ((event: maplibregl.MapLayerMouseEvent) => {
             const feature = event.features?.[0];
             if (!feature) return;
             handlers.current.onFeatureClick(feature.properties as unknown as FeatureProperties, {
@@ -126,25 +135,23 @@ export default function MapCanvas({
               lng: event.lngLat.lng,
             });
           }) as never);
-          map.on("mousemove", layer, ((event: maplibregl.MapLayerMouseEvent) => {
+          ready.on("mousemove", layer, ((event: maplibregl.MapLayerMouseEvent) => {
             const feature = event.features?.[0];
             handlers.current.onFeatureHover(feature ? (feature.properties as unknown as FeatureProperties) : null);
           }) as never);
-          map.on("mouseenter", layer, () => {
-            map?.getCanvas().style.setProperty("cursor", "pointer");
+          ready.on("mouseenter", layer, () => {
+            ready.getCanvas().style.setProperty("cursor", "pointer");
           });
-          map.on("mouseleave", layer, () => {
-            map?.getCanvas().style.setProperty("cursor", "");
+          ready.on("mouseleave", layer, () => {
+            ready.getCanvas().style.setProperty("cursor", "");
             handlers.current.onFeatureHover(null);
           });
         }
-        map?.on("click", (event) => {
-          const hits = map?.queryRenderedFeatures(event.point, {
-            layers: DATA_LAYERS.filter((layer) => Boolean(map?.getLayer(layer))),
-          });
-          if (!hits || hits.length === 0) handlers.current.onBackgroundClick();
+        ready.on("click", (event) => {
+          const hits = ready.queryRenderedFeatures(event.point, { layers: dataLayerIds(ready) });
+          if (hits.length === 0) handlers.current.onBackgroundClick();
         });
-        if (map) onReady(map);
+        onReady(ready);
         emitView();
       });
 
@@ -169,6 +176,16 @@ export default function MapCanvas({
     // The map is created once; later view changes are driven imperatively by the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Switching between tiles and GeoJSON is a live operation: no remount, no lost viewport.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) {
+      if (map) setDelivery(map, tiles);
+      return;
+    }
+    setDelivery(map, tiles, fontRef.current);
+  }, [tiles]);
 
   return <div ref={container} className="map-wrap" aria-label="atlas map" />;
 }

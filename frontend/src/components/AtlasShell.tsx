@@ -17,9 +17,16 @@ import EntityDrawer from "./EntityDrawer";
 import MapCanvas from "./MapCanvas";
 import { CoveragePanel, LayersPanel, LegendPanel, LocaleSwitcher, NavLinks, SearchPanel, StatusBar } from "./Panels";
 import TimelinePanel from "./TimelinePanel";
-import { ApiError, getEntity, getFeatures, getMeta, getTimeline, roundZoom } from "@/lib/api";
+import { ApiError, getEntity, getFeatures, getMeta, getTilesIndex, getTimeline, getWindow, roundZoom } from "@/lib/api";
 import { t } from "@/lib/i18n";
-import { setSelectedFeature, setLayerVisibility, updateAtlasData } from "@/lib/mapStyle";
+import {
+  setSelectedFeature,
+  setLayerVisibility,
+  setTemporalWindow,
+  updateAtlasData,
+  type VectorBinding,
+} from "@/lib/mapStyle";
+import { resolveTiles, type ResolvedTiles } from "@/lib/tiles";
 import { parseAtlasState, serializeAtlasState, type AtlasState } from "@/lib/atlasState";
 import type {
   CalendarCode,
@@ -31,6 +38,7 @@ import type {
   SearchHit,
   TemporalMode,
   TimelineBucket,
+  TilesIndex,
   ZoomLevelInfo,
 } from "@/lib/types";
 
@@ -52,6 +60,8 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
   const [hovered, setHovered] = useState<FeatureProperties | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [tilesIndex, setTilesIndex] = useState<TilesIndex | null>(null);
+  const [tiles, setTiles] = useState<ResolvedTiles | null>(null);
 
   const mapRef = useRef<maplibregl.Map | null>(null);
   const stateRef = useRef<AtlasState | null>(null);
@@ -93,6 +103,36 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
     return () => clearTimeout(timer);
   }, [state, meta, pathname, router, searchParams]);
 
+  /* ---------------------------------------------------------- tile delivery */
+
+  // What the API offers. A missing or disabled tile endpoint is not an error: the map then simply
+  // keeps using the GeoJSON viewport, which always works.
+  useEffect(() => {
+    const controller = new AbortController();
+    getTilesIndex(locale, controller.signal)
+      .then((payload) => setTilesIndex(payload.data))
+      .catch((cause: unknown) => {
+        if ((cause as Error).name !== "AbortError") setTilesIndex(null);
+      });
+    return () => controller.abort();
+  }, [locale]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void resolveTiles(tilesIndex, state?.source ?? "auto").then((resolved) => {
+      if (!cancelled) setTiles(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tilesIndex, state?.source]);
+
+  const tilesBinding = useMemo<VectorBinding | null>(
+    () => (tiles?.spec ? { spec: tiles.spec, sourceLayers: tiles.sourceLayers } : null),
+    [tiles],
+  );
+  const delivery = tilesBinding ? (tiles?.mode ?? "dynamic") : "geojson";
+
   /* ---------------------------------------------------------- features */
 
   const activeLayers = useMemo<string[]>(() => {
@@ -103,6 +143,9 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     if (!meta || !state || !view || !mapReady) return;
+    // In tile mode the map already has everything: the archive holds the whole region, and the
+    // timeline narrows it locally. Fetching a viewport on top of that would pay twice for one map.
+    if (tilesBinding) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       const params = {
@@ -122,11 +165,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         .then((payload) => {
           setCollection(payload);
           const map = mapRef.current;
-          if (map) {
-            updateAtlasData(map, payload);
-            setLayerVisibility(map, activeLayers);
-            setSelectedFeature(map, state.entity);
-          }
+          if (map) updateAtlasData(map, payload);
         })
         .catch((cause: unknown) => {
           if ((cause as Error).name !== "AbortError") console.error("features failed", cause);
@@ -136,7 +175,67 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [meta, state, view, activeLayers, locale, mapReady]);
+  }, [meta, state, view, activeLayers, locale, mapReady, tilesBinding]);
+
+  /* ---------------------------------------------------------- presentation filters */
+
+  // Layer visibility and selection now live in their own effects: they apply to both deliveries,
+  // whereas the payload above only exists in GeoJSON mode.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && mapReady) setLayerVisibility(map, activeLayers);
+  }, [activeLayers, mapReady, tilesBinding]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    setSelectedFeature(mapRef.current, state?.entity ?? null);
+  }, [state?.entity, mapReady, tilesBinding]);
+
+  /**
+   * The timeline, as a filter on the map.
+   *
+   * With tiles this *is* the temporal mechanism (ADR-0018): one archive holds every period and the
+   * browser narrows it, so scrubbing costs no request at all. With GeoJSON it is a safety net over
+   * what the server already filtered -- the same predicate, so nothing legitimate can disappear.
+   *
+   * A non-Gregorian calendar is normalized by the server first. Calendar conversion is historical
+   * logic, and historical logic does not live in the browser (AGENTS.md rule 5).
+   */
+  useEffect(() => {
+    if (!state || !mapReady) return;
+    const window = state.span
+      ? { from: state.span[0], to: state.span[1], mode: state.mode }
+      : { from: state.year, to: state.year, mode: state.mode };
+    if (state.calendar === "gregorian_proleptic") {
+      if (mapRef.current) setTemporalWindow(mapRef.current, window);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    getWindow(
+      state.span
+        ? { ...window, cal: state.calendar }
+        : { t: state.year, mode: state.mode, cal: state.calendar },
+      controller.signal,
+    )
+      .then((payload) => {
+        if (cancelled || !mapRef.current) return;
+        setTemporalWindow(mapRef.current, {
+          from: payload.data.from,
+          to: payload.data.to,
+          mode: payload.data.mode,
+        });
+      })
+      .catch((cause: unknown) => {
+        if ((cause as Error).name !== "AbortError") console.error("calendar normalization failed", cause);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+    // Deliberately narrow: a pan or a zoom must not re-normalize the calendar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.year, state?.span, state?.mode, state?.calendar, mapReady, tilesBinding]);
 
   /* ---------------------------------------------------------- timeline */
 
@@ -308,6 +407,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
       <MapCanvas
         center={state.center}
         zoom={state.zoom}
+        tiles={tilesBinding}
         maxBounds={meta.study_area.bbox}
         onReady={(map) => {
           mapRef.current = map;
@@ -345,6 +445,10 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
             patch({ layers: [...next] });
           }}
           onOnly={(id) => patch({ layers: [id] })}
+          source={state.source}
+          delivery={delivery}
+          archiveLocales={tilesIndex?.archive_locales ?? []}
+          onSourceChange={(source) => patch({ source })}
         />
         <LegendPanel locale={locale} />
         <CoveragePanel
@@ -372,8 +476,10 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         featureCount={collection?.meta.returned ?? 0}
         payloadBytes={collection?.meta.payload_bytes ?? 0}
         truncated={collection?.meta.truncated ?? false}
-        driver={collection?.meta.driver ?? meta.driver ?? "—"}
+        driver={collection?.meta.driver ?? tilesIndex?.archive?.driver ?? meta.driver ?? "—"}
         hovered={hovered}
+        delivery={delivery}
+        dataRevision={tiles?.archive?.data_revision ?? null}
       />
 
       <TimelinePanel

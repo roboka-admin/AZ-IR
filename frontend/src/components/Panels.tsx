@@ -17,6 +17,8 @@ import type {
   FeatureProperties,
   LayerInfo,
   Locale,
+  TilesDelivery,
+  TilesPreference,
   MetaResponse,
   SearchHit,
   ZoomLevelInfo,
@@ -30,14 +32,72 @@ export interface LayersPanelProps {
   selected: Set<string>;
   onToggle: (id: string) => void;
   onOnly: (id: string) => void;
+  /** Tile delivery is a reader-facing choice, so it lives with the other map controls. */
+  source: TilesPreference;
+  delivery: TilesDelivery;
+  /** Which locales have a built archive — the reason a fallback happened, when one did. */
+  archiveLocales: string[];
+  onSourceChange: (source: TilesPreference) => void;
 }
 
-export function LayersPanel({ locale, layers, selected, onToggle, onOnly }: LayersPanelProps) {
+/**
+ * Explain a fallback instead of leaving the switcher to look broken.
+ *
+ * Asking for tiles and silently getting GeoJSON is the kind of failure nobody reports: the map still
+ * works, it is just slower. So the hint names the cause — nothing built, built for another language,
+ * or the render endpoint switched off on the server.
+ */
+function sourceHint(
+  locale: Locale,
+  source: TilesPreference,
+  delivery: TilesDelivery,
+  archiveLocales: string[],
+): string {
+  if (source === "geojson" || delivery !== "geojson") return t(locale, "ui.source.hint");
+  if (source === "tiles") return t(locale, "ui.source.dynamic_off");
+  return archiveLocales.length > 0
+    ? t(locale, "ui.source.unavailable_locale", { locales: archiveLocales.join(" / ") })
+    : t(locale, "ui.source.unavailable");
+}
+
+const SOURCE_CHOICES: TilesPreference[] = ["auto", "tiles", "geojson"];
+
+export function LayersPanel({
+  locale,
+  layers,
+  selected,
+  onToggle,
+  onOnly,
+  source,
+  delivery,
+  archiveLocales,
+  onSourceChange,
+}: LayersPanelProps) {
   return (
     <section className="panel">
       <header className="panel-title">
         <span>{t(locale, "ui.layers.title")}</span>
       </header>
+      <div className="layer-row" style={{ gap: 6, padding: "2px 0 8px" }}>
+        <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{t(locale, "ui.source.title")}</span>
+        <div style={{ display: "flex", gap: 4, marginInlineStart: "auto" }}>
+          {SOURCE_CHOICES.map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              className="btn btn-compact"
+              aria-pressed={source === choice}
+              onClick={() => onSourceChange(choice)}
+              title={t(locale, `ui.source.${choice}` as never)}
+            >
+              {t(locale, `ui.source.${choice}` as never)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="legend" style={{ paddingTop: 0 }}>
+        {sourceHint(locale, source, delivery, archiveLocales)}
+      </div>
       <div style={{ padding: "4px 0 6px" }}>
         {layers.map((layer) => (
           <label className="layer-row" key={layer.id}>
@@ -246,6 +306,8 @@ export function StatusBar({
   truncated,
   driver,
   hovered,
+  delivery,
+  dataRevision,
 }: {
   locale: Locale;
   zoomLevel: ZoomLevelInfo | null;
@@ -254,6 +316,8 @@ export function StatusBar({
   truncated: boolean;
   driver: string;
   hovered: FeatureProperties | null;
+  delivery: TilesDelivery;
+  dataRevision: string | null;
 }) {
   return (
     <div className="statusbar">
@@ -263,11 +327,30 @@ export function StatusBar({
           {zoomLevel.description ? ` — ${zoomLevel.description}` : ""}
         </span>
       ) : null}
-      <span className="status-pill">
-        <strong>{formatNumber(featureCount, locale)}</strong> {locale === "fa" ? "عارضه" : "features"}
-      </span>
-      <span className="status-pill">{t(locale, "ui.features.payload", { kb: (payloadBytes / 1024).toFixed(0) })}</span>
-      {truncated ? <span className="status-pill warn">{t(locale, "ui.features.truncated")}</span> : null}
+      {delivery === "geojson" ? (
+        <>
+          <span className="status-pill">
+            <strong>{formatNumber(featureCount, locale)}</strong> {locale === "fa" ? "عارضه" : "features"}
+          </span>
+          <span className="status-pill">
+            {t(locale, "ui.features.payload", { kb: (payloadBytes / 1024).toFixed(0) })}
+          </span>
+          {truncated ? <span className="status-pill warn">{t(locale, "ui.features.truncated")}</span> : null}
+        </>
+      ) : (
+        <>
+          {/* Tiles are counted by the archive, not by the viewport: saying "0 features" here would
+              be a lie about what is on screen. */}
+          <span className="status-pill">
+            <strong>{t(locale, delivery === "pmtiles" ? "ui.source.pmtiles" : "ui.source.dynamic")}</strong>
+          </span>
+          {dataRevision ? (
+            <span className="status-pill" style={{ fontFamily: "var(--font-mono)" }}>
+              {t(locale, "ui.status.revision")} {dataRevision.slice(0, 8)}
+            </span>
+          ) : null}
+        </>
+      )}
       {hovered ? (
         <span className="status-pill">
           <strong>{hovered.label}</strong>

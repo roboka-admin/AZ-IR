@@ -59,6 +59,20 @@ const MESSAGES = {
     "ui.features.truncated": "پاسخ به‌سبب سقف حجم کوتاه شد؛ برای دیدن همه، بزرگ‌نمایی کنید یا لایه‌ها را محدودتر کنید.",
     "ui.features.payload": "{kb} کیلوبایت",
 
+    "ui.source.title": "منبع دادهٔ نقشه",
+    "ui.source.auto": "خودکار",
+    "ui.source.tiles": "کاشی برداری",
+    "ui.source.geojson": "GeoJSON زنده",
+    "ui.source.pmtiles": "آرشیو PMTiles",
+    "ui.source.dynamic": "کاشی زنده",
+    "ui.source.hint": "در حالت کاشی، حرکت روی زمان بدون درخواست شبکه فیلتر می‌شود؛ کل منطقه یک آرشیو است.",
+    "ui.source.unavailable": "آرشیوی ساخته نشده است. برای فعال‌سازی، `make tiles` را اجرا کنید.",
+    "ui.source.unavailable_locale":
+      "آرشیو tile فقط برای {locales} ساخته شده است؛ نام‌ها در زمان ساخت در tile پخته می‌شوند. برای این زبان: `azir tiles build --locale …`.",
+    "ui.source.dynamic_off":
+      "رندر پویای tile روی سرور خاموش است (AZIR_TILES_DYNAMIC_ENABLED=false). یا آرشیو بسازید یا این کلید را روشن کنید.",
+    "ui.status.revision": "نسخهٔ داده",
+
     "ui.entity.summary": "خلاصه",
     "ui.entity.relationships": "روابط",
     "ui.entity.disagreements": "اختلاف نظر پژوهشی",
@@ -151,6 +165,20 @@ const MESSAGES = {
     "ui.features.truncated":
       "The response was trimmed to stay inside the payload budget; zoom in or narrow the layers to see more.",
     "ui.features.payload": "{kb} KB",
+
+    "ui.source.title": "Map data source",
+    "ui.source.auto": "Auto",
+    "ui.source.tiles": "Vector tiles",
+    "ui.source.geojson": "Live GeoJSON",
+    "ui.source.pmtiles": "PMTiles archive",
+    "ui.source.dynamic": "Live tiles",
+    "ui.source.hint": "In tile mode the timeline filters locally: the whole region is one archive.",
+    "ui.source.unavailable": "No archive has been built yet. Run `make tiles` to enable it.",
+    "ui.source.unavailable_locale":
+      "Tiles are built for {locales} only — labels are baked in at build time. For this language: `azir tiles build --locale …`.",
+    "ui.source.dynamic_off":
+      "Dynamic tile rendering is switched off on the server (AZIR_TILES_DYNAMIC_ENABLED=false). Build an archive, or turn it on.",
+    "ui.status.revision": "data revision",
 
     "ui.entity.summary": "Summary",
     "ui.entity.relationships": "Relationships",

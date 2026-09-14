@@ -1,10 +1,13 @@
-"""Operational CLI: ``python -m azir.cli {seed,doctor,serve,migrate,user,lint}``.
+"""Operational CLI: ``python -m azir.cli {seed,doctor,serve,migrate,user,lint,tiles}``.
 
 Deliberately dependency-free (argparse only, AGENTS.md rule 14). Every command is safe to run in
-CI: nothing writes unless ``seed``/``user`` is asked to, and ``doctor``/``lint`` never mutate data.
+CI: nothing writes unless ``seed``/``user``/``tiles build`` is asked to, and ``doctor``/``lint``
+never mutate data.
 
 ``user`` and ``lint`` exist because the alternative is worse: an account created by hand-written SQL
 is an account with no audit row, and a lint rule nobody can run on demand is a rule nobody believes.
+``tiles`` exists because a tile archive is a build artefact: it has to be reproducible from the
+database by a command, not by a notebook somebody ran once (ADR-0018).
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ from typing import Any
 
 from .core.config import Settings, get_settings
 from .core.logging import configure_logging
+from .tiles.pmtiles import find_tile
 
 logger = logging.getLogger("azir.cli")
 
@@ -371,6 +375,115 @@ def _type_from_id(entity_id: str) -> str:
 # ------------------------------------------------------------------ parser
 
 
+def command_tiles_build(args: argparse.Namespace, settings: Settings) -> int:
+    """Render the published corpus into one PMTiles archive (ADR-0011, ADR-0018)."""
+    from .services.atlas import AtlasService
+    from .services.registry import get_repository
+    from .services.tiles import TileService
+
+    repository = get_repository()
+    tiles = TileService(AtlasService(repository, settings), repository, settings)
+    report = tiles.build_archive(
+        args.out,
+        min_zoom=args.min_zoom,
+        max_zoom=args.max_zoom,
+        # Unset means "whatever the deployment's default locale is", not a second hard-coded "fa".
+        locale=args.locale or settings.default_locale,
+        write_pointer=not args.no_pointer,
+    )
+    if args.json:
+        print(json.dumps(report.as_dict(), ensure_ascii=False, indent=2))
+        return 0
+    archive = report.archive
+    print(f"archive  {archive.path}")
+    print(f"size     {archive.bytes:,} bytes  ({archive.contents} blobs, {archive.entries} entries)")
+    print(
+        f"tiles    {archive.tiles} at z{archive.min_zoom}..z{archive.max_zoom}"
+        f"  (largest {archive.largest_tile_bytes:,} bytes)"
+    )
+    print(f"features {report.features} rendered in {report.seconds:.1f}s from {report.driver}")
+    print(f"revision {report.tileset_version} / data {report.data_revision}")
+    print(f"serve    {report.pointer.get('url', '-')}")
+    if report.degraded_tiles:
+        print(
+            f"WARNING  {report.degraded_tiles} tile(s) hit the {settings.tiles_feature_limit}-feature "
+            "limit and were degraded by rank",
+            file=sys.stderr,
+        )
+    return 0
+
+
+def command_tiles_inspect(args: argparse.Namespace, settings: Settings) -> int:
+    """Print what is inside an archive, or render one tile live without building anything."""
+    from .services.atlas import AtlasService
+    from .services.registry import get_repository
+    from .services.tiles import TileService
+    from .tiles.mvt import decode_tile
+    from .tiles.pmtiles import read_header, read_metadata
+
+    if args.z is None or args.x is None or args.y is None:
+        if args.file is None:
+            print("give a .pmtiles file, or --z/--x/--y to render a tile", file=sys.stderr)
+            return 2
+        with Path(args.file).open("rb") as handle:
+            header = read_header(handle.read(127))
+            payload: dict[str, Any] = {
+                "file": args.file,
+                "header": {
+                    "spec_version": 3,
+                    "tiles": header.addressed_tiles,
+                    "entries": header.tile_entries,
+                    "contents": header.tile_contents,
+                    "clustered": bool(header.clustered),
+                    "tile_compression": header.tile_compression,
+                    "internal_compression": header.internal_compression,
+                    "tile_type": header.tile_type,
+                    "zoom": [header.min_zoom, header.max_zoom],
+                    "bounds": list(header.bounds),
+                    "center": [*header.center, header.center_zoom],
+                    "root_dir_bytes": header.root_dir_length,
+                    "leaf_dir_bytes": header.leaf_dirs_length,
+                },
+                "metadata": read_metadata(handle, header),
+            }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.file is not None:
+        with Path(args.file).open("rb") as handle:
+            header = read_header(handle.read(127))
+            raw = find_tile(handle, header, args.z, args.x, args.y)
+        if raw is None:
+            print(f"tile {args.z}/{args.x}/{args.y} is not in the archive", file=sys.stderr)
+            return 1
+        source = args.file
+    else:
+        repository = get_repository()
+        tiles = TileService(AtlasService(repository, settings), repository, settings)
+        raw = tiles.tile(args.z, args.x, args.y, locale=args.locale or settings.default_locale)
+        source = f"rendered live ({repository.driver_name})"
+
+    layers = decode_tile(raw)
+    summary = {
+        "source": source,
+        "tile": [args.z, args.x, args.y],
+        "bytes": len(raw),
+        "layers": [
+            {
+                "name": layer["name"],
+                "version": layer["version"],
+                "extent": layer["extent"],
+                "features": len(layer["features"]),
+                "keys": layer["keys"],
+                "sample": layer["features"][: args.sample],
+            }
+            for layer in layers
+        ],
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="azir", description="AZ-IR historical atlas operations")
     parser.add_argument("--log-level", default="INFO")
@@ -424,6 +537,39 @@ def build_parser() -> argparse.ArgumentParser:
     lint.add_argument("--json", action="store_true", help="the full report instead of a summary")
     lint.add_argument("--record", action="store_true", help="persist the run (lint_run table)")
     lint.set_defaults(func=command_lint)
+
+    tiles = sub.add_parser("tiles", help="build and inspect the vector tile archive")
+    tiles_sub = tiles.add_subparsers(dest="tiles_command", required=True)
+    build = tiles_sub.add_parser("build", help="render the pyramid into one .pmtiles file")
+    build.add_argument(
+        "--out", default=None, help="directory or .pmtiles path (default: AZIR_TILES_DIR)"
+    )
+    build.add_argument("--min-zoom", type=int, default=None)
+    build.add_argument(
+        "--max-zoom", type=int, default=None, help="default: AZIR_TILES_MAX_ZOOM"
+    )
+    build.add_argument(
+        "--locale",
+        default=None,
+        choices=["fa", "en"],
+        # Labels are baked into tiles, so every locale needs its own archive.
+        help="default: AZIR_DEFAULT_LOCALE; build once per supported locale",
+    )
+    build.add_argument("--no-pointer", action="store_true", help="do not write latest.json")
+    build.add_argument("--json", action="store_true", help="the full build report as JSON")
+    build.set_defaults(func=command_tiles_build)
+    inspect = tiles_sub.add_parser(
+        "inspect", help="print an archive's header and metadata, or one tile's contents"
+    )
+    inspect.add_argument(
+        "file", nargs="?", default=None, help="a .pmtiles archive; omit to render the tile live"
+    )
+    inspect.add_argument("--z", type=int, default=None, help="zoom of the tile to read")
+    inspect.add_argument("--x", type=int, default=None)
+    inspect.add_argument("--y", type=int, default=None)
+    inspect.add_argument("--locale", default=None, choices=["fa", "en"])
+    inspect.add_argument("--sample", type=int, default=2, help="features to print per layer")
+    inspect.set_defaults(func=command_tiles_inspect)
     return parser
 
 

@@ -108,6 +108,41 @@ def test_non_gregorian_calendars_are_accepted(client: TestClient) -> None:
     assert 1978 <= sh["meta"]["time"]["from"] <= 1979
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"t": 1514},
+        {"t": 907, "cal": "islamic_lunar"},
+        {"t": 1357, "cal": "persian_solar"},
+        {"t": 1514, "cal": "julian"},
+        {"from": 900, "to": 910, "cal": "islamic_lunar", "mode": "overlaps"},
+        {"from": 1500, "to": 1520, "mode": "during"},
+    ],
+)
+def test_the_window_endpoint_agrees_with_features(client: TestClient, params: dict[str, Any]) -> None:
+    """Tiles filter client-side, so "what does this calendar year mean?" must be the server's answer.
+
+    The two endpoints share ``_build_window``; this pins that they cannot drift, because a frontend
+    that converted calendars itself would be doing history in the browser (AGENTS.md rule 5) and
+    would silently disagree with the GeoJSON path.
+    """
+    window = client.get("/api/v1/atlas/window", params=params).json()["data"]
+    features = client.get("/api/v1/atlas/features", params={**params, "zoom": 7}).json()
+    assert window["from"] == features["meta"]["time"]["from"]
+    assert window["to"] == features["meta"]["time"]["to"]
+    assert window["mode"] == features["meta"]["time"]["mode"]
+    assert window["normalized_calendar"] == "gregorian_proleptic"
+
+
+def test_the_window_endpoint_normalizes_calendars(client: TestClient) -> None:
+    hijri = client.get("/api/v1/atlas/window", params={"t": 900, "cal": "islamic_lunar"}).json()["data"]
+    assert (hijri["from"], hijri["to"]) == (1494, 1495)  # AH 900 spans two Gregorian years
+    jalali = client.get("/api/v1/atlas/window", params={"from": 1, "to": 1, "cal": "persian_solar"}).json()["data"]
+    assert jalali["from"] == 622  # AP 1 begins in 622 CE
+    plain = client.get("/api/v1/atlas/window", params={"t": 1514}).json()["data"]
+    assert (plain["from"], plain["to"], plain["mode"]) == (1514, 1514, "at")
+
+
 def test_locale_switches_labels_and_direction(client: TestClient) -> None:
     fa = client.get("/api/v1/atlas/features", params={"zoom": 7, "t": 1510, "locale": "fa"}).json()
     en = client.get("/api/v1/atlas/features", params={"zoom": 7, "t": 1510, "locale": "en"}).json()

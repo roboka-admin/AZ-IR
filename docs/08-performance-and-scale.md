@@ -41,6 +41,9 @@
 | HTTP | ETag روی همه‌ی GETها → 304 | – |
 | app | LRU کوچک برای name resolution و taxonomy | in-process |
 | client | featureها در memory با `t_from/t_to` → فیلتر local هنگام scrub | تا تغییر viewport/bucket |
+| CDN | `/tiles/archive/atlas-{locale}-{ver}-{revision}.pmtiles` (immutable چون نامش شامل revision است) | ۱ سال |
+| CDN | `/tiles/index.json` (pointer؛ کوتاه، چون انتشار یعنی عوض‌شدنش) | ۶۰s |
+| CDN | `/tiles/{z}/{x}/{y}.pbf` (رندر پویا؛ فقط وقتی آرشیو نداریم) | ۳۰۰s + `ETag`/304 |
 
 `data_revision` (بالاترین revision منتشرشده) در کلید cache است → انتشار داده cache را بی‌اعتبار می‌کند.
 
@@ -55,9 +58,25 @@
 - connection pool: `pool_size=5, max_overflow=10` با pgbouncer transaction mode.
 - read replica وقتی write/read جدا شد (بعد از Pilot لازم نیست).
 
-## ۶. چه وقت Vector Tiles لازم می‌شود؟
-محرک‌های عینی (نه حسی):
+## ۶. Vector Tiles: ساخته شده، اندازه‌گیری‌شده (ADR-0018)
+مسیر PMTiles پیاده‌سازی شد؛ محرک‌های زیر تعیین می‌کنند **کی روشنش کنیم** (ساختن آرشیو یک تصمیم
+عملیاتی است، نه یک پرچم پنهان):
 - بیش از ~۵۰٬۰۰۰ feature منتشرشده، یا
 - viewportهایی که به‌طور منظم `meta.truncated=true` می‌دهند، یا
 - p95 `/atlas/features` > ۳۰۰ms با ایندکس‌های درست.
-→ آن‌وقت ADR-0011 اجرا می‌شود (PMTiles + فیلتر زمان سمت کلاینت).
+
+اندازه‌گیری روی پیکرهٔ اردبیل (fixtures، z0..z10، هر زبان یک آرشیو):
+
+| معیار | مقدار |
+|-------|-------|
+| تعداد tile | ۱٬۰۱۰ |
+| اندازهٔ آرشیو | ۸۴۶٬۷۲۳ بایت (fa) / ۸۴۹٬۰۵۳ (en) |
+| feature رندرشده | ۵٬۶۴۷ |
+| blob/entry پس از dedupe + run-length | ۵۶۸ / ۶۶۹ |
+| زمان ساخت | ~۲٫۵ ثانیه |
+| بزرگ‌ترین tile | ۷٬۲۵۷ بایت (سقف degrade: ۴٬۰۰۰ feature) |
+
+یعنی **کل اطلس در یک فایل زیر یک مگابایت** که روی هر object storage/CDN می‌نشیند، بدون tile server.
+هزینهٔ واقعی مقیاس، build است نه سرو: با هر انتشار یک `make tiles` (یا job روی رویداد publish)،
+وگرنه tileها عقب می‌مانند. زومِ بیشتر از `AZIR_TILES_MAX_ZOOM` در آرشیو نیست → یا build بزرگ‌تر، یا
+رندر پویا که همچنان سر جایش است.

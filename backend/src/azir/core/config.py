@@ -63,6 +63,27 @@ class Settings(BaseSettings):
     login_max_attempts: int = 5
     login_window_seconds: int = 300
 
+    # --- tiles (ADR-0011) --------------------------------------------------
+    #: Where ``azir tiles build`` writes archives. Served statically (or uploaded to object
+    #: storage) -- the API never needs to read this directory to answer a tile request.
+    tiles_dir: str = "tiles"
+    tiles_min_zoom: int = 0
+    #: Pilot default. Deeper zooms are built when the corpus has geometry that justifies them:
+    #: an empty z14 pyramid is 16x the requests for nothing.
+    tiles_max_zoom: int = 10
+    #: How far outside the tile to query and clip, as a fraction of the tile span. Lines and
+    #: labels must not stop dead at the seam; 10% is enough and keeps tiles small.
+    tiles_buffer_ratio: float = 0.1
+    #: Features per tile before the tile is degraded by rank (and reported, never silent).
+    tiles_feature_limit: int = 4000
+    #: Serve ``GET /api/v1/tiles/{z}/{x}/{y}.pbf``. On in development (no build step needed to see
+    #: a map); in production the static archive on the CDN answers this and the API stays out of it.
+    tiles_dynamic_enabled: bool = True
+    #: Public URL prefix for the archive, written into ``latest.json``. None means "derive from
+    #: public_base_url + /tiles", which is right for local development and wrong for a CDN -- set it
+    #: (e.g. https://cdn.example.com/azir/tiles) when the archive is uploaded.
+    tiles_public_base_url: str | None = None
+
     # --- study area (the atlas viewport default) ---------------------------
     study_area_bbox: tuple[float, float, float, float] = (44.0, 35.5, 49.5, 39.8)
     #: The wider area the corpus may legitimately reach into: places and events that Iranian

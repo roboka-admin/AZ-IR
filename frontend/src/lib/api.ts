@@ -10,10 +10,12 @@ import type {
   FeatureCollection,
   ListResponse,
   MetaResponse,
+  NormalizedWindow,
   ProblemDetails,
   SearchResponse,
   SourceRecord,
   TimelineResponse,
+  TilesIndex,
   Locale,
   Relationship,
 } from "./types";
@@ -124,6 +126,30 @@ export function getContext(
   signal?: AbortSignal,
 ): Promise<ListResponse<Relationship>> {
   return request<ListResponse<Relationship>>("/atlas/context", params, { signal });
+}
+
+/**
+ * The normalized years behind a calendar selection.
+ *
+ * Tiles carry normalized years and are filtered in the browser, so the conversion has to come from
+ * the server: doing it here would put calendar arithmetic -- historical logic -- in the frontend
+ * (AGENTS.md rule 5). Memoized because it is a pure function of its parameters.
+ */
+export function getWindow(
+  params: { t?: number; from?: number; to?: number; mode?: string; cal?: string },
+  signal?: AbortSignal,
+): Promise<{ data: NormalizedWindow; meta: Record<string, unknown> }> {
+  return request("/atlas/window", params, { signal, memoize: true });
+}
+
+/* ------------------------------------------------------------------ tiles */
+
+/** How the map should get its tiles: archive, dynamic render, or nothing (GeoJSON viewport). */
+export function getTilesIndex(
+  locale: Locale,
+  signal?: AbortSignal,
+): Promise<{ data: TilesIndex; meta: { driver: string } }> {
+  return request("/tiles/index.json", { locale }, { signal, memoize: true });
 }
 
 /** Half-a-zoom rounding keeps responses cacheable while the user pinch-zooms (ADR-0009). */

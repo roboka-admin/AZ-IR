@@ -21,8 +21,19 @@ memory (ADR-0014):
 make install        # python venv + node modules
 make dev-backend    # API  → http://localhost:8000  (docs at /docs)
 make dev-web        # web  → http://localhost:3000
-make check          # lint + types + tests (227 backend tests)
+make check          # lint + types + tests (403 backend tests)
 ```
+
+Vector tiles — optional until the corpus outgrows GeoJSON (ADR-0018):
+
+```bash
+make tiles          # build the static PMTiles archive (z0..z10: 1010 tiles, ~850 kB for the pilot)
+make tiles-verify   # re-read it with `pmtiles`, the reference reader MapLibre uses in the browser
+make smoke          # 42 end-to-end contract checks against a running API
+```
+
+The map picks the archive up by itself: with one built it serves tiles, without one it keeps serving
+the live GeoJSON endpoint. Nothing else changes.
 
 With PostgreSQL + PostGIS (production truth):
 
@@ -58,9 +69,11 @@ search → context) and fails loudly on any contract violation.
 | Offline fallback basemap with graticule (no third-party tiles required) | done |
 | Editorial workflow UI (draft → review → publish), PMTiles delivery, vector tiles | Phase 2–3 |
 
-Test suite: **227 passing** (domain, API contract, fixtures data, schema/migration drift, CLI) plus
-**17 PostGIS contract tests** that run in CI against a real `postgis/postgis:16-3.4` service and
-compare both drivers on identical queries.
+Test suite: **403 passing** (domain, API contract, fixtures data, schema/migration drift, tile
+encoders, CLI) plus **17 PostGIS contract tests** that run in CI against a real
+`postgis/postgis:16-3.4` service and compare both drivers on identical queries. CI also rebuilds the
+tile archive and re-reads it with the JavaScript PMTiles library the browser uses — over HTTP, range
+requests included — so a format mistake fails the build instead of rendering a blank map.
 
 ---
 
@@ -72,7 +85,7 @@ docs/
   00-design-review.md     the 10 critical gaps in the original brief and how they were fixed
   01..09-*.md             architecture, domain model, temporal, spatial, API, map/UX, editorial,
                           performance, roadmap
-  adr/0001..0016          decisions, superseded rather than edited
+  adr/0001..0018          decisions, superseded rather than edited
 backend/
   src/azir/
     domain/               pure logic: temporal, calendar, geo, semantic zoom, text, model, enums
@@ -80,21 +93,25 @@ backend/
       ports.py            the only thing services may depend on
       fixtures.py         YAML corpus → normalized domain records (also the seeder's normalizer)
       postgis/            schema mirror, mappers, SQL repository, seeder
-    services/             atlas, entity, search, registry (composition root)
+    services/             atlas, entity, search, editorial, tiles, lint, registry (composition root)
     api/v1/               routers + problem details; no business logic here
     core/                 config, errors, logging, pagination, budgets
-    cli.py                azir seed | doctor | migrate | serve
+    tiles/                PMTiles v3 + MVT v2 encoders (zero new dependencies — ADR-0018)
+    cli.py                azir seed | doctor | lint | user | tiles | migrate | serve
   migrations/             frozen Alembic DDL (extensions, tables, indexes, view, folding functions)
   seeds/fixtures/         00..09 YAML: taxonomy, predicates, schemes, periods, sources, places,
                           people, events, polities, links, assertions, articles, geometries
   tests/
 frontend/
-  src/lib/                api client, URL state codec, map style, i18n, markdown, types
+  src/lib/                api client, URL state codec, map style, tile delivery, i18n, markdown, types
   src/components/         AtlasShell, MapCanvas, TimelinePanel, SidePanel, EntityDrawer
   src/app/[locale]/       fa (RTL, default) + en pages
+scripts/                  smoke.sh (HTTP contract), verify-pmtiles.mjs (reference tile reader),
+                          ci-report.sh, wsl-setup.sh
 docker-compose.yml        postgis + api + web
 Makefile                  every routine operation
-.github/workflows/ci.yml  lint, types, migrations, seed, doctor, tests (both drivers), web build
+.github/workflows/ci.yml  lint, types, migrations, seed, doctor, tests (both drivers), tile build +
+                          reference-reader verification, web build
 ```
 
 Layering is enforced by tests and review, not by hope:

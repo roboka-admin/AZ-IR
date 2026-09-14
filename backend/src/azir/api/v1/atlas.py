@@ -121,6 +121,41 @@ def features(
     )
 
 
+@router.get(
+    "/window",
+    summary="Calendar year or span -> the normalized years the tiles are keyed by",
+)
+def normalize_window(
+    settings: SettingsDep,
+    t: Annotated[int | None, Query(description="A year in `cal`, or a normalized year")] = None,
+    year_from: Annotated[int | None, Query(alias="from")] = None,
+    year_to: Annotated[int | None, Query(alias="to")] = None,
+    mode: Mode = "at",
+    cal: CalendarParam = "gregorian_proleptic",
+) -> JSONResponse:
+    """Answer "which normalized years does this calendar selection mean?".
+
+    Tiles store normalized (astronomical Gregorian) years, and a browser that converted a Jalali or
+    Hijri year itself would be doing history in the frontend (AGENTS.md rule 5) with a table nobody
+    can audit. So the conversion stays here: the GeoJSON path gets it for free inside ``/features``,
+    and the tile path asks once per change of the timeline instead of once per viewport.
+    """
+    resolved = _build_window(t, year_from, year_to, mode, cal, settings)
+    return JSONResponse(
+        {
+            "data": {
+                "from": resolved.year_from,
+                "to": resolved.year_to,
+                "mode": resolved.mode,
+                "calendar": cal,
+                "normalized_calendar": Calendar.GREGORIAN_PROLEPTIC.value,
+            },
+            "meta": {"driver": settings.db_driver, "circa_fuzz_years": settings.circa_fuzz_years},
+        },
+        headers={"cache-control": f"public, max-age={settings.entity_cache_ttl_seconds}"},
+    )
+
+
 def _etag(result: Any) -> str:
     import hashlib
     import json

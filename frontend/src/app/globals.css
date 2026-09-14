@@ -241,6 +241,11 @@ button {
   color: var(--sand-100);
 }
 
+.btn-compact {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
 .btn-icon {
   width: 30px;
   height: 30px;

@@ -133,7 +133,8 @@ frontend/src/
 └── lib/
     ├── api.ts                    تنها کلاینت /api/v1 (cache، abort، ProblemDetails)
     ├── atlasState.ts             codec دوطرفهٔ MapState ⇄ URL (ADR-0015)
-    ├── mapStyle.ts               لایه‌ها/رنگ‌ها از properties سرویس؛ fallback + graticule
+    ├── mapStyle.ts               لایه‌ها/رنگ‌ها از properties سرویس؛ fallback + graticule؛ تحویل دوگانه
+    ├── tiles.ts                  تصمیم «کدام منبع tile؟» از index.json + ترجیح کاربر (ADR-0018)
     ├── i18n.ts                   fa/en، رقم فارسی، برچسب‌های certainty/precision/status
     ├── markdown.tsx              MarkdownLite + لینک خودکار [[entity]]
     ├── serverApi.ts              fetch سمت سرور (SSR) از همان contract
@@ -142,7 +143,25 @@ frontend/src/
 
 `lib/api.ts` تنها جایی است که با `/api/v1` حرف می‌زند. `next.config.ts` یک `rewrites()` دارد:
 `/api/:path* → $AZIR_BACKEND_URL/api/:path*` → مرورگر **هرگز** مستقیماً به backend درخواست
-نمی‌دهد (قاعدهٔ ۱ حتی در سطح شبکه)، و preview روی هر host دیگری بدون CORS کار می‌کند.
+نمی‌دهد (قاعدهٔ ۱ حتی در سطح شبکه)، و preview روی هر host دیگری بدون CORS کار می‌کند. همین
+rewrite درخواست‌های `Range` آرشیو PMTiles را هم رد می‌کند (با `206`) — چیزی که در smoke و CI
+سنجیده می‌شود، چون پروکسیِ Range‌نشناس یعنی نقشهٔ سفید.
+
+### ۹٫۱ دو مسیر تحویل، یک style (ADR-0018)
+
+`mapStyle.ts` یک registry دارد: هر لایه = یک paint spec + یک `source-layer` نام، و id نهایی
+`spec@layer`. همان specها یک بار روی GeoJSON source می‌نشینند و یک بار روی vector source؛
+`setDelivery()` زنده جابه‌جا می‌کند، پس تعویض منبع داده نقشه را بازسازی نمی‌کند و **دو تعریف
+لایه وجود ندارد** که بتوانند واگرا شوند.
+
+ترتیب: `auto` (پیش‌فرض) → PMTiles اگر آرشیویی برای **همین زبان** ساخته شده باشد، وگرنه GeoJSON؛
+`tiles` → endpoint رندر پویا؛ `geojson` → مسیر زنده. انتخاب در URL می‌ماند (`src=`، ADR-0015) و
+وقتی fallback رخ می‌دهد، پنل **دلیلش** را می‌گوید (آرشیو ساخته نشده / فقط برای زبان دیگر ساخته شده /
+رندر پویا خاموش است) — کلیدی که بی‌صدا کار نکند، باگ گزارش‌نشده است.
+
+فیلتر زمان در حالت tile سمت کلاینت است ولی **منطق تاریخی نیست**: یک expression روی
+`t_from`/`t_to`/`g_from`/`g_to` که خود API در `properties` اعلام کرده. تبدیل تقویم هرگز در مرورگر
+انجام نمی‌شود و از `GET /atlas/window` می‌آید. نتیجه: scrub روی تایم‌لاین بدون هیچ درخواست شبکه.
 
 ## ۱۰. وضعیت فاز ۱
 
@@ -159,8 +178,9 @@ frontend/src/
 | URL به‌عنوان state (اشتراک‌گذاری/بوک‌مارک/back) | انجام |
 | a11y: نمای فهرستی، `aria-live`، میان‌بر صفحه‌کلید، کنتراست | انجام |
 | fallback آفلاین (بدون basemap خارجی) | انجام |
-| PMTiles به‌جای GeoJSON (ADR-0011) | فاز ۲ |
-| پنل ویرایش/بازبینی (workflow نویسندگان) | فاز ۳ |
+| PMTiles به‌جای GeoJSON (ADR-0011) با fallback خودکار | انجام (ADR-0018) |
+| لایهٔ نوشتن: workflow، audit، gate انتشار (API/CLI) | انجام (ADR-0017) |
+| پنل ویرایش/بازبینی (UI نویسندگان) | فاز ۳ |
 
 قیدهای معماری که در کد رعایت شده‌اند: هیچ عدد/نام/تاریخ تاریخی در کامپوننت‌ها hard-code
 نیست (قاعدهٔ ۱۷)؛ همه‌چیز از `/meta` یا feature properties می‌آید؛ MapLibre هیچ منطق تاریخی

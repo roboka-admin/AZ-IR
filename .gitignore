@@ -38,3 +38,8 @@ Thumbs.db
 *.log
 backend/.azir-cache/
 tools/devdb/
+# Tile archives are reproducible from the database (`make tiles`) and are served from object storage
+# or a CDN in production, so they are build output, not source (ADR-0018). Anchored on purpose:
+# `backend/src/azir/tiles/` is the encoder and must never match.
+/backend/tiles/
+*.pmtiles

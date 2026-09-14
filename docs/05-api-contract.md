@@ -144,7 +144,66 @@
 ```
 پاسخ = همان GeoJSON `/atlas/features` + `meta.applied_filters`.
 
-## ۱۲. نسخه‌بندی و سازگاری
+## ۱۲. `GET /api/v1/atlas/window` و endpointهای tile (ADR-0018)
+
+### ۱۲٫۱ `GET /api/v1/atlas/window` — پنجرهٔ زمانیِ نرمال‌شده
+همان پارامترهای زمانیِ `/atlas/features` (`t` یا `from`/`to`، `mode`، `span`، `cal`)؛ پاسخ **فقط
+عدد** است. دلیل وجودش: tileها سالِ نرمال‌شده (میلادیِ proleptic) را در attribute نگه می‌دارند و
+مرورگر نباید خودش تقویم تبدیل کند (قاعدهٔ ۵: منطق تاریخی در فرانت‌اند ممنوع).
+```
+?t=1514&mode=overlaps&cal=julian&span=10
+```
+```json
+{"data":{"from":1514,"to":1515,"mode":"overlaps","calendar":"julian",
+         "normalized_calendar":"gregorian_proleptic"},
+ "meta":{"driver":"fixtures","circa_fuzz_years":10}}
+```
+```
+?t=900&mode=at&cal=islamic_lunar   →   {"from":1494,"to":1495,"mode":"overlaps", …}
+```
+توجه: `mode` ممکن است **ارتقا** پیدا کند (`at` → `overlaps`)، چون یک سال قمری در یک سال میلادی
+جا نمی‌شود. کلاینت باید `mode` بازگشتی را استفاده کند، نه چیزی که فرستاده — دقتِ جعلی ممنوع.
+این endpoint و `/atlas/features` هر دو از یک تابع می‌آیند و یک تست، توافقشان را پین می‌کند.
+
+### ۱۲٫۲ `GET /api/v1/tiles/index.json` — «tileها را چطور بگیرم؟»
+پاسخ عامدانه ساده است: یا URL آرشیو، یا الگوی render پویا. کلاینتی که اشتباه حدس بزند، هزینه‌اش
+را روی **هر tile** می‌دهد؛ پس انتخاب منتشر می‌شود نه استنتاج.
+```json
+{"data":{"mode":"pmtiles","dynamic_enabled":true,
+         "dynamic_template":"https://…/api/v1/tiles/{z}/{x}/{y}.pbf",
+         "archive":{"url":"https://…/api/v1/tiles/archive/atlas-fa-1.0.0-5c705fe34dfc4da8.pmtiles",
+                    "filename":"atlas-fa-1.0.0-5c705fe34dfc4da8.pmtiles","locale":"fa",
+                    "data_revision":"5c705fe34dfc4da8","tileset_version":"1.0.0",
+                    "bytes":846723,"tiles":1010,"min_zoom":0,"max_zoom":10,
+                    "bounds":[42.5,34.0,51.0,41.3],"center":[47.0,38.0,6.4],
+                    "driver":"fixtures","generated_at":"2026-09-14T19:45:08Z"},
+         "archive_locales":["en","fa"],
+         "layers":["modern_borders","political_entities","places","…"],
+         "properties":{"t_from":"Number","t_to":"Number","certainty":"String","label":"String","…":"…"},
+         "min_zoom":0,"max_zoom":10,"locale":"fa","bounds":[…],"center":[…]},
+ "meta":{"driver":"fixtures"}}
+```
+* `archive` **برای همان `locale` درخواستی** است یا `null`. نام‌ها در زمان build داخل tile پخته
+  می‌شوند، پس آرشیو زبان‌مشخص است و تحویلِ آرشیوِ زبانِ دیگر = دروغِ بی‌صدا.
+* `archive_locales` می‌گوید کدام زبان‌ها آرشیو دارند → UI دلیل fallback را می‌گوید، نه اینکه وانمود
+  کند کلید کار نمی‌کند.
+* `layers` ترتیب paint است و `properties` قراردادِ propertyها (همان چیزی که style بر اساسش نوشته
+  شده): هیچ‌کدام در فرانت hard-code نیست.
+
+### ۱۲٫۳ `GET /api/v1/tiles/{z}/{x}/{y}.pbf` — یک tile رندرشده
+gzip، `application/vnd.mapbox-vector-tile`، `ETag` → `304`، و `x-azir-tile-bytes`.
+tile **خالی** = `200` با بدنهٔ صفر و `x-azir-empty: 1` («اینجا چیزی نیست» یک پاسخ معتبر است، نه
+۴۰۴). بیرون از pyramid = `404` با همان problem+json. خاموش بودنِ قابلیت
+(`AZIR_TILES_DYNAMIC_ENABLED=false`) = `503` با اشاره به آرشیو.
+
+### ۱۲٫۴ `GET /api/v1/tiles/archive/{filename}` — آرشیو با پشتیبانی range
+`Accept-Ranges: bytes`، پاسخ به `Range` با `206` و `Content-Range`، و
+`cache-control: public, max-age=31536000, immutable` (چون نام فایل شامل `data_revision` است).
+بدون `206` پروتکل PMTiles در مرورگر کار نمی‌کند؛ به همین دلیل smoke test و CI دقیقاً همین را
+با **خوانندهٔ مرجعِ JS** روی HTTP می‌سنجند. نام فایل با فهرست واقعی directory مقایسه می‌شود، پس
+`..%2F..%2F…` = `404`.
+
+## ۱۳. نسخه‌بندی و سازگاری
 - افزودن فیلد/endpoint = minor (مجاز در v1).
 - حذف/تغییر معنا/تغییر نوع = breaking → `v2` + doc migration + دوره‌ی overlap.
 - CI یک snapshot از `openapi.json` دارد؛ diff غیرمنتظره → fail.

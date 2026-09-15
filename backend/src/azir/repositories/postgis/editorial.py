@@ -602,9 +602,9 @@ class PostgisEditorialMixin:
             FROM entity_read_model erm
             LEFT JOIN editorial_state es
                    ON es.entity_id = erm.id AND es.entity_type = erm.entity_type
-            WHERE erm.status = ANY(:statuses::text[])
-              AND erm.entity_type = ANY(:narrative_types::text[])
-              AND (:entity_type::text IS NULL OR erm.entity_type = :entity_type::text)
+            WHERE erm.status = ANY(CAST(:statuses AS text[]))
+              AND erm.entity_type = ANY(CAST(:narrative_types AS text[]))
+              AND (CAST(:entity_type AS text) IS NULL OR erm.entity_type = CAST(:entity_type AS text))
             ORDER BY es.updated_at DESC NULLS LAST, erm.id ASC
             LIMIT :limit
             """
@@ -657,9 +657,9 @@ class PostgisEditorialMixin:
             SELECT a.id, a.actor_id, u.display_name AS actor_name, a.action, a.entity_type,
                    a.entity_id, a.payload, a.request_id, a.created_at
             FROM audit_log a LEFT JOIN app_user u ON u.id = a.actor_id
-            WHERE (:entity_type::text IS NULL OR a.entity_type = :entity_type::text)
-              AND (:entity_id::text IS NULL OR a.entity_id = :entity_id::text)
-              AND (:action::text IS NULL OR a.action = :action::text)
+            WHERE (CAST(:entity_type AS text) IS NULL OR a.entity_type = CAST(:entity_type AS text))
+              AND (CAST(:entity_id AS text) IS NULL OR a.entity_id = CAST(:entity_id AS text))
+              AND (CAST(:action AS text) IS NULL OR a.action = CAST(:action AS text))
             ORDER BY a.id DESC
             LIMIT :limit
             """
@@ -902,7 +902,7 @@ class PostgisEditorialMixin:
             SELECT es.entity_id FROM editorial_state es
             JOIN entity_read_model erm ON erm.id = es.entity_id
             WHERE es.head_id = :head AND es.entity_type = :t
-              AND erm.status = ANY(:open::text[])
+              AND erm.status = ANY(CAST(:open AS text[]))
             ORDER BY es.revision DESC LIMIT 1
             """
         )

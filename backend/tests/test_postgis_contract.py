@@ -284,6 +284,13 @@ def test_seeding_twice_is_idempotent(db_repository) -> None:
     assert first.tables["entity_geometry"] == second.tables["entity_geometry"]
 
 
+def test_stats_text_query_binds_the_entity_type_array(db_repository) -> None:
+    stats = db_repository.stats()  # type: ignore[attr-defined]
+
+    assert stats["event"] > 0
+    assert stats["place"] > 0
+
+
 def test_seed_stamps_published_editorial_state_with_the_database_clock(db_repository) -> None:
     import sqlalchemy as sa
 

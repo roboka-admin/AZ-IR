@@ -157,24 +157,24 @@ class PostgisRepository(PostgisEditorialMixin):
                    erm.rank::float AS rank,
                    erm.temporal_display_fa AS temporal_display_fa,
                    erm.year_from AS year_from, erm.year_to AS year_to
-            FROM generate_series(:start::int, :end::int - :size::int, :size::int) AS b(bucket_from)
+            FROM generate_series(CAST(:start AS int), CAST(:end AS int) - CAST(:size AS int), CAST(:size AS int)) AS b(bucket_from)
             JOIN entity_read_model erm
               ON erm.year_from IS NOT NULL AND erm.year_to IS NOT NULL
-             AND erm.year_from <= b.bucket_from + :size::int - 1
+             AND erm.year_from <= b.bucket_from + CAST(:size AS int) - 1
              AND erm.year_to >= b.bucket_from
             WHERE erm.status = 'published'
-              AND erm.entity_type = ANY(:narrative_types::text[])
-              AND erm.layer = ANY(:layers::text[])
+              AND erm.entity_type = ANY(CAST(:narrative_types AS text[]))
+              AND erm.layer = ANY(CAST(:layers AS text[]))
               AND EXISTS (
                     SELECT 1 FROM entity_geometry g
                     WHERE g.entity_id = erm.id
                       AND ST_Intersects(g.geom, ST_MakeEnvelope(
-                            :west::float, :south::float, :east::float, :north::float, 4326))
-                      AND (g.validity @> (b.bucket_from + (:size::int / 2))
+                            CAST(:west AS float), CAST(:south AS float), CAST(:east AS float), CAST(:north AS float), 4326))
+                      AND (g.validity @> (b.bucket_from + (CAST(:size AS int) / 2))
                            OR NOT EXISTS (
                                 SELECT 1 FROM entity_geometry g2
                                 WHERE g2.entity_id = erm.id
-                                  AND g2.validity @> (b.bucket_from + (:size::int / 2))))
+                                  AND g2.validity @> (b.bucket_from + (CAST(:size AS int) / 2))))
                   )
             ORDER BY b.bucket_from, erm.rank DESC, erm.id
             """
@@ -280,8 +280,8 @@ class PostgisRepository(PostgisEditorialMixin):
             """
             SELECT id FROM entity_read_model erm
             WHERE erm.entity_type = :entity_type
-              AND (:status::text IS NULL OR erm.status = :status::text)
-              AND (:temporal_off::boolean
+              AND (CAST(:status AS text) IS NULL OR erm.status = CAST(:status AS text))
+              AND (CAST(:temporal_off AS boolean)
                    OR erm.year_from IS NULL OR erm.year_to IS NULL
                    OR (:temporal_mode = 'during'
                        AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
@@ -436,14 +436,14 @@ class PostgisRepository(PostgisEditorialMixin):
                            erm.confidence, erm.calendar, erm.temporal_display_fa
                     FROM entity_read_model erm
                     WHERE erm.status = 'published'
-                      AND erm.entity_type = ANY(:narrative_types::text[])
+                      AND erm.entity_type = ANY(CAST(:narrative_types AS text[]))
                       AND EXISTS (
                           SELECT 1 FROM entity_geometry g
                           WHERE g.entity_id = erm.id
                             AND ST_DWithin(
                                 ST_PointOnSurface(g.geom)::geography,
-                                ST_SetSRID(ST_MakePoint(:lon::float, :lat::float), 4326)::geography,
-                                :radius_m::float))
+                                ST_SetSRID(ST_MakePoint(CAST(:lon AS float), CAST(:lat AS float)), 4326)::geography,
+                                CAST(:radius_m AS float)))
                     ORDER BY erm.rank DESC, erm.id
                     """
                 )
@@ -491,7 +491,7 @@ class PostgisRepository(PostgisEditorialMixin):
                 for row in connection.execute(
                     text(
                         "SELECT entity_type, count(*) FROM entity_read_model "
-                        "WHERE status = 'published' AND entity_type = ANY(:types::text[]) "
+                        "WHERE status = 'published' AND entity_type = ANY(CAST(:types AS text[])) "
                         "GROUP BY entity_type"
                     ),
                     {"types": list(NARRATIVE_TYPES)},
@@ -551,7 +551,7 @@ class PostgisRepository(PostgisEditorialMixin):
             rows = [
                 dict(row)
                 for row in connection.execute(
-                    text("SELECT * FROM entity_read_model WHERE id = ANY(:ids::text[])"),
+                    text("SELECT * FROM entity_read_model WHERE id = ANY(CAST(:ids AS text[]))"),
                     {"ids": ids},
                 ).mappings().all()
             ]
@@ -593,7 +593,7 @@ class PostgisRepository(PostgisEditorialMixin):
                 text(
                     "SELECT entity_id, form, lang, script, kind, transliteration, year_from, "
                     "year_to, source_id, note FROM name_variant "
-                    "WHERE entity_id = ANY(:ids::text[]) ORDER BY entity_id, id"
+                    "WHERE entity_id = ANY(CAST(:ids AS text[])) ORDER BY entity_id, id"
                 ),
                 {"ids": ids},
             ).mappings().all()
@@ -611,7 +611,7 @@ class PostgisRepository(PostgisEditorialMixin):
         rows = connection.execute(
             text(
                 "SELECT DISTINCT ON (entity_id) entity_id, form FROM name_variant "
-                "WHERE entity_id = ANY(:ids::text[]) "
+                "WHERE entity_id = ANY(CAST(:ids AS text[])) "
                 "ORDER BY entity_id, (lang = :locale) DESC, (kind = 'preferred') DESC, id"
             ),
             {"ids": list(ids), "locale": locale},
@@ -626,7 +626,7 @@ class PostgisRepository(PostgisEditorialMixin):
                     "SELECT entity_id, ST_AsGeoJSON(geom)::json AS geojson, kind, certainty, "
                     "year_from, year_to, lod_min_zoom, lod_max_zoom, source_id, note_fa, note_en, "
                     "needs_digitisation FROM entity_geometry "
-                    "WHERE entity_id = ANY(:ids::text[]) ORDER BY entity_id, id"
+                    "WHERE entity_id = ANY(CAST(:ids AS text[])) ORDER BY entity_id, id"
                 ),
                 {"ids": ids},
             ).mappings().all()
@@ -645,7 +645,7 @@ class PostgisRepository(PostgisEditorialMixin):
             for count_row in connection.execute(
                 text(
                     "SELECT entity_id, count(*) FROM article_entity "
-                    "WHERE entity_id = ANY(:ids::text[]) GROUP BY entity_id"
+                    "WHERE entity_id = ANY(CAST(:ids AS text[])) GROUP BY entity_id"
                 ),
                 {"ids": ids},
             ).all()
@@ -654,11 +654,11 @@ class PostgisRepository(PostgisEditorialMixin):
         for count_row in connection.execute(
                 text(
                     "SELECT subject_id AS id, count(*) FROM assertion "
-                    "WHERE status <> 'rejected' AND subject_id = ANY(:ids::text[]) "
+                    "WHERE status <> 'rejected' AND subject_id = ANY(CAST(:ids AS text[])) "
                     "GROUP BY subject_id "
                     "UNION ALL "
                     "SELECT object_id AS id, count(*) FROM assertion "
-                    "WHERE status <> 'rejected' AND object_id = ANY(:ids::text[]) "
+                    "WHERE status <> 'rejected' AND object_id = ANY(CAST(:ids AS text[])) "
                     "GROUP BY object_id"
                 ),
                 {"ids": ids},
@@ -672,7 +672,7 @@ class PostgisRepository(PostgisEditorialMixin):
                     "LEFT JOIN period p ON erm.year_from IS NOT NULL AND erm.year_to IS NOT NULL "
                     "  AND p.year_from IS NOT NULL AND p.year_to IS NOT NULL "
                     "  AND p.year_from <= erm.year_to AND p.year_to >= erm.year_from "
-                    "WHERE erm.id = ANY(:ids::text[]) GROUP BY erm.id"
+                    "WHERE erm.id = ANY(CAST(:ids AS text[])) GROUP BY erm.id"
                 ),
                 {"ids": ids},
             ).all()
@@ -693,7 +693,7 @@ class PostgisRepository(PostgisEditorialMixin):
         rows = connection.execute(
             text(
                 "SELECT entity_id, article_id FROM article_entity "
-                "WHERE entity_id = ANY(:ids::text[]) ORDER BY entity_id, id"
+                "WHERE entity_id = ANY(CAST(:ids AS text[])) ORDER BY entity_id, id"
             ),
             {"ids": ids},
         ).mappings().all()
@@ -739,7 +739,7 @@ _FEATURES_SQL = """
                          SELECT g.geom
                          FROM entity_geometry g
                          WHERE g.entity_id = erm.id
-                         ORDER BY (g.validity @> :rep_year::int)::int DESC,
+                         ORDER BY (g.validity @> CAST(:rep_year AS int))::int DESC,
                                   CASE g.kind
                                       WHEN 'footprint' THEN 0
                                       WHEN 'extent_reconstructed' THEN 1
@@ -751,11 +751,11 @@ _FEATURES_SQL = """
                          LIMIT 1
                        ) AS geom
                 FROM entity_read_model erm
-                WHERE erm.entity_type = ANY(:narrative_types::text[])
-                  AND (:include_unpublished::boolean OR erm.status = 'published')
-                  AND erm.layer = ANY(:layers::text[])
-                  AND (cardinality(:kinds::text[]) = 0 OR erm.kind = ANY(:kinds::text[]))
-                  AND erm.rank >= :min_rank::numeric
+                WHERE erm.entity_type = ANY(CAST(:narrative_types AS text[]))
+                  AND (CAST(:include_unpublished AS boolean) OR erm.status = 'published')
+                  AND erm.layer = ANY(CAST(:layers AS text[]))
+                  AND (cardinality(CAST(:kinds AS text[])) = 0 OR erm.kind = ANY(CAST(:kinds AS text[])))
+                  AND erm.rank >= CAST(:min_rank AS numeric)
                   AND (erm.year_from IS NULL OR erm.year_to IS NULL
                        OR (:temporal_mode = 'during'
                            AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
@@ -767,24 +767,24 @@ _FEATURES_SQL = """
                 FROM candidate c
                 WHERE c.geom IS NOT NULL
                   AND ST_Intersects(c.geom, ST_MakeEnvelope(
-                        :west::float, :south::float, :east::float, :north::float, 4326))
-                  AND (:near_lon::float IS NULL OR ST_DWithin(
+                        CAST(:west AS float), CAST(:south AS float), CAST(:east AS float), CAST(:north AS float), 4326))
+                  AND (CAST(:near_lon AS float) IS NULL OR ST_DWithin(
                         c.geom::geography,
-                        ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
-                        :radius_m::float))
+                        ST_SetSRID(ST_MakePoint(CAST(:near_lon AS float), CAST(:near_lat AS float)), 4326)::geography,
+                        CAST(:radius_m AS float)))
             )
             SELECT id, entity_type, rank::float AS rank,
                    ST_AsGeoJSON(CASE
-                       WHEN :tolerance::float > 0
+                       WHEN CAST(:tolerance AS float) > 0
                             AND GeometryType(geom) NOT IN ('POINT', 'MULTIPOINT')
-                       THEN ST_SimplifyPreserveTopology(geom, :tolerance::float)
+                       THEN ST_SimplifyPreserveTopology(geom, CAST(:tolerance AS float))
                        ELSE geom
                    END)::json AS geojson,
                    total
             FROM located
-            WHERE (:cursor_rank::numeric IS NULL
-                   OR rank < :cursor_rank::numeric
-                   OR (rank = :cursor_rank::numeric AND id > :cursor_id::text))
+            WHERE (CAST(:cursor_rank AS numeric) IS NULL
+                   OR rank < CAST(:cursor_rank AS numeric)
+                   OR (rank = CAST(:cursor_rank AS numeric) AND id > CAST(:cursor_id AS text)))
             ORDER BY rank DESC, id ASC
             LIMIT :limit_plus_one
 """
@@ -794,26 +794,26 @@ _SEARCH_SQL = """
             FROM entity_read_model erm
             JOIN name_variant nv ON nv.entity_id = erm.id AND nv.entity_type = erm.entity_type
             WHERE erm.status = 'published'
-              AND erm.entity_type = ANY(:types::text[])
+              AND erm.entity_type = ANY(CAST(:types AS text[]))
               AND (nv.search_form % :folded
                    OR strpos(nv.search_form, :folded) > 0
                    OR strpos(nv.search_form, :raw) > 0
                    OR nv.search_tsv @@ plainto_tsquery('simple', :folded)
                    OR strpos(public.azir_search_form(coalesce(erm.summary_fa, '')), :folded) > 0
                    OR strpos(public.azir_search_form(coalesce(erm.extra ->> 'title_fa', '')), :folded) > 0)
-              AND (:temporal_off::boolean
+              AND (CAST(:temporal_off AS boolean)
                    OR erm.year_from IS NULL OR erm.year_to IS NULL
                    OR (:temporal_mode = 'during'
                        AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
                    OR (:temporal_mode <> 'during'
                        AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
-              AND (:near_lon::float IS NULL OR EXISTS (
+              AND (CAST(:near_lon AS float) IS NULL OR EXISTS (
                     SELECT 1 FROM entity_geometry g
                     WHERE g.entity_id = erm.id
                       AND ST_DWithin(
                             ST_PointOnSurface(g.geom)::geography,
-                            ST_SetSRID(ST_MakePoint(:near_lon::float, :near_lat::float), 4326)::geography,
-                            :radius_m::float)))
+                            ST_SetSRID(ST_MakePoint(CAST(:near_lon AS float), CAST(:near_lat AS float)), 4326)::geography,
+                            CAST(:radius_m AS float))))
             ORDER BY erm.id
             LIMIT :candidate_limit
 """
@@ -821,11 +821,11 @@ _SEARCH_SQL = """
 _GAPS_SQL = """
 SELECT erm.entity_type || ':' || erm.id || ':no-geometry' AS gap
 FROM entity_read_model erm
-WHERE erm.entity_type = ANY(:narrative_types::text[])
-  AND (:include_unpublished::boolean OR erm.status = 'published')
-  AND erm.layer = ANY(:layers::text[])
-  AND (cardinality(:kinds::text[]) = 0 OR erm.kind = ANY(:kinds::text[]))
-  AND erm.rank >= :min_rank::numeric
+WHERE erm.entity_type = ANY(CAST(:narrative_types AS text[]))
+  AND (CAST(:include_unpublished AS boolean) OR erm.status = 'published')
+  AND erm.layer = ANY(CAST(:layers AS text[]))
+  AND (cardinality(CAST(:kinds AS text[])) = 0 OR erm.kind = ANY(CAST(:kinds AS text[])))
+  AND erm.rank >= CAST(:min_rank AS numeric)
   AND (erm.year_from IS NULL OR erm.year_to IS NULL
        OR (:temporal_mode = 'during' AND erm.year_from >= :year_from AND erm.year_to <= :year_to)
        OR (:temporal_mode <> 'during' AND erm.year_from <= :year_to AND erm.year_to >= :year_from))
@@ -866,7 +866,7 @@ SELECT a.id AS id, a.subject_id AS subject_id, a.predicate AS predicate,
        'out' AS direction,
        {_EVIDENCE_AGG}
 FROM assertion a
-WHERE a.status = 'disputed' AND a.subject_id = ANY(:ids::text[])
+WHERE a.status = 'disputed' AND a.subject_id = ANY(CAST(:ids AS text[]))
 ORDER BY a.subject_id, a.topic_fa, a.id
 """
 
@@ -887,65 +887,65 @@ WITH edges AS (
            'gregorian_proleptic'::text AS calendar, NULL::text AS temporal_display_fa,
            'accepted'::text AS status, NULL::text AS topic_fa, pl.note_fa,
            '[]'::json AS evidence
-    FROM place_link pl WHERE pl.parent_id = ANY(:ids::text[])
+    FROM place_link pl WHERE pl.parent_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     SELECT 0, pl.id, pl.child_id, 'in', pl.kind, 'place', pl.parent_id,
            NULL, NULL, NULL, pl.certainty, pl.year_from, pl.year_to, pl.precision, pl.confidence,
            'gregorian_proleptic', NULL, 'accepted', NULL, pl.note_fa, '[]'::json
-    FROM place_link pl WHERE pl.child_id = ANY(:ids::text[])
+    FROM place_link pl WHERE pl.child_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     -- 1: event <-> place
     SELECT 1, 0, ep.event_id, 'out', ep.role, 'place', ep.place_id,
            NULL, ep.role, NULL, ep.certainty, ep.year_from, ep.year_to,
            'range', 'high', 'gregorian_proleptic', NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM event_place ep WHERE ep.event_id = ANY(:ids::text[])
+    FROM event_place ep WHERE ep.event_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     SELECT 1, 0, ep.place_id, 'in', 'hosted', 'event', ep.event_id,
            NULL, ep.role, NULL, ep.certainty, ep.year_from, ep.year_to,
            'range', 'high', 'gregorian_proleptic', NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM event_place ep WHERE ep.place_id = ANY(:ids::text[])
+    FROM event_place ep WHERE ep.place_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     -- 2: event <-> participant
     SELECT 2, epn.id, epn.event_id, 'out', 'participated_in', epn.participant_type,
            epn.participant_id, NULL, epn.role, epn.side, NULL, NULL, NULL,
            'range', 'high', 'gregorian_proleptic', NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM event_participant epn WHERE epn.event_id = ANY(:ids::text[])
+    FROM event_participant epn WHERE epn.event_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     SELECT 2, epn.id, epn.participant_id, 'in', 'participated_in', 'event', epn.event_id,
            NULL, epn.role, epn.side, NULL, NULL, NULL,
            'range', 'high', 'gregorian_proleptic', NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM event_participant epn WHERE epn.participant_id = ANY(:ids::text[])
+    FROM event_participant epn WHERE epn.participant_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     -- 3: event <-> event
     SELECT 3, el.id, el.event_id, 'out', el.relation, 'event', el.other_event_id,
            NULL, NULL, NULL, NULL, NULL, NULL, 'range', 'high', 'gregorian_proleptic', NULL,
            'accepted', NULL, NULL, '[]'::json
-    FROM event_link el WHERE el.event_id = ANY(:ids::text[])
+    FROM event_link el WHERE el.event_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     SELECT 3, el.id, el.other_event_id, 'in',
            CASE el.relation WHEN 'part_of' THEN 'has_part' ELSE el.relation END,
            'event', el.event_id, NULL, NULL, NULL, NULL, NULL, NULL, 'range', 'high',
            'gregorian_proleptic', NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM event_link el WHERE el.other_event_id = ANY(:ids::text[])
+    FROM event_link el WHERE el.other_event_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     -- 4: article <-> entity
     SELECT 4, ae.id, ae.entity_id, 'out', 'article:' || ae.relation, 'article', ae.article_id,
            NULL, ae.relation, NULL, NULL, NULL, NULL, 'range', 'high', 'gregorian_proleptic',
            NULL, 'accepted', NULL, NULL, '[]'::json
-    FROM article_entity ae WHERE ae.entity_id = ANY(:ids::text[])
+    FROM article_entity ae WHERE ae.entity_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     SELECT 4, ae.id, ae.article_id, 'in', 'article:' || ae.relation, erm.entity_type, erm.id,
            NULL, ae.relation, NULL, NULL, NULL, NULL, 'range', 'high', 'gregorian_proleptic',
            NULL, 'accepted', NULL, NULL, '[]'::json
     FROM article_entity ae JOIN entity_read_model erm ON erm.id = ae.entity_id
-    WHERE ae.article_id = ANY(:ids::text[])
+    WHERE ae.article_id = ANY(CAST(:ids AS text[]))
     UNION ALL
     -- {_CLAIM_SORT_KEY}: assertions, outgoing
     SELECT {_CLAIM_SORT_KEY}, 0, a.subject_id, 'out', a.predicate, a.object_type, a.object_id,
            a.value, a.role, NULL::text, NULL::text, a.year_from, a.year_to, a.precision,
            a.confidence, a.calendar, a.temporal_display_fa, a.status, a.topic_fa, a.note_fa,
            {_EVIDENCE_AGG}
-    FROM assertion a WHERE a.subject_id = ANY(:ids::text[]) AND a.status <> 'rejected'
+    FROM assertion a WHERE a.subject_id = ANY(CAST(:ids AS text[])) AND a.status <> 'rejected'
     UNION ALL
     -- {_CLAIM_SORT_KEY}: assertions, incoming (predicate inverted, exactly as the domain does)
     SELECT {_CLAIM_SORT_KEY}, 0, a.object_id, 'in',
@@ -955,7 +955,7 @@ WITH edges AS (
            a.confidence, a.calendar, a.temporal_display_fa, a.status, a.topic_fa, a.note_fa,
            {_EVIDENCE_AGG}
     FROM assertion a LEFT JOIN predicate p ON p.code = a.predicate
-    WHERE a.object_id = ANY(:ids::text[]) AND a.status <> 'rejected'
+    WHERE a.object_id = ANY(CAST(:ids AS text[])) AND a.status <> 'rejected'
 )
 SELECT e.owner_id AS owner_id, e.sort_key AS sort_key, e.edge_id AS edge_id,
        e.predicate AS predicate, e.direction AS direction, e.object_type AS object_type,

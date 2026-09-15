@@ -244,6 +244,21 @@ def test_the_trgm_similarity_operator_reaches_postgres_intact() -> None:
     assert "nv.search_form % 'x'" in mogrify(_SEARCH_SQL)
 
 
+def test_textual_sql_does_not_put_postgres_casts_directly_after_bind_names() -> None:
+    """``text(':value::type')`` escapes the colon instead of creating a bind parameter.
+
+    PostgreSQL then receives the literal ``:value`` token.  ``CAST(:value AS type)`` is unambiguous
+    to both SQLAlchemy's textual-SQL parser and PostgreSQL.
+    """
+    pattern = re.compile(r":[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_]")
+    offenders = {
+        path.name: sorted(set(pattern.findall(path.read_text(encoding="utf-8"))))
+        for path in POSTGIS_PACKAGE.glob("*.py")
+    }
+    offenders = {name: matches for name, matches in offenders.items() if matches}
+    assert not offenders, f"ambiguous bind/cast syntax: {offenders}"
+
+
 def test_radius_parameters_are_lon_then_lat() -> None:
     """The codebase speaks (lon, lat) everywhere -- GeoJSON order, `?near=lon,lat`, `point=`.
 

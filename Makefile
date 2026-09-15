@@ -13,7 +13,9 @@
 # Override the interpreter for a prebuilt environment:
 #   make check PYTHON=/path/to/venv/bin/python
 
-PYTHON      ?= python3
+# Prefer the project venv once `make install` has created it, so the documented commands work
+# without `PYTHON=…` on every line; fall back to whatever python3 is on PATH.
+PYTHON      ?= $(if $(wildcard $(VENV)/bin/python),$(VENV)/bin/python,python3)
 NPM         ?= npm
 BACKEND     := backend
 FRONTEND    := frontend

@@ -160,6 +160,11 @@ logic; the frontend never talks to the database.
 
 Everything is environment-driven (`AZIR_*`, see [`.env.example`](.env.example)). The important ones:
 
+`.env.example` documents the variables; it is not read from the repository root. The API reads
+`backend/.env` (its working directory) and Next.js reads `frontend/.env.local` — but for local
+development you do not need either: every `make` target that can reach the database passes
+`AZIR_DB_URL` itself.
+
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `AZIR_DB_DRIVER` | `fixtures` | `fixtures` \| `postgis`; `fixtures` is refused in production |

@@ -156,6 +156,49 @@ def test_predicates_are_declared_in_the_taxonomy(rows: dict[str, list[dict]]) ->
     assert used <= declared, sorted(used - declared)
 
 
+def test_taxonomy_codes_are_globally_unique() -> None:
+    """``entity_kind.code`` is the primary key across *every* category, not per category.
+
+    Two categories may not share a code even when the word means something different in each,
+    because the seeder writes one row per taxonomy entry: a collision is a UniqueViolation on
+    ``pk_entity_kind`` and ``make seed`` stops. ``inscription`` was exactly that -- a source kind
+    (کتیبه) and an event kind (ثبت میراثی) -- so the event one is now ``heritage_inscription``.
+    """
+    codes = [str(item["code"]) for item in DOCS.get("taxonomy", [])]
+    reused = sorted(code for code, count in Counter(codes).items() if count > 1)
+    assert not reused, f"taxonomy codes reused across categories: {reused}"
+
+
+@pytest.mark.parametrize(
+    ("rows_key", "category"),
+    [
+        ("places", "place_kind"),
+        ("people", "person_kind"),
+        ("events", "event_kind"),
+        ("political_entities", "polity_kind"),
+        ("articles", "article_kind"),
+        ("sources", "source_kind"),
+    ],
+)
+def test_every_kind_a_fixture_uses_is_declared_in_its_category(
+    rows: dict[str, list[dict]], rows_key: str, category: str
+) -> None:
+    """Each of these columns is a foreign key to ``entity_kind(code)``.
+
+    An undeclared kind is not a warning: the insert fails with a ForeignKeyViolation, and only
+    *after* the vocabulary itself has loaded -- so the corpus looks healthy right up to the moment
+    the seed dies. Membership is checked per category, not just per table, because the database
+    cannot tell that an event carrying a source kind is nonsense.
+    """
+    declared = {
+        str(item["code"])
+        for item in DOCS.get("taxonomy", [])
+        if str(item.get("kind") or item.get("category")) == category
+    }
+    used = {str(row["kind"]) for row in rows[rows_key] if row.get("kind")}
+    assert used <= declared, sorted(used - declared)
+
+
 def test_place_links_form_a_dag(rows: dict[str, list[dict]]) -> None:
     known = {str(row["id"]) for row in rows["places"]}
     edges: dict[str, set[str]] = {}

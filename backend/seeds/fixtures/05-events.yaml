@@ -312,7 +312,7 @@ events:
       (AGENTS.md #20 و ADR-0013).
 
   - id: evt_unesco_sheikh_safi_2010
-    kind: inscription
+    kind: heritage_inscription
     slug: unesco-sheikh-safi-2010
     status: published
     importance: 0.5

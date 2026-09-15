@@ -26,6 +26,10 @@ taxonomy:
   - {kind: place_kind, code: river,            label_fa: "رود",           label_en: "River",           weight: 0.45}
   - {kind: place_kind, code: lake,             label_fa: "دریاچه",        label_en: "Lake",            weight: 0.5}
   - {kind: place_kind, code: route,            label_fa: "مسیر تاریخی",   label_en: "Historical route", weight: 0.5}
+  # --- person kinds
+  # Declared because person.kind is a foreign key to entity_kind: the corpus does not sub-classify
+  # people yet, and inventing ruler/scholar/poet values here would be fabricating data (AGENTS.md).
+  - {kind: person_kind, code: person,          label_fa: "شخص",           label_en: "Person"}
   # --- event kinds
   - {kind: event_kind, code: battle,       label_fa: "نبرد",           label_en: "Battle"}
   - {kind: event_kind, code: siege,        label_fa: "محاصره",         label_en: "Siege"}
@@ -41,7 +45,7 @@ taxonomy:
   - {kind: event_kind, code: cultural,      label_fa: "رویداد فرهنگی",  label_en: "Cultural event"}
   - {kind: event_kind, code: earthquake,    label_fa: "زمین‌لرزه",      label_en: "Earthquake"}
   - {kind: event_kind, code: epidemic,      label_fa: "همه‌گیری",       label_en: "Epidemic"}
-  - {kind: event_kind, code: inscription,   label_fa: "ثبت میراثی",     label_en: "Heritage inscription"}
+  - {kind: event_kind, code: heritage_inscription, label_fa: "ثبت میراثی", label_en: "Heritage inscription"}
   - {kind: event_kind, code: war,           label_fa: "جنگ",            label_en: "War"}
   # --- political entity kinds
   - {kind: polity_kind, code: kingdom,             label_fa: "پادشاهی",        label_en: "Kingdom"}

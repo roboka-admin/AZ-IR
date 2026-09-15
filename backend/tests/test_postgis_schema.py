@@ -244,6 +244,30 @@ def test_the_trgm_similarity_operator_reaches_postgres_intact() -> None:
     assert "nv.search_form % 'x'" in mogrify(_SEARCH_SQL)
 
 
+def test_gaps_sql_does_not_invent_a_bind_from_the_no_geometry_literal() -> None:
+    """The query must accept exactly the parameters supplied by ``features()``.
+
+    A SQL literal containing ``':no-geometry'`` is parsed by ``text()`` as a ``no`` bind even though
+    it is inside quotes. Keeping the punctuation and suffix in separate literals avoids that parser
+    ambiguity while PostgreSQL still produces ``<type>:<id>:no-geometry``.
+    """
+    params = {
+        "narrative_types": [],
+        "include_unpublished": False,
+        "layers": [],
+        "kinds": [],
+        "min_rank": 0.0,
+        "temporal_mode": "overlaps",
+        "year_from": -1_000_000,
+        "year_to": 1_000_000,
+    }
+    compiled = text(_GAPS_SQL).compile(dialect=PSYCOPG2)
+
+    assert "no" not in compiled.params
+    compiled.construct_params(params)
+    assert "|| ':' || 'no-geometry'" in str(compiled)
+
+
 def test_textual_sql_does_not_put_postgres_casts_directly_after_bind_names() -> None:
     """``text(':value::type')`` escapes the colon instead of creating a bind parameter.
 

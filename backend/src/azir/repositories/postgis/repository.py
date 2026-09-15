@@ -819,7 +819,7 @@ _SEARCH_SQL = """
 """
 
 _GAPS_SQL = """
-SELECT erm.entity_type || ':' || erm.id || ':no-geometry' AS gap
+SELECT erm.entity_type || ':' || erm.id || ':' || 'no-geometry' AS gap
 FROM entity_read_model erm
 WHERE erm.entity_type = ANY(CAST(:narrative_types AS text[]))
   AND (CAST(:include_unpublished AS boolean) OR erm.status = 'published')

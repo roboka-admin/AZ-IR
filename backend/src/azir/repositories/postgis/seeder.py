@@ -360,12 +360,31 @@ def seed_database(
                 "entity_id": record.id,
                 "revision": record.revision,
                 "head_id": None,
-                "published_at": sa.func.now() if record.status.value == "published" else None,
+                "published_at": None,
             }
             for record in records
             if record.entity_type.value in editable
         ]
         _insert(connection, schema.editorial_state, state_rows, counts)
+        published_keys = [
+            (record.entity_type.value, record.id)
+            for record in records
+            if record.entity_type.value in editable and record.status.value == "published"
+        ]
+        if published_keys:
+            # SQL expressions in executemany parameter mappings are sent to psycopg2 as values,
+            # not rendered. Stamp published rows in one explicit statement so PostgreSQL's clock
+            # remains authoritative (and draft timestamps remain NULL).
+            connection.execute(
+                schema.editorial_state.update()
+                .where(
+                    sa.tuple_(
+                        schema.editorial_state.c.entity_type,
+                        schema.editorial_state.c.entity_id,
+                    ).in_(published_keys)
+                )
+                .values(published_at=sa.func.now())
+            )
 
         # -- facets --------------------------------------------------------
         name_rows = [row for record in records for row in _name_rows(record)]

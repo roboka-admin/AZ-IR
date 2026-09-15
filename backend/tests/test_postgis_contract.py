@@ -284,6 +284,24 @@ def test_seeding_twice_is_idempotent(db_repository) -> None:
     assert first.tables["entity_geometry"] == second.tables["entity_geometry"]
 
 
+def test_seed_stamps_published_editorial_state_with_the_database_clock(db_repository) -> None:
+    import sqlalchemy as sa
+
+    from azir.repositories.postgis import build_engine, schema
+
+    engine = build_engine(DB_URL or "")
+    with engine.connect() as connection:
+        published_at = connection.scalar(
+            sa.select(schema.editorial_state.c.published_at).where(
+                schema.editorial_state.c.entity_type == "event",
+                schema.editorial_state.c.entity_id == "evt_battle_chaldiran",
+            )
+        )
+    engine.dispose()
+
+    assert published_at is not None
+
+
 def test_unpublished_entities_are_not_served(db_repository) -> None:
     page = query(db_repository, zoom=6.0, window=TimeWindow.at(1500))
     records = list(page.entities.values())

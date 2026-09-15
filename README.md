@@ -27,9 +27,9 @@ make check          # lint + types + tests (403 backend tests)
 Vector tiles — optional until the corpus outgrows GeoJSON (ADR-0018):
 
 ```bash
-make tiles          # build the static PMTiles archive (z0..z10: 1010 tiles, ~850 kB for the pilot)
-make tiles-verify   # re-read it with `pmtiles`, the reference reader MapLibre uses in the browser
-make smoke          # 42 end-to-end contract checks against a running API
+make tiles          # build the archives, one per locale (z0..z10: 1010 tiles, ~850 kB each)
+make tiles-verify   # re-read them with `pmtiles`, the reference reader MapLibre uses in the browser
+make smoke          # 44 end-to-end contract checks against a running API
 ```
 
 The map picks the archive up by itself: with one built it serves tiles, without one it keeps serving
@@ -41,9 +41,15 @@ With PostgreSQL + PostGIS (production truth):
 make db-up                                   # docker compose up -d db  (postgis/postgis:16-3.4)
 make migrate                                 # alembic upgrade head
 make seed                                    # azir seed: fixtures corpus → PostGIS
+make dev-users                               # the four editorial logins (AZIR_DEV_PASSWORD)
 AZIR_DB_DRIVER=postgis make dev-backend      # same API, real spatial SQL
-make test-postgis                            # contract suite against both drivers
+AZIR_DB_DRIVER=postgis make tiles            # archives rendered from the database
+make db-test && make test-postgis            # contract suite against both drivers
 ```
+
+Every target that can reach the database passes `AZIR_DB_URL` for you (override it with
+`make … DB_URL=postgresql+psycopg2://user:pass@host:5432/db`); `AZIR_DB_DRIVER=postgis` without a
+URL is refused at startup rather than served as empty data.
 
 `make doctor` prints configuration + data health as JSON and exits non-zero if a lint rule fails
 (claims without evidence, published entities without names/geometry, reconstructed extents marked

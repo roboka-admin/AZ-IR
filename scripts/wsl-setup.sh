@@ -212,10 +212,13 @@ step "done — run the atlas"
 cat <<'NEXT'
   Terminal 1:  make dev-backend        # API  → http://localhost:8000/docs
   Terminal 2:  make dev-web            # web  → http://localhost:3000
-  Check:       make check              # lint + types + tests
-               make smoke              # 20 end-to-end contract checks against the running API
+  Optional:    make tiles              # PMTiles archives (fa+en) → the map serves tiles
+  Check:       make check              # lint + types + 400+ tests
+               make smoke              # 44 end-to-end contract checks against the running API
 
-  With PostGIS (after --with-db or `make db-up migrate seed`):
-               AZIR_DB_DRIVER=postgis make dev-backend
-               make test-postgis       # contract suite against both drivers
+  With PostGIS (after --with-db, or `make db-up migrate seed`):
+               AZIR_DB_DRIVER=postgis make dev-backend   # the Makefile passes AZIR_DB_URL
+               AZIR_DB_DRIVER=postgis make tiles         # archives built from the real database
+               make dev-users                           # the four logins (AZIR_DEV_PASSWORD)
+               make db-test && make test-postgis        # contract suite against both drivers
 NEXT

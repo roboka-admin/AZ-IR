@@ -8,6 +8,7 @@
 #   make lint-data   # the data-quality rules over the fixture corpus
 #   make dev-web     # Next.js on :3000
 #   make db-up       # PostGIS in Docker, then `make migrate seed`
+#   make db-test     # the azir_test database for `make test-postgis`
 #
 # Override the interpreter for a prebuilt environment:
 #   make check PYTHON=/path/to/venv/bin/python
@@ -30,7 +31,7 @@ UVICORN     := $(PYTHON) -m uvicorn
 
 .DEFAULT_GOAL := help
 .PHONY: help install venv lint typecheck test test-postgis check clean smoke wsl-setup \
-        migrate seed doctor dev-backend dev-web build db-up db-down db-logs \
+        migrate seed doctor dev-backend dev-web build db-up db-down db-logs db-test \
         dev-users users lint-data tiles tiles-verify tiles-inspect
 
 help: ## Show this help
@@ -78,10 +79,12 @@ seed: ## Load the fixture corpus into PostgreSQL+PostGIS
 	  $(PYTHON) -m azir.cli seed --fixtures-dir "$(FIXTURES)"
 
 doctor: ## Configuration + data health report
-	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" $(PYTHON) -m azir.cli --human-logs doctor
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_DB_URL="$(DB_URL)" \
+	  $(PYTHON) -m azir.cli --human-logs doctor
 
-dev-backend: ## API with reload, fixtures driver (no database required)
-	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_TILES_DIR="$(TILES_DIR)" AZIR_DEBUG=true \
+dev-backend: ## API with reload (fixtures by default; AZIR_DB_DRIVER=postgis for real spatial SQL)
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_TILES_DIR="$(TILES_DIR)" \
+	  AZIR_DB_URL="$(DB_URL)" AZIR_DEBUG=true \
 	  $(UVICORN) azir.main:app --app-dir src --host 0.0.0.0 --port 8000 --reload
 
 dev-web: ## Next.js dev server
@@ -97,13 +100,14 @@ users: ## List editorial accounts (PostgreSQL)
 	  $(PYTHON) -m azir.cli --human-logs user list
 
 lint-data: ## Data-quality rules over the corpus (docs/07 §3); exit 1 if anything blocks
-	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" \
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_DB_URL="$(DB_URL)" \
 	  $(PYTHON) -m azir.cli --human-logs lint
 
 tiles: ## Build the static tile archives, one per locale (PostgreSQL when configured)
 	@for locale in $(TILES_LOCALES); do \
 	  echo "→ locale $$locale"; \
 	  (cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_TILES_DIR="$(TILES_DIR)" \
+	    AZIR_DB_URL="$(DB_URL)" \
 	    $(PYTHON) -m azir.cli --human-logs tiles build --locale $$locale \
 	      --max-zoom $(TILES_MAX_ZOOM)) || exit 1; \
 	done
@@ -117,12 +121,20 @@ tiles-verify: ## Re-read every built archive with the reference (browser) PMTile
 tiles-inspect: ## Report the contents of the built archive, per zoom level
 	@ARCHIVE=$$(ls -t $(TILES_DIR)/*.pmtiles 2>/dev/null | head -1); \
 	if [ -z "$$ARCHIVE" ]; then echo "no archive in $(TILES_DIR) -- run \`make tiles\` first"; exit 1; fi; \
-	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" \
+	cd $(BACKEND) && AZIR_FIXTURES_DIR="$(FIXTURES)" AZIR_DB_URL="$(DB_URL)" \
 	  $(PYTHON) -m azir.cli --human-logs tiles inspect "$$ARCHIVE"
 
 db-up: ## PostGIS in Docker
 	docker compose up -d db
 	@echo "waiting for postgres..."; sleep 5; docker compose ps db
+
+db-test: ## Create the azir_test database that `make test-postgis` runs against (idempotent)
+	@docker compose exec -T db psql -U azir -d postgres -tc \
+	  "SELECT 1 FROM pg_database WHERE datname = 'azir_test'" | grep -q 1 \
+	  || docker compose exec -T db createdb -U azir azir_test
+	@docker compose exec -T db psql -U azir -d azir_test -c \
+	  "CREATE EXTENSION IF NOT EXISTS postgis" >/dev/null
+	@echo "azir_test ready (PostGIS enabled)"
 
 db-down: ## Stop the database (keeps the volume)
 	docker compose stop db

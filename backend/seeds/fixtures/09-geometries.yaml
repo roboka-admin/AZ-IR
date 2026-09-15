@@ -1,0 +1,251 @@
+# ---------------------------------------------------------------------------
+# 09-geometries.yaml — area geometries (reconstructed extents)
+#
+# WHY A SEPARATE FILE
+#   Every polygon here is a *reconstruction*, not a surveyed boundary. Keeping them in one file
+#   means a reviewer can audit the whole "where did we draw a shape and on what authority"
+#   question without hunting through entity records (ADR-0013, AGENTS.md #7 / #9).
+#
+# HONESTY RULES APPLIED TO EVERY ENTRY
+#   kind: extent_reconstructed   -> the shape is an interpretation, never a footprint
+#   certainty: reconstructed     -> the UI renders it hatched/dashed and shows the note
+#   year_from / year_to          -> an extent is only valid for its own years (ADR-0004)
+#   source                       -> a citable work that describes the extent in words
+#   note                         -> what the shape is NOT, and what must replace it
+#
+# These polygons are schematic: they encode the *scale and orientation* of a polity as described
+# by the cited sources, so the map can show change over time. They must be replaced by
+# digitized, per-source boundary research before any publication claims precision. The
+# `needs_digitisation: true` marker keeps that obligation machine-readable.
+# ---------------------------------------------------------------------------
+
+geometries:
+
+  # ============================================================ historical region
+  - entity: plc_azerbaijan_historical
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: -300
+    year_to: 1925
+    source: src_eir_azerbaijan_history
+    needs_digitisation: true
+    note_fa: >-
+      محدودهٔ «آذربایجان تاریخی» در دوره‌ها متفاوت است؛ این شکل یک بازسازی طرح‌واره‌ای از
+      هستهٔ پایدار منطقه (میان آرس در شمال، دریاچهٔ ارومیه، زنجان و کرانهٔ شرقی تا اردبیل) است
+      و با تقسیمات استانی امروزی یکی نیست.
+    note_en: >-
+      The extent of historical Azerbaijan varied by period. This is a schematic reconstruction of
+      the region's stable core (between the Aras, Lake Urmia, Zanjan and Ardabil) and is not
+      identical with today's provinces.
+    coordinates: [[[44.05, 39.75], [45.6, 39.75], [47.0, 39.6], [48.5, 39.35], [49.3, 38.6],
+                   [49.0, 37.6], [48.2, 36.95], [47.0, 36.6], [45.8, 36.45], [44.95, 37.05],
+                   [44.35, 38.0], [44.05, 39.0], [44.05, 39.75]]]
+
+  # ============================================================ Lake Urmia: two dated shorelines
+  # A natural feature whose area changed dramatically in the last decades; modelling it as two
+  # time-bounded geometries is exactly what docs/04 §"time-varying geometry" asks for.
+  - entity: plc_lake_urmia
+    kind: footprint
+    certainty: approximate
+    type: Polygon
+    year_from: 1980
+    year_to: 2010
+    source: src_osm_modern_admin
+    needs_digitisation: true
+    note_fa: >-
+      پهنهٔ دریاچه در این بازه (پیش از خشک‌سازی گسترده). این شکل تقریبی است و باید با دادهٔ
+      هیدرولوژیک معتبر (سنجش از دور) جایگزین شود.
+    note_en: Approximate lake extent before the major shrinkage; to be replaced by remote-sensing data.
+    coordinates: [[[44.95, 38.3], [45.6, 38.5], [46.15, 38.25], [46.4, 37.85], [46.2, 37.4],
+                   [45.7, 37.0], [45.2, 37.1], [44.9, 37.6], [44.85, 38.0], [44.95, 38.3]]]
+
+  - entity: plc_lake_urmia
+    kind: footprint
+    certainty: approximate
+    type: Polygon
+    year_from: 2011
+    year_to: 2026
+    source: src_osm_modern_admin
+    needs_digitisation: true
+    note_fa: >-
+      پهنهٔ کوچک‌شدهٔ دریاچه پس از ۱۳۹۰ ش؛ مقایسهٔ دو هندسهٔ زمان‌دار، تغییر محیطی را روی نقشه
+      نشان می‌دهد.
+    note_en: The shrunken lake after 2011; comparing the two dated geometries shows environmental change on the map.
+    coordinates: [[[45.45, 38.2], [45.95, 38.05], [46.0, 37.6], [45.6, 37.3], [45.25, 37.6],
+                   [45.25, 38.0], [45.45, 38.2]]]
+
+  # ============================================================ Atropatene
+  - entity: pol_atropatene
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: -320
+    year_to: 226
+    source: src_strabo_geographica
+    needs_digitisation: true
+    note_fa: >-
+      بر پایهٔ توصیف استرابون (کتاب یازدهم) از آتروپاتن: ناحیه‌ای کوهستانی با مرکزیت گنزک/شیز
+      در جنوب دریاچهٔ ارومیه و امتداد تا دشت مغان. مرزها در منابع به‌دقت نیامده‌اند.
+    note_en: >-
+      Reconstructed from Strabo's description (Geographica XI) of a mountainous region centred on
+      Ganzak/Shiz, south of Lake Urmia towards the Mugan plain. Sources give no precise borders.
+    coordinates: [[[44.6, 38.4], [45.0, 39.3], [46.5, 39.5], [48.0, 39.3], [48.8, 38.4],
+                   [48.3, 37.4], [47.2, 36.9], [45.9, 36.8], [45.0, 37.5], [44.6, 38.4]]]
+
+  # ============================================================ Eldiguzids
+  - entity: pol_eldiguzids
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1136
+    year_to: 1225
+    source: src_bosworth_dynasties
+    needs_digitisation: true
+    note_fa: >-
+      قلمرو اتابکان آذربایجان: آران و شروان (گنجه، نخجوان، باکو)، آذربایجان و بخش‌هایی از
+      عراق عجم تا همدان و ری. بازسازی بر پایهٔ فهرست بوسورث و تواریخ محلی.
+    note_en: >-
+      Atabeg domains: Arran and Shirvan (Ganja, Nakhchivan, Baku), Azerbaijan and parts of Persian
+      Iraq towards Hamadan and Rayy, per Bosworth's dynastic tables and local chronicles.
+    coordinates: [[[44.0, 39.8], [44.4, 41.0], [46.0, 41.6], [47.9, 41.3], [49.6, 40.5],
+                   [50.2, 39.0], [49.4, 37.9], [48.0, 37.1], [46.4, 36.9], [45.2, 37.5],
+                   [44.4, 38.6], [44.0, 39.8]]]
+
+  # ============================================================ Ilkhanate
+  - entity: pol_ilkhanate
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1256
+    year_to: 1335
+    source: src_chiran_vol5
+    needs_digitisation: true
+    note_fa: >-
+      قلمرو ایلخانان در اوج خود: از آناتولی شرقی تا خراسان و هرات، از قفقاز تا کرانهٔ خلیج فارس.
+      مرزهای غربی با ممالیک و شمالی با اردوی زرین متغیر بود. بازسازی بر پایهٔ تاریخ کمبریج ایران.
+    note_en: >-
+      Ilkhanid domains at their greatest extent: from eastern Anatolia to Khurasan and Herat, from
+      the Caucasus to the Persian Gulf. Western and northern frontiers shifted; reconstructed from
+      the Cambridge History of Iran, vol. 5.
+    coordinates: [[[35.6, 36.6], [36.2, 42.0], [45.0, 43.2], [55.0, 42.2], [65.0, 39.0],
+                   [66.5, 33.5], [61.0, 27.0], [55.0, 25.6], [49.0, 27.6], [44.0, 30.6],
+                   [39.0, 32.2], [35.6, 36.6]]]
+
+  # ============================================================ Qara Qoyunlu
+  - entity: pol_qara_qoyunlu
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1380
+    year_to: 1468
+    source: src_bosworth_dynasties
+    needs_digitisation: true
+    note_fa: >-
+      قلمرو قره‌قویونلوها با مرکزیت تبریز: شرق آناتولی (ارزروم، وان)، آذربایجان، عراق عجم و
+      عراق عرب تا بغداد (پس از ۱۴۱۰). مرزها با قلمرو تیموری و آق‌قویونلو سیال بود.
+    note_en: >-
+      Qara Qoyunlu domains centred on Tabriz: eastern Anatolia (Erzurum, Van), Azerbaijan, Persian
+      Iraq and Arab Iraq to Baghdad after 1410. Frontiers with Timurid and Aq Qoyunlu lands were fluid.
+    coordinates: [[[38.6, 38.0], [39.2, 40.4], [43.0, 41.4], [47.0, 40.9], [49.6, 39.4],
+                   [50.6, 37.4], [49.0, 35.0], [46.4, 33.4], [43.4, 34.0], [41.0, 36.0],
+                   [38.6, 38.0]]]
+
+  # ============================================================ Aq Qoyunlu
+  - entity: pol_aq_qoyunlu
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1468
+    year_to: 1501
+    source: src_chiran_vol6
+    needs_digitisation: true
+    note_fa: >-
+      قلمرو آق‌قویونلوها پس از پیروزی اوزون حسن بر جهان‌شاه (۱۴۶۸): شرق آناتولی با مرکزیت
+      دیاربکر، آذربایجان، عراق عجم، فارس و کرمان. این شکل فقط بازهٔ پس از ۱۴۶۸ را پوشش می‌دهد
+      زیرا پیش از آن قلمرو محدود به دیاربکر بود.
+    note_en: >-
+      Aq Qoyunlu domains after Uzun Hasan defeated Jahan Shah (1468): eastern Anatolia centred on
+      Diyarbakir, Azerbaijan, Persian Iraq, Fars and Kirman. Only the post-1468 phase is modelled.
+    coordinates: [[[38.2, 37.0], [38.2, 40.0], [42.0, 41.4], [47.6, 40.9], [52.2, 38.9],
+                   [53.6, 35.4], [51.0, 32.0], [47.0, 30.4], [44.0, 32.6], [40.6, 34.6],
+                   [38.2, 37.0]]]
+
+  # ============================================================ Safaviyya order (influence, not territory)
+  - entity: pol_safaviyya
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1400
+    year_to: 1501
+    source: src_eir_safavid_dynasty
+    needs_digitisation: true
+    note_fa: >-
+      حوزهٔ نفوذ طریقت صفویه، نه قلمرو سیاسی: شبکهٔ خلافت و مریدان از اردبیل تا آناتولی شرقی،
+      شامات، قفقاز و خراسان. نمایش آن روی نقشه باید با سبک متمایز (بدون ادعای مرز) باشد.
+    note_en: >-
+      The zone of the Safaviyya order's influence, not a political territory: networks of deputies
+      and disciples from Ardabil into eastern Anatolia, Syria, the Caucasus and Khurasan.
+    coordinates: [[[44.6, 41.0], [47.6, 41.0], [49.6, 39.0], [49.0, 37.0], [46.4, 36.4],
+                   [45.0, 38.0], [44.6, 41.0]]]
+
+  # ============================================================ Safavid state, phase 1 (1501-1600)
+  - entity: pol_safavid
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1501
+    year_to: 1600
+    source: src_savory_safavid_iran
+    needs_digitisation: true
+    note_fa: >-
+      دولت صفوی در دورهٔ نخست (۱۵۰۱–۱۶۰۰ م): شامل عراق عرب تا بغداد (از ۱۵۳۴)، قفقاز جنوبی
+      (با نوسان پس از جنگ‌های ۱۵۴۸–۱۵۵۵)، خراسان و هرات، و کرانهٔ خلیج فارس. بازسازی بر پایهٔ
+      سیوری و تاریخ کمبریج ایران (جلد ۶).
+    note_en: >-
+      The Safavid state in its first phase (1501-1600): Arab Iraq to Baghdad from 1534, the southern
+      Caucasus (contested after the wars of 1548-1555), Khurasan and Herat, and the Persian Gulf
+      coast. Reconstructed from Savory and Cambridge History of Iran vol. 6.
+    coordinates: [[[43.4, 33.6], [42.2, 37.0], [43.6, 42.4], [48.0, 42.6], [52.2, 41.0],
+                   [60.0, 38.2], [63.6, 35.0], [62.0, 30.0], [58.0, 26.0], [52.0, 25.4],
+                   [48.6, 29.0], [45.0, 30.6], [43.4, 33.6]]]
+
+  # ============================================================ Safavid state, phase 2 (1601-1736)
+  - entity: pol_safavid
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1601
+    year_to: 1736
+    source: src_chiran_vol6
+    needs_digitisation: true
+    note_fa: >-
+      دورهٔ دوم (۱۶۰۱–۱۷۳۶ م): پس از معاهدهٔ زهاب (۱۶۳۹ م) عراق عرب و بغداد به امپراتوری
+      عثمانی واگذار شد و مرز غربی تقریباً به همان خطی رسید که امروز هم پابرجاست؛ قندهار در میانهٔ
+      سدهٔ هفدهم از دست رفت.
+    note_en: >-
+      The second phase (1601-1736): after the Treaty of Zuhab (1639) Arab Iraq and Baghdad passed to
+      the Ottoman empire along a frontier close to today's border; Qandahar was lost mid-century.
+    coordinates: [[[45.6, 33.4], [45.4, 38.0], [45.6, 42.4], [48.0, 42.6], [52.2, 41.0],
+                   [60.0, 38.2], [62.6, 35.0], [61.0, 30.0], [57.4, 26.0], [52.0, 25.4],
+                   [49.0, 29.0], [47.6, 31.6], [45.6, 33.4]]]
+
+  # ============================================================ Azerbaijan People's Government, 1945-46
+  - entity: pol_azerbaijan_gov_1945
+    kind: extent_reconstructed
+    certainty: reconstructed
+    type: Polygon
+    year_from: 1945
+    year_to: 1946
+    source: src_kasravi_mashrute
+    needs_digitisation: true
+    note_fa: >-
+      محدودهٔ تقریبی تحت کنترل «حکومت ملی آذربایجان» (آذر ۱۳۲۴ – آذر ۱۳۲۵ ش): آذربایجان شرقی و
+      غربی و بخش‌هایی از اردبیل. این یک قلمرو کوتاه‌مدت و مورد مناقشه است و باید با certainty
+      پایین نمایش داده شود.
+    note_en: >-
+      Approximate area controlled by the Azerbaijan People's Government (Dec 1945 - Dec 1946):
+      East and West Azerbaijan with parts of Ardabil. A short-lived, contested entity that must be
+      shown with low certainty.
+    coordinates: [[[44.3, 39.7], [46.5, 39.8], [48.5, 39.4], [49.2, 38.4], [48.4, 37.4],
+                   [47.0, 36.9], [45.6, 37.0], [44.6, 37.8], [44.2, 38.8], [44.3, 39.7]]]

@@ -1,0 +1,129 @@
+# Controlled vocabularies (ADR-0012). Adding a value here is a data change that must be reviewed;
+# nothing in the code may invent a new kind/predicate at runtime.
+taxonomy:
+  # --- place kinds
+  - {kind: place_kind, code: historical_region, label_fa: "منطقهٔ تاریخی", label_en: "Historical region", weight: 1.0}
+  - {kind: place_kind, code: region,           label_fa: "منطقه",         label_en: "Region",          weight: 0.95}
+  - {kind: place_kind, code: province_modern,  label_fa: "استان (تقسیمات امروزی)", label_en: "Modern province", weight: 0.2}
+  - {kind: place_kind, code: city,             label_fa: "شهر",           label_en: "City",            weight: 0.9}
+  - {kind: place_kind, code: town,             label_fa: "شهرک",          label_en: "Town",            weight: 0.62}
+  - {kind: place_kind, code: village,          label_fa: "روستا",         label_en: "Village",         weight: 0.25}
+  - {kind: place_kind, code: district,         label_fa: "بخش",           label_en: "District",        weight: 0.35}
+  - {kind: place_kind, code: neighborhood,     label_fa: "محله",          label_en: "Neighbourhood",   weight: 0.3}
+  - {kind: place_kind, code: building,         label_fa: "بنا",           label_en: "Building",        weight: 0.55}
+  - {kind: place_kind, code: mosque,           label_fa: "مسجد",          label_en: "Mosque",          weight: 0.55}
+  - {kind: place_kind, code: mausoleum,        label_fa: "بقعه/آرامگاه",  label_en: "Mausoleum",       weight: 0.58}
+  - {kind: place_kind, code: citadel,          label_fa: "ارگ",           label_en: "Citadel",         weight: 0.6}
+  - {kind: place_kind, code: castle,           label_fa: "قلعه",          label_en: "Castle",          weight: 0.6}
+  - {kind: place_kind, code: bazaar,           label_fa: "بازار",         label_en: "Bazaar",          weight: 0.55}
+  - {kind: place_kind, code: caravanserai,     label_fa: "کاروانسرا",     label_en: "Caravanserai",    weight: 0.45}
+  - {kind: place_kind, code: bridge,           label_fa: "پل",            label_en: "Bridge",          weight: 0.4}
+  - {kind: place_kind, code: cemetery,         label_fa: "گورستان",       label_en: "Cemetery",        weight: 0.3}
+  - {kind: place_kind, code: archaeological_site, label_fa: "محوطهٔ باستانی", label_en: "Archaeological site", weight: 0.78}
+  - {kind: place_kind, code: site,             label_fa: "محوطه",         label_en: "Site",            weight: 0.5}
+  - {kind: place_kind, code: battlefield,      label_fa: "میدان نبرد",    label_en: "Battlefield",     weight: 0.8}
+  - {kind: place_kind, code: mountain,         label_fa: "کوه",           label_en: "Mountain",        weight: 0.45}
+  - {kind: place_kind, code: river,            label_fa: "رود",           label_en: "River",           weight: 0.45}
+  - {kind: place_kind, code: lake,             label_fa: "دریاچه",        label_en: "Lake",            weight: 0.5}
+  - {kind: place_kind, code: route,            label_fa: "مسیر تاریخی",   label_en: "Historical route", weight: 0.5}
+  # --- person kinds
+  # Declared because person.kind is a foreign key to entity_kind: the corpus does not sub-classify
+  # people yet, and inventing ruler/scholar/poet values here would be fabricating data (AGENTS.md).
+  - {kind: person_kind, code: person,          label_fa: "شخص",           label_en: "Person"}
+  # --- event kinds
+  - {kind: event_kind, code: battle,       label_fa: "نبرد",           label_en: "Battle"}
+  - {kind: event_kind, code: siege,        label_fa: "محاصره",         label_en: "Siege"}
+  - {kind: event_kind, code: sack,         label_fa: "غارت/تسخیر",     label_en: "Sack"}
+  - {kind: event_kind, code: revolt,       label_fa: "شورش",           label_en: "Revolt"}
+  - {kind: event_kind, code: treaty,       label_fa: "پیمان",          label_en: "Treaty"}
+  - {kind: event_kind, code: coronation,   label_fa: "تاج‌گذاری",      label_en: "Coronation"}
+  - {kind: event_kind, code: founding,     label_fa: "تأسیس",          label_en: "Founding"}
+  - {kind: event_kind, code: construction,  label_fa: "ساخت",           label_en: "Construction"}
+  - {kind: event_kind, code: destruction,   label_fa: "تخریب",          label_en: "Destruction"}
+  - {kind: event_kind, code: migration,     label_fa: "مهاجرت",         label_en: "Migration"}
+  - {kind: event_kind, code: political,     label_fa: "رویداد سیاسی",   label_en: "Political event"}
+  - {kind: event_kind, code: cultural,      label_fa: "رویداد فرهنگی",  label_en: "Cultural event"}
+  - {kind: event_kind, code: earthquake,    label_fa: "زمین‌لرزه",      label_en: "Earthquake"}
+  - {kind: event_kind, code: epidemic,      label_fa: "همه‌گیری",       label_en: "Epidemic"}
+  - {kind: event_kind, code: heritage_inscription, label_fa: "ثبت میراثی", label_en: "Heritage inscription"}
+  - {kind: event_kind, code: war,           label_fa: "جنگ",            label_en: "War"}
+  # --- political entity kinds
+  - {kind: polity_kind, code: kingdom,             label_fa: "پادشاهی",        label_en: "Kingdom"}
+  - {kind: polity_kind, code: dynasty,             label_fa: "دودمان",         label_en: "Dynasty"}
+  - {kind: polity_kind, code: empire,              label_fa: "امپراتوری",      label_en: "Empire"}
+  - {kind: polity_kind, code: emirate,             label_fa: "امارت",          label_en: "Emirate"}
+  - {kind: polity_kind, code: khanate,             label_fa: "خان‌نشین",       label_en: "Khanate"}
+  - {kind: polity_kind, code: atabegate,           label_fa: "اتابکیه",        label_en: "Atabegate"}
+  - {kind: polity_kind, code: confederation,       label_fa: "اتحادیهٔ ایلی",  label_en: "Tribal confederation"}
+  - {kind: polity_kind, code: sufi_order,          label_fa: "طریقت",          label_en: "Sufi order"}
+  - {kind: polity_kind, code: autonomous_government, label_fa: "حکومت خودمختار", label_en: "Autonomous government"}
+  - {kind: polity_kind, code: province,            label_fa: "ایالت/ولایت",    label_en: "Province"}
+  # --- source kinds
+  - {kind: source_kind, code: chronicle,             label_fa: "تاریخ‌نامه",        label_en: "Chronicle"}
+  - {kind: source_kind, code: manuscript,            label_fa: "نسخهٔ خطی",         label_en: "Manuscript"}
+  - {kind: source_kind, code: inscription,           label_fa: "کتیبه",             label_en: "Inscription"}
+  - {kind: source_kind, code: geographical_work,     label_fa: "اثر جغرافیایی",     label_en: "Geographical work"}
+  - {kind: source_kind, code: archaeological_report, label_fa: "گزارش باستان‌شناسی", label_en: "Archaeological report"}
+  - {kind: source_kind, code: academic_article,      label_fa: "مقالهٔ دانشگاهی",   label_en: "Academic article"}
+  - {kind: source_kind, code: academic_book,         label_fa: "کتاب دانشگاهی",     label_en: "Academic book"}
+  - {kind: source_kind, code: encyclopedia_entry,    label_fa: "مدخل دانشنامه",     label_en: "Encyclopedia entry"}
+  - {kind: source_kind, code: heritage_dossier,      label_fa: "پروندهٔ میراث جهانی", label_en: "World Heritage dossier"}
+  - {kind: source_kind, code: travel_account,        label_fa: "سفرنامه",           label_en: "Travel account"}
+  - {kind: source_kind, code: official_register,     label_fa: "فهرست رسمی",        label_en: "Official register"}
+  - {kind: source_kind, code: classical_author,      label_fa: "مؤلف کلاسیک",       label_en: "Classical author"}
+  # --- locator types
+  - {kind: locator_type, code: page,              label_fa: "صفحه",        label_en: "page"}
+  - {kind: locator_type, code: folio,             label_fa: "برگ",         label_en: "folio"}
+  - {kind: locator_type, code: chapter,           label_fa: "فصل/باب",     label_en: "chapter"}
+  - {kind: locator_type, code: entry,             label_fa: "مدخل",        label_en: "entry"}
+  - {kind: locator_type, code: paragraph,         label_fa: "بند",         label_en: "paragraph"}
+  - {kind: locator_type, code: catalogue_number,  label_fa: "شمارهٔ فهرست", label_en: "catalogue number"}
+  - {kind: locator_type, code: map_sheet,         label_fa: "شیت نقشه",    label_en: "map sheet"}
+  - {kind: locator_type, code: plate,             label_fa: "لوحه/تصویر",  label_en: "plate"}
+  - {kind: locator_type, code: criterion,         label_fa: "معیار یونسکو", label_en: "UNESCO criterion"}
+
+# Predicate vocabulary for assertions (ADR-0003). Labels are used directly in the API/UI.
+predicates:
+  - {code: born_in,        label_fa: "زادگاه",          label_en: "born in"}
+  - {code: died_in,        label_fa: "محل درگذشت",      label_en: "died in"}
+  - {code: lived_in,       label_fa: "زیست در",         label_en: "lived in"}
+  - {code: worked_at,      label_fa: "محل فعالیت",      label_en: "worked at"}
+  - {code: ruled,          label_fa: "فرمان‌روای",       label_en: "ruled"}
+  - {code: ruled_by,       label_fa: "به فرمان‌روایی",   label_en: "ruled by"}
+  - {code: founded,        label_fa: "بنیان‌گذار",       label_en: "founded"}
+  - {code: founded_by,     label_fa: "به بنیان‌گذاری",   label_en: "founded by"}
+  - {code: commissioned,   label_fa: "بانِی",            label_en: "commissioned"}
+  - {code: commissioned_by, label_fa: "به بانیشنی",      label_en: "commissioned by"}
+  - {code: built_by,       label_fa: "ساختهٔ",           label_en: "built by"}
+  - {code: capital_of,     label_fa: "پایتختِ",          label_en: "capital of"}
+  - {code: capital,        label_fa: "پایتخت",           label_en: "capital"}
+  - {code: located_in,     label_fa: "واقع در",          label_en: "located in"}
+  - {code: contains,       label_fa: "شامل",             label_en: "contains"}
+  - {code: part_of,        label_fa: "بخشی از",          label_en: "part of"}
+  - {code: has_part,       label_fa: "دارای بخش",        label_en: "has part"}
+  - {code: admin_in,       label_fa: "تقسیمات اداری امروزی", label_en: "modern administrative unit"}
+  - {code: historically_in, label_fa: "از نظر تاریخی در", label_en: "historically part of"}
+  - {code: site_of,        label_fa: "محل وقوع",         label_en: "site of"}
+  - {code: hosted,         label_fa: "میزبان",           label_en: "hosted"}
+  - {code: participated_in, label_fa: "شرکت در",         label_en: "participated in"}
+  - {code: has_participant, label_fa: "با شرکت",         label_en: "has participant"}
+  - {code: succeeded,      label_fa: "جانشین",           label_en: "succeeded"}
+  - {code: preceded,       label_fa: "پیشین",            label_en: "preceded"}
+  - {code: caused,         label_fa: "علت",              label_en: "caused"}
+  - {code: led_to,         label_fa: "انجامید به",       label_en: "led to"}
+  - {code: member_of,      label_fa: "عضو",              label_en: "member of"}
+  - {code: affiliated_with, label_fa: "منسوب به",        label_en: "affiliated with"}
+  - {code: attributed_to,  label_fa: "منسوب به (انتسابی)", label_en: "attributed to"}
+  - {code: mentioned_in,   label_fa: "یادشده در",        label_en: "mentioned in"}
+  - {code: burial_place,   label_fa: "آرامگاه",          label_en: "burial place"}
+  - {code: birthplace_of,  label_fa: "زادگاهِ",          label_en: "birthplace of"}
+  - {code: death_place_of, label_fa: "محل درگذشتِ",      label_en: "death place of"}
+  - {code: workplace_of,   label_fa: "محل فعالیتِ",      label_en: "workplace of"}
+  - {code: located_near,   label_fa: "در نزدیکی",        label_en: "located near"}
+  - {code: descendant_of,  label_fa: "از نسل",         label_en: "descendant of"}
+  - {code: dissolved,      label_fa: "پایان",           label_en: "dissolved"}
+  - {code: damaged,        label_fa: "آسیب‌رسان به",     label_en: "damaged"}
+  - {code: casualty_estimate, label_fa: "برآورد تلفات", label_en: "casualty estimate"}
+  - {code: besieged,       label_fa: "محاصرهٔ",         label_en: "besieged"}
+  - {code: inscribed,      label_fa: "ثبت‌شده در",       label_en: "inscribed in"}
+  - {code: contemporaneous_with, label_fa: "هم‌دوره با",  label_en: "contemporaneous with"}

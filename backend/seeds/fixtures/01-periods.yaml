@@ -1,0 +1,33 @@
+# Periodization is region-aware and scheme-scoped (ADR-0012). Years are normalized (CE) here;
+# the display labels carry the faithful calendar text.
+schemes:
+  - id: sch_azerbaijan_v1
+    code: azerbaijan-chronology-v1
+    name_fa: "گاه‌شماری سیاسی آذربایجان (نسخهٔ ۱)"
+    name_en: "Azerbaijan political chronology (v1)"
+    description_fa: "دوره‌بندی بر پایهٔ حکومت‌های مسلط بر آذربایجان ایران؛ بازه‌ها تقریبی‌اند و محل بحث پژوهشی."
+    owner: "AZ-IR editorial"
+    is_default: true
+    sources: [src_bosworth_dynasties, src_chiran_vol5, src_chiran_vol6]
+
+periods:
+  - {id: prd_ancient, scheme: sch_azerbaijan_v1, code: ancient, label_fa: "دوران باستان", label_en: "Ancient",
+     from: -800, to: 651, precision: range, confidence: medium,
+     note_fa: "از اورارتو/ماد تا پایان دورهٔ ساسانی؛ مرز پایانی با فتح اسلامی مشخص می‌شود."}
+  - {id: prd_early_islamic, scheme: sch_azerbaijan_v1, code: early_islamic, label_fa: "دوران اسلامی اولیه", label_en: "Early Islamic",
+     from: 651, to: 1220, precision: range, confidence: medium}
+  - {id: prd_mongol, scheme: sch_azerbaijan_v1, code: mongol_ilkhanid, label_fa: "مغول و ایلخانی", label_en: "Mongol & Ilkhanid",
+     from: 1220, to: 1335, precision: range, confidence: high}
+  - {id: prd_turkmen, scheme: sch_azerbaijan_v1, code: turkmen, label_fa: "قره‌قویونلو و آق‌قویونلو", label_en: "Qara & Aq Qoyunlu",
+     from: 1335, to: 1501, precision: range, confidence: high}
+  - {id: prd_safavid, scheme: sch_azerbaijan_v1, code: safavid, label_fa: "صفوی", label_en: "Safavid",
+     from: 1501, to: 1736, precision: range, confidence: high,
+     note_fa: "پایان دوره محل بحث است: سقوط اصفهان ۱۷۲۲ یا برکناری رسمی ۱۷۳۶."}
+  - {id: prd_afshar_zand, scheme: sch_azerbaijan_v1, code: afshar_zand, label_fa: "افشار و زند و خان‌نشین‌ها", label_en: "Afsharid, Zand & khanates",
+     from: 1736, to: 1796, precision: range, confidence: medium}
+  - {id: prd_qajar, scheme: sch_azerbaijan_v1, code: qajar, label_fa: "قاجار", label_en: "Qajar",
+     from: 1796, to: 1925, precision: range, confidence: high}
+  - {id: prd_pahlavi, scheme: sch_azerbaijan_v1, code: pahlavi, label_fa: "پهلوی", label_en: "Pahlavi",
+     from: 1925, to: 1979, precision: range, confidence: high}
+  - {id: prd_contemporary, scheme: sch_azerbaijan_v1, code: contemporary, label_fa: "معاصر", label_en: "Contemporary",
+     from: 1979, to: 2026, precision: range, confidence: high}

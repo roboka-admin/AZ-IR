@@ -1,0 +1,328 @@
+# Events have intervals (not instants), multiple places with roles, participants with sides, and
+# `part_of` hierarchy -- so a War is just an Event (ADR-0004).
+events:
+  - id: evt_babak_revolt
+    kind: revolt
+    slug: babak-revolt
+    status: published
+    importance: 0.8
+    attestation: well_attested
+    temporal: {from: 816, to: 837, precision: range, confidence: medium, display_fa: "۸۱۶–۸۳۷ م / ۲۰۱–۲۲۲ ق"}
+    geometry: {kind: uncertain_locus, certainty: approximate, type: Point, coordinates: [47.0411, 38.9053],
+               note: "مرکز جنبش در ناحیهٔ بذ/قره‌داغ گزارش شده است."}
+    places:
+      - {id: plc_babak_castle, role: site_of, certainty: approximate}
+      - {id: plc_mughan, role: affected, certainty: uncertain}
+      - {id: plc_kalibar, role: affected, certainty: approximate}
+    participants:
+      - {type: person, id: prs_babak, role: commander, side: khurramiyya}
+    names:
+      - {lang: fa, form: "شورش بابک خرمدین", kind: preferred}
+      - {lang: en, form: "Babak's revolt", kind: preferred}
+    summary_fa: "قیامی دو دهه‌ای در ناحیهٔ قره‌داغ و شمال آذربایجان علیه خلافت عباسی که با شکست و اعدام بابک پایان یافت."
+    summary_en: "A two-decade uprising in the Qaradagh region and northern Azerbaijan against the Abbasid caliphate, ending in Babak's defeat and execution."
+    sources: [src_tabari_tarikh, src_eir_babak]
+
+  - id: evt_mongol_raid_1221
+    kind: sack
+    slug: mongol-raid-tabriz-1221
+    status: published
+    importance: 0.7
+    attestation: well_attested
+    temporal: {from: 1221, to: 1221, precision: exact_year, confidence: medium, display_fa: "۱۲۲۱ م / ۶۱۸ ق"}
+    places:
+      - {id: plc_tabriz, role: affected, certainty: exact}
+    names:
+      - {lang: fa, form: "حملهٔ مغول به آذربایجان و باج‌گزاری تبریز", kind: preferred}
+      - {lang: en, form: "Mongol raid on Azerbaijan; Tabriz submits", kind: preferred}
+    summary_fa: "نخستین تاخت‌وتاز مغولان به آذربایجان که به باج‌گزاری تبریز انجامید؛ جزئیات و میزان خسارت در منابع متفاوت گزارش شده است."
+    summary_en: "The first Mongol incursion into Azerbaijan, resulting in Tabriz paying tribute; details and the scale of damage vary across sources."
+    sources: [src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: evt_ilkhanate_founding
+    kind: founding
+    slug: ilkhanate-founding
+    status: published
+    importance: 0.75
+    attestation: well_attested
+    temporal: {from: 1256, to: 1256, precision: exact_year, confidence: high, display_fa: "۱۲۵۶ م / ۶۵۴ ق"}
+    places:
+      - {id: plc_maragheh, role: site_of, certainty: approximate}
+    participants:
+      - {type: person, id: prs_hulagu, role: founder, side: mongol}
+    names:
+      - {lang: fa, form: "تأسیس ایلخانان", kind: preferred}
+      - {lang: en, form: "Foundation of the Ilkhanate", kind: preferred}
+    summary_fa: "استقرار حکومت ایلخانی به رهبری هولاکو که آذربایجان را به یکی از مراکز اصلی خود تبدیل کرد."
+    summary_en: "The establishment of Ilkhanid rule under Hülegü, which made Azerbaijan one of its main centres."
+    sources: [src_chiran_vol5, src_bosworth_dynasties]
+
+  - id: evt_observatory_founding
+    kind: founding
+    slug: maragheh-observatory-founding
+    status: published
+    importance: 0.85
+    attestation: well_attested
+    temporal: {calendar: islamic_lunar, from: 657, to: 657, precision: exact_year, confidence: high,
+               display_fa: "۶۵۷ ق / ۱۲۵۹ م"}
+    places:
+      - {id: plc_maragheh_observatory, role: site_of, certainty: exact}
+    participants:
+      - {type: person, id: prs_nasir_al_din_tusi, role: director, side: il_khanid}
+      - {type: person, id: prs_hulagu, role: patron, side: il_khanid}
+    names:
+      - {lang: fa, form: "بنیان‌گذاری رصدخانهٔ مراغه", kind: preferred}
+      - {lang: en, form: "Foundation of the Maragheh Observatory", kind: preferred}
+    summary_fa: "تأسیس رصدخانه‌ای که به یکی از مراکز اصلی اخترشناسی جهان اسلام بدل شد و زیج ایلخانی از آن برخاست."
+    summary_en: "The founding of an observatory that became a leading centre of Islamic astronomy and produced the Ilkhanid Zij."
+    sources: [src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: evt_dome_soltaniyeh_construction
+    kind: construction
+    slug: dome-of-soltaniyeh-construction
+    status: published
+    importance: 0.8
+    attestation: well_attested
+    temporal: {calendar: islamic_lunar, from: 703, to: 712, precision: range, confidence: high,
+               display_fa: "۷۰۳–۷۱۲ ق / ۱۳۰۲–۱۳۱۲ م"}
+    places:
+      - {id: plc_dome_soltaniyeh, role: site_of, certainty: exact}
+    participants:
+      - {type: person, id: prs_oljeitu, role: commissioner, side: il_khanid}
+    names:
+      - {lang: fa, form: "ساخت گنبد سلطانیه", kind: preferred}
+      - {lang: en, form: "Construction of the Dome of Soltaniyeh", kind: preferred}
+    summary_fa: "برنامهٔ ساختمانی الجایتو که به ساخت آرامگاهی با یکی از بزرگ‌ترین گنبدهای آجری جهان انجامید."
+    summary_en: "Öljaitü's building programme, producing a mausoleum with one of the largest brick domes in the world."
+    sources: [src_unesco_soltaniyeh, src_blair_bloom_islam]
+
+  - id: evt_rab_rashidi_foundation
+    kind: founding
+    slug: rab-e-rashidi-foundation
+    status: in_review
+    importance: 0.6
+    attestation: single_source
+    temporal: {calendar: islamic_lunar, from: 709, to: 710, precision: circa_year, confidence: low,
+               display_fa: "حدود ۷۰۹ ق / ۱۳۰۹ م"}
+    places:
+      - {id: plc_rab_rashidi, role: site_of, certainty: uncertain}
+    participants:
+      - {type: person, id: prs_rashid_al_din, role: founder, side: il_khanid}
+    names:
+      - {lang: fa, form: "بنیان‌گذاری ربع رشیدی", kind: preferred}
+      - {lang: en, form: "Foundation of the Rab'-e Rashidi", kind: preferred}
+    summary_fa: "بنیاد علمی-خیریه‌ای در حومهٔ تبریز که تاریخ دقیق و مکان قطعی آن هنوز نیازمند بررسی است."
+    summary_en: "A scholarly-charitable foundation on the outskirts of Tabriz whose exact date and location still require investigation."
+    sources: [src_rashid_al_din_jami, src_chiran_vol5]
+    coverage_note_fa: "status=in_review به‌دلیل نبود اجماع دربارهٔ مکان و تاریخ دقیق."
+
+  - id: evt_blue_mosque_construction
+    kind: construction
+    slug: blue-mosque-construction
+    status: published
+    importance: 0.7
+    attestation: well_attested
+    temporal: {calendar: islamic_lunar, from: 870, to: 870, precision: exact_year, confidence: high,
+               display_fa: "۸۷۰ ق / ۱۴۶۵ م"}
+    places:
+      - {id: plc_blue_mosque_tabriz, role: site_of, certainty: exact}
+    participants:
+      - {type: person, id: prs_jahan_shah, role: commissioner, side: qara_qoyunlu}
+    names:
+      - {lang: fa, form: "ساخت مسجد کبود تبریز", kind: preferred}
+      - {lang: en, form: "Construction of the Blue Mosque of Tabriz", kind: preferred}
+    summary_fa: "ساخت مسجدی که کاشی‌کاری لاجوردی آن از شاخص‌های معماری دورهٔ قره‌قویونلو است."
+    summary_en: "The building of a mosque whose cobalt tilework is a hallmark of Qara Qoyunlu architecture."
+    sources: [src_blair_bloom_islam, src_national_heritage_register]
+
+  - id: evt_battle_sharur_1501
+    kind: battle
+    slug: battle-of-sharur
+    status: published
+    importance: 0.7
+    attestation: well_attested
+    temporal: {calendar: islamic_lunar, from: 907, to: 907, precision: exact_year, confidence: medium,
+               display_fa: "۹۰۷ ق / ۱۵۰۱ م"}
+    places:
+      - {id: plc_sharur, role: site_of, certainty: uncertain}
+    participants:
+      - {type: person, id: prs_shah_ismail_i, role: commander, side: safavid}
+    led_to: evt_coronation_tabriz_1501
+    names:
+      - {lang: fa, form: "نبرد شروور", kind: preferred}
+      - {lang: en, form: "Battle of Sharur", kind: preferred}
+    summary_fa: "پیروزی اسماعیل بر رقیب آق‌قویونلو که راه را برای ورود او به تبریز و بنیان‌گذاری دولت صفوی باز کرد."
+    summary_en: "Ismail's victory over his Aq Qoyunlu rival, opening the way to Tabriz and the founding of the Safavid state."
+    sources: [src_hasan_rumlu_ahsan, src_savory_safavid_iran]
+
+  - id: evt_coronation_tabriz_1501
+    kind: coronation
+    slug: coronation-of-ismail
+    status: published
+    importance: 0.95
+    attestation: well_attested
+    temporal: {calendar: islamic_lunar, from: 907, to: 907, precision: exact_year, confidence: high,
+               display_fa: "۹۰۷ ق / ۱۵۰۱ م"}
+    places:
+      - {id: plc_tabriz, role: site_of, certainty: exact}
+    participants:
+      - {type: person, id: prs_shah_ismail_i, role: principal, side: safavid}
+    led_to: evt_ottoman_safavid_war
+    names:
+      - {lang: fa, form: "تاج‌گذاری شاه اسماعیل در تبریز", kind: preferred}
+      - {lang: en, form: "Coronation of Shah Ismail in Tabriz", kind: preferred}
+    summary_fa: "رویدادی که آغاز دولت صفوی و انتخاب تبریز به‌عنوان نخستین پایتخت آن به شمار می‌رود."
+    summary_en: "The event marking the beginning of the Safavid state and Tabriz as its first capital."
+    sources: [src_hasan_rumlu_ahsan, src_savory_safavid_iran, src_eir_safavid_dynasty]
+
+  - id: evt_ottoman_safavid_war
+    kind: war
+    slug: ottoman-safavid-war-1514
+    status: published
+    importance: 0.85
+    attestation: well_attested
+    temporal: {from: 1514, to: 1555, precision: range, confidence: medium,
+               display_fa: "۱۵۱۴–۱۵۵۵ م (درگیری‌های پراکنده تا پیمان آماسیه)"}
+    names:
+      - {lang: fa, form: "جنگ‌های عثمانی و صفوی (۱۵۱۴–۱۵۵۵)", kind: preferred}
+      - {lang: en, form: "Ottoman–Safavid wars (1514–1555)", kind: preferred}
+    summary_fa: "زنجیرهٔ درگیری‌های عثمانی و صفوی که با نبرد چالدران آغاز شد؛ این رویداد یک «جنگ» است و نبردهای آن با part_of به آن متصل‌اند."
+    summary_en: "The chain of Ottoman–Safavid hostilities opening with Chaldiran; modelled as a War Event with battles linked through part_of."
+    coverage_note_fa: "رویدادی چندمکانی است: خودِ جنگ هندسهٔ واحدی ندارد و مکان‌هایش در نبردهای جزئی‌تر (مانند چالدران) مدل شده‌اند که با part_of به این رویداد متصل‌اند."
+    coverage_note_en: "A multi-site event: the war itself has no single geometry, and its sites are modelled in the finer-grained battles linked to it through part_of."
+    sources: [src_chiran_vol6, src_ei_chaldiran]
+
+  - id: evt_battle_chaldiran
+    kind: battle
+    slug: battle-of-chaldiran
+    status: published
+    importance: 1.0
+    attestation: well_attested
+    temporal: {from: 1514, to: 1514, month: 8, day: 23, precision: exact_day, confidence: high,
+               display_fa: "۲۳ اوت ۱۵۱۴ م / ۲ رجب ۹۲۰ ق"}
+    geometry: {kind: uncertain_locus, certainty: uncertain, type: Point, coordinates: [44.3800, 39.0800],
+               note: "ناحیهٔ چالدران؛ محل دقیق میدان نبرد در منابع اختلافی است."}
+    places:
+      - {id: plc_chaldoran_battlefield, role: site_of, certainty: uncertain}
+      - {id: plc_chaldoran, role: affected, certainty: approximate}
+    participants:
+      - {type: person, id: prs_shah_ismail_i, role: commander, side: safavid}
+      - {type: person, id: prs_selim_i, role: commander, side: ottoman}
+    part_of: evt_ottoman_safavid_war
+    names:
+      - {lang: fa, form: "نبرد چالدران", kind: preferred}
+      - {lang: en, form: "Battle of Chaldiran", kind: preferred}
+    summary_fa: "نبردی میان صفویان و عثمانی که به شکست صفویان انجامید و بر توازن نظامی منطقه اثر گذاشت."
+    summary_en: "A battle between the Safavids and the Ottomans ending in Safavid defeat and shifting the regional military balance."
+    sources: [src_ei_chaldiran, src_hasan_rumlu_ahsan, src_chiran_vol6]
+    coverage_note_fa: "محل دقیق میدان نبرد نامطمئن است و در UI با certainty=uncertain نمایش داده می‌شود."
+
+  - id: evt_capital_to_qazvin
+    kind: political
+    slug: capital-moved-to-qazvin
+    status: published
+    importance: 0.65
+    attestation: well_attested
+    temporal: {from: 1548, to: 1548, precision: exact_year, confidence: high, display_fa: "۱۵۴۸ م / ۹۵۵ ق"}
+    places:
+      - {id: plc_qazvin, role: site_of, certainty: exact}
+      - {id: plc_tabriz, role: affected, certainty: exact}
+    participants:
+      - {type: person, id: prs_shah_tahmasp_i, role: principal, side: safavid}
+    names:
+      - {lang: fa, form: "انتقال پایتخت صفوی به قزوین", kind: preferred}
+      - {lang: en, form: "Safavid capital moved to Qazvin", kind: preferred}
+    summary_fa: "تصمیم شاه طهماسب برای انتقال پایتخت از تبریز به قزوین به‌دلیل فشارهای مرزی شمال غرب."
+    summary_en: "Shah Tahmasp's decision to move the capital from Tabriz to Qazvin under north-western frontier pressure."
+    sources: [src_savory_safavid_iran, src_chiran_vol6]
+
+  - id: evt_tabriz_earthquake_1780
+    kind: earthquake
+    slug: tabriz-earthquake-1780
+    status: published
+    importance: 0.75
+    attestation: well_attested
+    temporal: {from: 1780, to: 1780, month: 1, precision: exact_month, confidence: medium,
+               display_fa: "ژانویهٔ ۱۷۸۰ م / ۱۱۹۴ ق"}
+    places:
+      - {id: plc_tabriz, role: site_of, certainty: exact}
+    names:
+      - {lang: fa, form: "زمین‌لرزهٔ تبریز (۱۷۸۰ م)", kind: preferred}
+      - {lang: en, form: "Tabriz earthquake (1780)", kind: preferred}
+    summary_fa: "زمین‌لرزه‌ای ویرانگر که بخش بزرگی از بافت تاریخی تبریز از جمله مسجد کبود را آسیب زد؛ رقم تلفات در منابع اختلاف فاحش دارد."
+    summary_en: "A devastating earthquake that damaged much of historic Tabriz including the Blue Mosque; casualty figures vary widely across sources."
+    sources: [src_ambraseys_persian_earthquakes, src_eir_tabriz]
+
+  - id: evt_constitutional_tabriz
+    kind: political
+    slug: tabriz-constitutional-movement
+    status: published
+    importance: 0.8
+    attestation: well_attested
+    temporal: {from: 1906, to: 1909, precision: range, confidence: high, display_fa: "۱۹۰۶–۱۹۰۹ م / ۱۲۸۵–۱۲۸۸ ش"}
+    places:
+      - {id: plc_tabriz, role: site_of, certainty: exact}
+    participants:
+      - {type: person, id: prs_sattar_khan, role: leader, side: constitutionalist}
+      - {type: person, id: prs_bagher_khan, role: leader, side: constitutionalist}
+    names:
+      - {lang: fa, form: "جنبش مشروطه در تبریز", kind: preferred}
+      - {lang: en, form: "Tabriz in the Constitutional Revolution", kind: preferred}
+    summary_fa: "نقش تعیین‌کنندهٔ تبریز در انقلاب مشروطه، شامل محاصرهٔ طولانی شهر که در رویداد جداگانه‌ای ثبت شده است."
+    summary_en: "Tabriz's decisive role in the Constitutional Revolution, including a prolonged siege recorded as a separate event."
+    sources: [src_kasravi_mashrute]
+
+  - id: evt_siege_tabriz_1908
+    kind: siege
+    slug: siege-of-tabriz-1908
+    status: published
+    importance: 0.75
+    attestation: well_attested
+    temporal: {from: 1908, to: 1909, precision: range, confidence: high, display_fa: "۱۹۰۸–۱۹۰۹ م / ۱۲۸۷–۱۲۸۸ ش"}
+    places:
+      - {id: plc_tabriz, role: besieged, certainty: exact}
+    participants:
+      - {type: person, id: prs_sattar_khan, role: commander, side: constitutionalist}
+      - {type: person, id: prs_bagher_khan, role: commander, side: constitutionalist}
+    part_of: evt_constitutional_tabriz
+    names:
+      - {lang: fa, form: "محاصرهٔ تبریز", kind: preferred}
+      - {lang: en, form: "Siege of Tabriz (1908–1909)", kind: preferred}
+    summary_fa: "محاصرهٔ چندماههٔ تبریز که با مقاومت محلات و پایان یافتن محاصره به یکی از رویدادهای محوری مشروطه بدل شد."
+    summary_en: "A months-long siege of Tabriz, sustained by neighbourhood resistance, that became a defining episode of the Constitutional Revolution."
+    sources: [src_kasravi_mashrute]
+
+  - id: evt_azerbaijan_1945
+    kind: political
+    slug: azerbaijan-autonomous-government-1945
+    status: in_review
+    importance: 0.7
+    attestation: well_attested
+    temporal: {from: 1945, to: 1946, precision: range, confidence: medium, display_fa: "۱۳۲۴–۱۳۲۵ ش / ۱۹۴۵–۱۹۴۶ م"}
+    places:
+      - {id: plc_tabriz, role: site_of, certainty: exact}
+    names:
+      - {lang: fa, form: "حکومت خودمختار آذربایجان (۱۳۲۴–۱۳۲۵ ش)", kind: preferred}
+      - {lang: en, form: "Azerbaijan Autonomous Government (1945–1946)", kind: preferred}
+    summary_fa: "رویدادی سیاسی در بحران پس از جنگ جهانی دوم؛ روایت‌های متفاوتی دربارهٔ زمینه‌ها و ماهیت آن وجود دارد و این رکورد نیازمند بازبینی تخصصی است."
+    summary_en: "A political event during the post-WWII crisis; interpretations of its background and nature differ, and this record needs specialist review."
+    sources: [src_eir_azerbaijan_history]
+    coverage_note_fa: >-
+      عمداً در in_review: روایت‌های رقیب باید به‌صورت assertionهای جدا با منبع ثبت شوند، نه با یک روایت قطعی
+      (AGENTS.md #20 و ADR-0013).
+
+  - id: evt_unesco_sheikh_safi_2010
+    kind: heritage_inscription
+    slug: unesco-sheikh-safi-2010
+    status: published
+    importance: 0.5
+    attestation: well_attested
+    temporal: {from: 2010, to: 2010, precision: exact_year, confidence: high, display_fa: "۲۰۱۰ م / ۱۳۸۹ ش"}
+    places:
+      - {id: plc_sheikh_safi_complex, role: site_of, certainty: exact}
+    names:
+      - {lang: fa, form: "ثبت جهانی مجموعهٔ شیخ صفی‌الدین", kind: preferred}
+      - {lang: en, form: "World Heritage inscription of the Sheikh Safi ensemble", kind: preferred}
+    summary_fa: "ثبت مجموعهٔ خاندان و بقعهٔ شیخ صفی‌الدین اردبیلی در فهرست میراث جهانی یونسکو."
+    summary_en: "Inscription of the Sheikh Safi al-Din khānegāh and shrine ensemble on the UNESCO World Heritage List."
+    sources: [src_unesco_sheikh_safi]

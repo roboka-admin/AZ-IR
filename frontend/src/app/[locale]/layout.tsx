@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 
 import "../globals.css";
 import { DEFAULT_LOCALE, DIRECTION, LOCALES, t } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
+
+const vazirmatn = localFont({
+  src: "../../fonts/Vazirmatn-Variable.woff2",
+  variable: "--font-vazirmatn",
+  weight: "100 900",
+  style: "normal",
+  display: "swap",
+});
 
 /**
  * Root layout for the localized segment. `lang` and `dir` come from the URL, so Persian renders
@@ -38,7 +47,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
   const active: Locale = (LOCALES as string[]).includes(locale) ? (locale as Locale) : DEFAULT_LOCALE;
   return (
-    <html lang={active} dir={DIRECTION[active]}>
+    <html lang={active} dir={DIRECTION[active]} className={vazirmatn.variable}>
       <body>{children}</body>
     </html>
   );

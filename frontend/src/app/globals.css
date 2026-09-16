@@ -30,7 +30,7 @@
   --radius: 10px;
   --radius-sm: 6px;
   --shadow: 0 12px 34px rgba(4, 8, 14, 0.42);
-  --font-ui: "Vazirmatn", "IRANSansX", "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, -apple-system, sans-serif;
+  --font-ui: var(--font-vazirmatn), "IRANSansX", "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
   --header-h: 56px;
   --timeline-h: 132px;

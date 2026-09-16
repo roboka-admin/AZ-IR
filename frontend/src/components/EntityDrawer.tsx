@@ -81,10 +81,7 @@ export default function EntityDrawer({ detail, locale, loading, onClose, onOpenE
   return (
     <aside className="panel drawer" aria-label={detail.names.display} aria-busy={loading ?? false}>
       <header className="panel-title">
-        <span
-          className="row"
-          style={{ gap: 6, textTransform: "none", letterSpacing: 0, fontSize: 13, color: "var(--text)" }}
-        >
+        <span className="row" style={{ gap: 6, textTransform: "none", fontSize: 13, color: "var(--text)" }}>
           <strong>{detail.names.display}</strong>
           {detail.names.display_secondary ? (
             <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>{detail.names.display_secondary}</span>

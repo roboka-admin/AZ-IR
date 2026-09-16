@@ -40,6 +40,14 @@ export interface MapCanvasProps {
 }
 
 const PROBE_TIMEOUT_MS = 4000;
+const RTL_TEXT_PLUGIN_URL =
+  "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js";
+
+/** Register Arabic shaping and bidirectional-text support once, loading it only when needed. */
+async function ensureRtlTextSupport(): Promise<void> {
+  if (maplibregl.getRTLTextPluginStatus() !== "unavailable") return;
+  await maplibregl.setRTLTextPlugin(RTL_TEXT_PLUGIN_URL, true);
+}
 
 /**
  * Resolve the basemap before constructing the map.
@@ -85,6 +93,12 @@ export default function MapCanvas({
     let map: maplibregl.Map | null = null;
 
     void (async () => {
+      try {
+        await ensureRtlTextSupport();
+      } catch (cause) {
+        // A blocked plugin CDN must not prevent the map and its unshaped fallback labels loading.
+        console.warn("RTL text plugin unavailable", cause);
+      }
       const resolved = await resolveBasemap();
       if (cancelled || !container.current) return;
       fontRef.current = resolved.font;

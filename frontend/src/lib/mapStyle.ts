@@ -19,7 +19,7 @@ import type { GeoJSONSource, Map as MaplibreMap, StyleSpecification } from "mapl
 import type { FeatureCollection, TemporalFilter, VectorSourceSpec } from "./types";
 
 /** Free, keyless basemap; probed at runtime and replaced by `fallbackStyle()` if unreachable. */
-export const BASEMAP_STYLE_URL = "https://tiles.openfreemap.io/styles/liberty";
+export const BASEMAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
 export const ATLAS_SOURCE = "azir-atlas";
 export const GRATICULE_SOURCE = "azir-graticule";

@@ -84,7 +84,7 @@ button {
   overflow: hidden;
 }
 
-.map-wrap {
+.app > .map-wrap {
   position: absolute;
   inset: 0;
 }

@@ -1,0 +1,4 @@
+# The atlas is a research surface; crawling the API is what the API is for.
+User-agent: *
+Allow: /
+Disallow: /api/

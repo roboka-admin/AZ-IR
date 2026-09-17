@@ -1,0 +1,509 @@
+# The graph: structural links (identity-level, undisputed) + assertions (interpretive, citable,
+# temporal, confidence-bearing). ADR-0003: assertions are the source of truth for facts.
+place_links:
+  # --- containment (city -> building/site). Structural, undisputed.
+  - {parent: plc_ardabil,  child: plc_sheikh_safi_complex, kind: contains}
+  - {parent: plc_ardabil,  child: plc_ardabil_bazaar,      kind: contains}
+  - {parent: plc_tabriz,   child: plc_blue_mosque_tabriz,  kind: contains}
+  - {parent: plc_tabriz,   child: plc_arg_tabriz,          kind: contains}
+  - {parent: plc_tabriz,   child: plc_tabriz_bazaar,       kind: contains}
+  - {parent: plc_tabriz,   child: plc_rab_rashidi,         kind: contains,
+     note: "در حومهٔ تاریخی تبریز؛ مکان دقیق محل بررسی است."}
+  - {parent: plc_maragheh, child: plc_maragheh_observatory, kind: contains}
+  - {parent: plc_maragheh, child: plc_gonbad_sorkh,         kind: contains}
+  - {parent: plc_soltaniyeh, child: plc_dome_soltaniyeh,    kind: contains}
+  - {parent: plc_urmia,    child: plc_urmia_jameh_mosque,   kind: contains}
+  - {parent: plc_jolfa,    child: plc_st_stepanos,          kind: contains}
+  - {parent: plc_chaldoran, child: plc_chaldoran_battlefield, kind: contains}
+  - {parent: plc_chaldoran, child: plc_qara_kelisa,         kind: contains,
+     note: "قره‌کلیسا در ناحیهٔ چالدران قرار دارد."}
+  - {parent: plc_kalibar,  child: plc_babak_castle,         kind: contains}
+
+  # --- historical vs modern: these MUST stay different kinds (AGENTS.md #9)
+  - {parent: plc_azerbaijan_historical, child: plc_ardabil,  kind: historically_in,
+     temporal: {from: 800, to: 1925, precision: range, confidence: medium},
+     sources: [src_mustawfi_nuzha]}
+  - {parent: plc_azerbaijan_historical, child: plc_tabriz,   kind: historically_in,
+     temporal: {from: 800, to: 1925, precision: range, confidence: medium},
+     sources: [src_mustawfi_nuzha]}
+  - {parent: plc_azerbaijan_historical, child: plc_urmia,    kind: historically_in,
+     temporal: {from: 800, to: 1925, precision: range, confidence: medium},
+     sources: [src_mustawfi_nuzha]}
+  - {parent: plc_ardabil_province,        child: plc_ardabil, kind: admin_in,
+     sources: [src_osm_modern_admin], note: "لایهٔ اداری امروزی؛ هرگز به‌عنوان مرز تاریخی نمایش داده نمی‌شود."}
+  - {parent: plc_east_azerbaijan_province, child: plc_tabriz, kind: admin_in,
+     sources: [src_osm_modern_admin]}
+  - {parent: plc_east_azerbaijan_province, child: plc_maragheh, kind: admin_in,
+     sources: [src_osm_modern_admin]}
+  - {parent: plc_west_azerbaijan_province, child: plc_urmia,  kind: admin_in,
+     sources: [src_osm_modern_admin]}
+  - {parent: plc_west_azerbaijan_province, child: plc_takht_soleyman, kind: admin_in,
+     sources: [src_osm_modern_admin]}
+
+assertions:
+  # ----------------------------------------------------------- Sheikh Safi lineage
+  - id: asn_safi_born_ardabil
+    subject: {type: person, id: prs_sheikh_safi}
+    predicate: born_in
+    object: {type: place, id: plc_ardabil}
+    temporal: {from: 1252, to: 1252, precision: exact_year, confidence: high, display_fa: "۶۵۰ ق / ۱۲۵۲ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_eir_ardabil, locator_type: entry, locator: "ARDEBĪL", stance: supports}
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  - id: asn_safi_died_ardabil
+    subject: {type: person, id: prs_sheikh_safi}
+    predicate: died_in
+    object: {type: place, id: plc_ardabil}
+    temporal: {calendar: islamic_lunar, from: 735, to: 735, precision: exact_year, confidence: high,
+               display_fa: "۷۳۵ ق (۱۳۳۴–۱۳۳۵ م)"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_eir_ardabil, locator_type: entry, stance: supports}
+
+  - id: asn_safi_burial
+    subject: {type: person, id: prs_sheikh_safi}
+    predicate: burial_place
+    object: {type: place, id: plc_sheikh_safi_complex}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_unesco_sheikh_safi, locator_type: criterion, locator: "Statement of significance", stance: supports}
+
+  - id: asn_safi_founded_order
+    subject: {type: person, id: prs_sheikh_safi}
+    predicate: founded
+    object: {type: political_entity, id: pol_safaviyya}
+    temporal: {from: 1301, to: 1301, precision: circa_year, confidence: medium, display_fa: "حدود ۱۳۰۱ م"}
+    status: accepted
+    confidence: medium
+    note: "تاریخ دقیق بنیان‌گذاری طریقت در منابع صریح نیست؛ به‌صورت حدودی ثبت شده است."
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  - id: asn_sadr_succession
+    subject: {type: person, id: prs_sadr_al_din_musa}
+    predicate: succeeded
+    object: {type: person, id: prs_sheikh_safi}
+    temporal: {calendar: islamic_lunar, from: 735, to: 735, precision: exact_year, confidence: high, display_fa: "۷۳۵ ق"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  - id: asn_khwaja_ali_succession
+    subject: {type: person, id: prs_khwaja_ali}
+    predicate: succeeded
+    object: {type: person, id: prs_sadr_al_din_musa}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  - id: asn_khwaja_ali_death_disputed
+    subject: {type: person, id: prs_khwaja_ali}
+    predicate: died_in
+    object: {type: place, id: plc_ardabil}
+    temporal: {from: 1427, to: 1429, precision: range, confidence: low,
+               display_fa: "۱۴۲۷ یا ۱۴۲۹ م (۸۳۰ یا ۸۳۲ ق)"}
+    status: disputed
+    confidence: low
+    topic_fa: "سال درگذشت خواجه علی صفوی"
+    topic_en: "Death year of Khwāja ʿAlī Ṣafawī"
+    note: "منابع ۸۳۰ و ۸۳۲ قمری را داده‌اند؛ اختلاف حفظ می‌شود و پنهان نمی‌گردد (AGENTS.md #20)."
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports,
+         quote_translation: "Sources give different death dates for Khwāja ʿAlī."}
+
+  - id: asn_junayd_succession
+    subject: {type: person, id: prs_shaykh_junayd}
+    predicate: succeeded
+    object: {type: person, id: prs_khwaja_ali}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  - id: asn_haydar_succession
+    subject: {type: person, id: prs_shaykh_haydar}
+    predicate: succeeded
+    object: {type: person, id: prs_shaykh_junayd}
+    temporal: {from: 1460, to: 1460, precision: exact_year, confidence: medium, display_fa: "۱۴۶۰ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_chiran_vol6, locator_type: chapter, locator: "The Safavid period", stance: supports}
+
+  # --------------------------------------------------------------- Shah Ismail
+  - id: asn_ismail_born_ardabil
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: born_in
+    object: {type: place, id: plc_ardabil}
+    temporal: {calendar: islamic_lunar, from: 892, to: 892, precision: exact_year, confidence: high,
+               display_fa: "۸۹۲ ق / ۱۴۸۷ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_savory_safavid_iran, locator_type: chapter, locator: "1", stance: supports}
+      - {source: src_hasan_rumlu_ahsan, locator_type: chapter, stance: supports}
+
+  - id: asn_ismail_died_tabriz
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: died_in
+    object: {type: place, id: plc_tabriz}
+    temporal: {from: 1524, to: 1524, precision: exact_year, confidence: high, display_fa: "۹۳۰ ق / ۱۵۲۴ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_savory_safavid_iran, locator_type: chapter, locator: "1", stance: supports}
+
+  - id: asn_ismail_burial_ardabil
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: burial_place
+    object: {type: place, id: plc_sheikh_safi_complex}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_unesco_sheikh_safi, locator_type: criterion, stance: supports}
+
+  - id: asn_ismail_descended_uzun_hasan
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: descendant_of
+    object: {type: person, id: prs_uzun_hasan}
+    status: accepted
+    confidence: high
+    note: "از سوی مادر؛ این رابطه برای مشروعیت سیاسی صفویان اهمیت داشت."
+    evidence:
+      - {source: src_chiran_vol6, locator_type: chapter, stance: supports}
+
+  - id: asn_ismail_ruled_safavid
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: ruled
+    object: {type: political_entity, id: pol_safavid}
+    temporal: {from: 1501, to: 1524, precision: range, confidence: high, display_fa: "۱۵۰۱–۱۵۲۴ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Safavids", stance: supports}
+
+  - id: asn_tahmasp_ruled_safavid
+    subject: {type: person, id: prs_shah_tahmasp_i}
+    predicate: ruled
+    object: {type: political_entity, id: pol_safavid}
+    temporal: {from: 1524, to: 1576, precision: range, confidence: high, display_fa: "۱۵۲۴–۱۵۷۶ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Safavids", stance: supports}
+
+  # --------------------------------------------------- Safavid capitals (time-bounded!)
+  - id: asn_safavid_capital_tabriz
+    subject: {type: political_entity, id: pol_safavid}
+    predicate: capital
+    object: {type: place, id: plc_tabriz}
+    temporal: {from: 1501, to: 1548, precision: range, confidence: high, display_fa: "۱۵۰۱–۱۵۴۸ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_savory_safavid_iran, locator_type: chapter, stance: supports}
+
+  - id: asn_safavid_capital_qazvin
+    subject: {type: political_entity, id: pol_safavid}
+    predicate: capital
+    object: {type: place, id: plc_qazvin}
+    temporal: {from: 1548, to: 1601, precision: range, confidence: high, display_fa: "۱۵۴۸–۱۶۰۱ م"}
+    status: accepted
+    confidence: high
+    note: "انتقال پایتخت به قزوین در ۱۵۴۸ و سپس به اصفهان در ۱۵۹۸–۱۶۰۱."
+    evidence:
+      - {source: src_savory_safavid_iran, locator_type: chapter, stance: supports}
+
+  - id: asn_safavid_end_1722
+    subject: {type: political_entity, id: pol_safavid}
+    predicate: dissolved
+    value: "1722"
+    temporal: {from: 1722, to: 1722, precision: exact_year, confidence: medium, display_fa: "۱۷۲۲ م / ۱۱۳۵ ق"}
+    status: disputed
+    confidence: medium
+    topic_fa: "پایان دورهٔ صفوی"
+    topic_en: "End of the Safavid period"
+    note: "دیدگاه اول: سقوط اصفهان به دست محمود افغان در ۱۷۲۲ پایان مؤثر حکومت است."
+    evidence:
+      - {source: src_chiran_vol6, locator_type: chapter, locator: "The Safavid period", stance: supports}
+
+  - id: asn_safavid_end_1736
+    subject: {type: political_entity, id: pol_safavid}
+    predicate: dissolved
+    value: "1736"
+    temporal: {from: 1736, to: 1736, precision: exact_year, confidence: medium, display_fa: "۱۷۳۶ م / ۱۱۴۸ ق"}
+    status: disputed
+    confidence: medium
+    topic_fa: "پایان دورهٔ صفوی"
+    topic_en: "End of the Safavid period"
+    note: "دیدگاه دوم: برکناری رسمی عباس سوم توسط نادرشاه در ۱۷۳۶ پایان حقوقی سلسله است."
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Safavids", stance: supports}
+
+  - id: asn_safaviyya_member_ismail
+    subject: {type: person, id: prs_shah_ismail_i}
+    predicate: member_of
+    object: {type: political_entity, id: pol_safaviyya}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_eir_safavid_dynasty, locator_type: entry, stance: supports}
+
+  # ------------------------------------------------------------ Ilkhanid capitals
+  - id: asn_ilkhanid_capital_maragheh
+    subject: {type: political_entity, id: pol_ilkhanate}
+    predicate: capital
+    object: {type: place, id: plc_maragheh}
+    temporal: {from: 1256, to: 1265, precision: range, confidence: low, display_fa: "حدود ۱۲۵۶–۱۲۶۵ م"}
+    status: accepted
+    confidence: low
+    note: "در دورهٔ هولاکو مراغه مرکز بود؛ عنوان «پایتخت» برای این دوره در منابع یکدست نیست."
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: qualifies}
+
+  - id: asn_ilkhanid_capital_tabriz
+    subject: {type: political_entity, id: pol_ilkhanate}
+    predicate: capital
+    object: {type: place, id: plc_tabriz}
+    temporal: {from: 1265, to: 1305, precision: range, confidence: medium, display_fa: "حدود ۱۲۶۵–۱۳۰۵ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_ilkhanid_capital_soltaniyeh
+    subject: {type: political_entity, id: pol_ilkhanate}
+    predicate: capital
+    object: {type: place, id: plc_soltaniyeh}
+    temporal: {from: 1305, to: 1335, precision: circa_year, confidence: medium, display_fa: "حدود ۱۳۰۵–۱۳۳۵ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_unesco_soltaniyeh, locator_type: criterion, stance: supports}
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_hulagu_founded_ilkhanate
+    subject: {type: person, id: prs_hulagu}
+    predicate: founded
+    object: {type: political_entity, id: pol_ilkhanate}
+    temporal: {from: 1256, to: 1256, precision: exact_year, confidence: high, display_fa: "۱۲۵۶ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Ilkhanids", stance: supports}
+
+  - id: asn_hulagu_commissioned_observatory
+    subject: {type: person, id: prs_hulagu}
+    predicate: commissioned
+    object: {type: place, id: plc_maragheh_observatory}
+    temporal: {from: 1259, to: 1259, precision: exact_year, confidence: high, display_fa: "۱۲۵۹ م / ۶۵۷ ق"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_hulagu_died_maragheh
+    subject: {type: person, id: prs_hulagu}
+    predicate: died_in
+    object: {type: place, id: plc_maragheh}
+    temporal: {from: 1265, to: 1265, precision: exact_year, confidence: low, display_fa: "۱۲۶۵ م"}
+    status: disputed
+    confidence: low
+    topic_fa: "محل درگذشت هولاکو"
+    topic_en: "Place of Hülegü's death"
+    note: "برخی منابع مراغه و برخی محل‌های دیگر را ذکر کرده‌اند."
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: qualifies}
+
+  - id: asn_tusi_worked_observatory
+    subject: {type: person, id: prs_nasir_al_din_tusi}
+    predicate: worked_at
+    object: {type: place, id: plc_maragheh_observatory}
+    temporal: {from: 1259, to: 1274, precision: range, confidence: high, display_fa: "۱۲۵۹–۱۲۷۴ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_oljeitu_commissioned_dome
+    subject: {type: person, id: prs_oljeitu}
+    predicate: commissioned
+    object: {type: place, id: plc_dome_soltaniyeh}
+    temporal: {calendar: islamic_lunar, from: 703, to: 712, precision: range, confidence: high,
+               display_fa: "۷۰۳–۷۱۲ ق / ۱۳۰۲–۱۳۱۲ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_unesco_soltaniyeh, locator_type: criterion, stance: supports}
+      - {source: src_blair_bloom_islam, locator_type: chapter, stance: supports}
+
+  - id: asn_oljeitu_died_soltaniyeh
+    subject: {type: person, id: prs_oljeitu}
+    predicate: died_in
+    object: {type: place, id: plc_soltaniyeh}
+    temporal: {from: 1316, to: 1316, precision: exact_year, confidence: medium, display_fa: "۱۳۱۶ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_rashid_founded_rab
+    subject: {type: person, id: prs_rashid_al_din}
+    predicate: founded
+    object: {type: place, id: plc_rab_rashidi}
+    temporal: {from: 1309, to: 1309, precision: circa_year, confidence: low, display_fa: "حدود ۱۳۰۹ م"}
+    status: accepted
+    confidence: low
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: qualifies}
+
+  - id: asn_rashid_died_tabriz
+    subject: {type: person, id: prs_rashid_al_din}
+    predicate: died_in
+    object: {type: place, id: plc_tabriz}
+    temporal: {from: 1318, to: 1318, precision: exact_year, confidence: high, display_fa: "۱۳۱۸ م / ۷۱۸ ق"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_chiran_vol5, locator_type: chapter, stance: supports}
+
+  - id: asn_jahan_shah_commissioned_blue_mosque
+    subject: {type: person, id: prs_jahan_shah}
+    predicate: commissioned
+    object: {type: place, id: plc_blue_mosque_tabriz}
+    temporal: {calendar: islamic_lunar, from: 870, to: 870, precision: exact_year, confidence: high,
+               display_fa: "۸۷۰ ق / ۱۴۶۵ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_blair_bloom_islam, locator_type: chapter, stance: supports}
+      - {source: src_national_heritage_register, locator_type: catalogue_number, stance: supports}
+
+  - id: asn_jahan_shah_ruled
+    subject: {type: person, id: prs_jahan_shah}
+    predicate: ruled
+    object: {type: political_entity, id: pol_qara_qoyunlu}
+    temporal: {from: 1438, to: 1467, precision: range, confidence: medium, display_fa: "۱۴۳۸–۱۴۶۷ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Qara Qoyunlu", stance: supports}
+
+  - id: asn_uzun_hasan_ruled
+    subject: {type: person, id: prs_uzun_hasan}
+    predicate: ruled
+    object: {type: political_entity, id: pol_aq_qoyunlu}
+    temporal: {from: 1453, to: 1478, precision: range, confidence: medium, display_fa: "۱۴۵۳–۱۴۷۸ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_bosworth_dynasties, locator_type: entry, locator: "Aq Qoyunlu", stance: supports}
+
+  # --------------------------------------------------------------------- Babak
+  - id: asn_babak_lived_castle
+    subject: {type: person, id: prs_babak}
+    predicate: lived_in
+    object: {type: place, id: plc_babak_castle}
+    temporal: {from: 816, to: 837, precision: range, confidence: medium, display_fa: "۸۱۶–۸۳۷ م"}
+    status: accepted
+    confidence: medium
+    note: "همسان‌سازی «بذ» با این قلعه پذیرفته‌شده اما قطعی نیست."
+    evidence:
+      - {source: src_tabari_tarikh, locator_type: chapter, stance: qualifies}
+      - {source: src_eir_babak, locator_type: entry, stance: supports}
+
+  - id: asn_babak_died_samarra
+    subject: {type: person, id: prs_babak}
+    predicate: died_in
+    value: "سامرا (خارج از حوزهٔ جغرافیایی اطلس)"
+    temporal: {from: 838, to: 838, precision: exact_year, confidence: high, display_fa: "۸۳۸ م / ۲۲۲ ق"}
+    status: accepted
+    confidence: high
+    note: "نمونهٔ یک ادعا که object آن یک موجودیت ثبت‌شده نیست؛ به‌صورت value ذخیره می‌شود."
+    evidence:
+      - {source: src_tabari_tarikh, locator_type: chapter, stance: supports}
+
+  # --------------------------------------------------------------- Constitutional
+  - id: asn_sattar_born_ahar
+    subject: {type: person, id: prs_sattar_khan}
+    predicate: born_in
+    object: {type: place, id: plc_ahar}
+    temporal: {from: 1866, to: 1866, precision: circa_year, confidence: medium, display_fa: "حدود ۱۸۶۶ م / ۱۲۴۵ ش"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_kasravi_mashrute, locator_type: chapter, stance: supports}
+
+  - id: asn_bagher_born_tabriz
+    subject: {type: person, id: prs_bagher_khan}
+    predicate: born_in
+    object: {type: place, id: plc_tabriz}
+    temporal: {from: 1865, to: 1865, precision: circa_year, confidence: medium, display_fa: "حدود ۱۸۶۵ م"}
+    status: accepted
+    confidence: medium
+    evidence:
+      - {source: src_kasravi_mashrute, locator_type: chapter, stance: supports}
+
+  # ------------------------------------------------------------- 1780 earthquake
+  - id: asn_earthquake_damaged_blue_mosque
+    subject: {type: event, id: evt_tabriz_earthquake_1780}
+    predicate: damaged
+    object: {type: place, id: plc_blue_mosque_tabriz}
+    temporal: {from: 1780, to: 1780, precision: exact_year, confidence: high, display_fa: "۱۷۸۰ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_ambraseys_persian_earthquakes, locator_type: chapter, locator: "Tabriz 1780", stance: supports}
+
+  - id: asn_earthquake_casualties
+    subject: {type: event, id: evt_tabriz_earthquake_1780}
+    predicate: casualty_estimate
+    value: "ارقام گزارش‌شده در منابع بسیار متفاوت است و بازبرآورد مدرن رقم‌های کهن را تأیید نمی‌کند"
+    status: disputed
+    confidence: low
+    topic_fa: "تعداد تلفات زمین‌لرزهٔ ۱۷۸۰ تبریز"
+    topic_en: "Casualties of the 1780 Tabriz earthquake"
+    note: "فهرست‌های کهن رقم‌های بسیار بالایی ذکر کرده‌اند؛ مطالعات لرزه‌شناسی تاریخی این ارقام را بحرانه‌ای می‌دانند. تا بررسی تخصصی، هیچ رقمی به‌عنوان فکت نمایش داده نمی‌شود."
+    evidence:
+      - {source: src_ambraseys_persian_earthquakes, locator_type: chapter, locator: "Tabriz 1780", stance: qualifies}
+
+  # --------------------------------------------------------------- heritage
+  - id: asn_sheikh_safi_unesco
+    subject: {type: place, id: plc_sheikh_safi_complex}
+    predicate: inscribed
+    value: "UNESCO World Heritage List No. 1345 (2010)"
+    temporal: {from: 2010, to: 2010, precision: exact_year, confidence: high, display_fa: "۲۰۱۰ م"}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_unesco_sheikh_safi, locator_type: catalogue_number, locator: "1345", stance: supports}
+
+  - id: asn_complex_founded_by_order
+    subject: {type: place, id: plc_sheikh_safi_complex}
+    predicate: affiliated_with
+    object: {type: political_entity, id: pol_safaviyya}
+    status: accepted
+    confidence: high
+    evidence:
+      - {source: src_unesco_sheikh_safi, locator_type: criterion, stance: supports}
+
+  # ---------------------------------------------------- Chaldiran location (disputed)
+  - id: asn_chaldiran_site_uncertain
+    subject: {type: event, id: evt_battle_chaldiran}
+    predicate: site_of
+    object: {type: place, id: plc_chaldoran_battlefield}
+    status: disputed
+    confidence: low
+    topic_fa: "محل دقیق میدان نبرد چالدران"
+    topic_en: "Exact location of the Chaldiran battlefield"
+    note: "منطقهٔ نبرد روشن است اما نقطهٔ دقیق میدان نبرد در منابع مختلف متفاوت آمده است."
+    evidence:
+      - {source: src_ei_chaldiran, locator_type: entry, stance: qualifies}
+      - {source: src_hasan_rumlu_ahsan, locator_type: chapter, stance: qualifies}

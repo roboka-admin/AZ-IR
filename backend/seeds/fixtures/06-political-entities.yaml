@@ -1,0 +1,113 @@
+# Political entities. Extents are NOT digitized in the pilot on purpose: drawing a historical
+# border requires a cited, certainty-tagged geometry (ADR-0013), which is a research task, not a
+# coding task. The entities below are timeline/graph anchors until their extents are sourced.
+political_entities:
+  - id: pol_atropatene
+    kind: kingdom
+    slug: atropatene
+    status: published
+    importance: 0.7
+    temporal: {from: -320, to: 226, precision: circa_year, confidence: low,
+               display_fa: "حدود ۳۲۱ ق.م تا سدهٔ ۳ م"}
+    names:
+      - {lang: fa, form: "آتروپاتن", kind: preferred}
+      - {lang: en, form: "Atropatene", kind: preferred}
+      - {lang: fa, form: "آذرآبادگان", kind: historical}
+    summary_fa: "پادشاهی‌ای که پس از اسکندر در شمال غرب ایران شکل گرفت و نام آن ریشهٔ نام آذربایجان دانسته می‌شود."
+    summary_en: "A kingdom that emerged in north-western Iran after Alexander, whose name is held to be the root of 'Azerbaijan'."
+    sources: [src_strabo_geographica, src_eir_azerbaijan_history]
+
+  - id: pol_eldiguzids
+    kind: atabegate
+    slug: eldiguzids
+    status: published
+    importance: 0.6
+    temporal: {from: 1136, to: 1225, precision: range, confidence: medium, display_fa: "۱۱۳۶–۱۲۲۵ م / ۵۳۱–۶۲۲ ق"}
+    names:
+      - {lang: fa, form: "اتابکان آذربایجان (الدگوزیان)", kind: preferred}
+      - {lang: en, form: "Eldiguzids (Atabegs of Azerbaijan)", kind: preferred}
+    summary_fa: "حکومتی ترک‌تبار بر آذربایجان و نواحی اطراف که در آستانهٔ حملهٔ مغول پایان یافت."
+    summary_en: "A Turkic dynasty ruling Azerbaijan and adjacent regions, ending on the eve of the Mongol invasion."
+    sources: [src_bosworth_dynasties, src_chiran_vol5]
+
+  - id: pol_ilkhanate
+    kind: empire
+    slug: ilkhanate
+    status: published
+    importance: 0.9
+    temporal: {from: 1256, to: 1335, precision: range, confidence: high, display_fa: "۱۲۵۶–۱۳۳۵ م / ۶۵۴–۷۳۶ ق"}
+    names:
+      - {lang: fa, form: "ایلخانان", kind: preferred}
+      - {lang: en, form: "Ilkhanate", kind: preferred}
+    summary_fa: "حکومت مغول بر ایران که آذربایجان را به مرکز سیاسی و علمی خود بدل کرد و پایتختش در این دوره جابه‌جا شد."
+    summary_en: "Mongol rule over Iran, which turned Azerbaijan into its political and scholarly centre and moved its capital several times."
+    sources: [src_bosworth_dynasties, src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: pol_qara_qoyunlu
+    kind: confederation
+    slug: qara-qoyunlu
+    status: published
+    importance: 0.65
+    temporal: {from: 1380, to: 1468, precision: circa_year, confidence: medium, display_fa: "حدود ۱۳۸۰–۱۴۶۸ م"}
+    names:
+      - {lang: fa, form: "قره‌قویونلو", kind: preferred}
+      - {lang: en, form: "Qara Qoyunlu", kind: preferred}
+    summary_fa: "اتحادیهٔ ایلی ترکمان که از تبریز حکومت کرد و جهان‌شاه از مهم‌ترین فرمانروایان آن بود."
+    summary_en: "A Turkmen confederation ruling from Tabriz; Jahan Shah was among its most significant rulers."
+    sources: [src_bosworth_dynasties, src_chiran_vol6]
+
+  - id: pol_aq_qoyunlu
+    kind: confederation
+    slug: aq-qoyunlu
+    status: published
+    importance: 0.65
+    temporal: {from: 1378, to: 1501, precision: circa_year, confidence: medium, display_fa: "حدود ۱۳۷۸–۱۵۰۱ م"}
+    names:
+      - {lang: fa, form: "آق‌قویونلو", kind: preferred}
+      - {lang: en, form: "Aq Qoyunlu", kind: preferred}
+    summary_fa: "اتحادیهٔ ایلی رقیب قره‌قویونلو که اوزون حسن آن را به اوج رساند و با پیروزی اسماعیل پایان یافت."
+    summary_en: "The rival Turkmen confederation brought to its peak by Uzun Hasan, ending with Ismail's victory."
+    sources: [src_bosworth_dynasties, src_chiran_vol6]
+
+  - id: pol_safaviyya
+    kind: sufi_order
+    slug: safaviyya-order
+    status: published
+    importance: 0.8
+    temporal: {from: 1301, to: 1501, precision: circa_year, confidence: medium,
+               display_fa: "حدود ۱۳۰۱–۱۵۰۱ م (تا تبدیل شدن به دولت)"}
+    names:
+      - {lang: fa, form: "طریقت صفویه", kind: preferred}
+      - {lang: en, form: "Safaviyya order", kind: preferred}
+    summary_fa: "طریقتی که در اردبیل شکل گرفت و طی دو سده از یک محفل عرفانی به نیرویی نظامی-سیاسی تبدیل شد؛ مقدمهٔ دولت صفوی است نه خود آن."
+    summary_en: "An order formed in Ardabil that evolved over two centuries from a Sufi circle into a military-political force; the prelude to, not the same as, the Safavid state."
+    sources: [src_eir_safavid_dynasty, src_savory_safavid_iran]
+
+  - id: pol_safavid
+    kind: dynasty
+    slug: safavid-dynasty
+    status: published
+    importance: 1.0
+    temporal: {from: 1501, to: 1736, precision: range, confidence: medium,
+               display_fa: "۱۵۰۱–۱۷۳۶ م (پایان دوره محل بحث: ۱۷۲۲ یا ۱۷۳۶)"}
+    names:
+      - {lang: fa, form: "صفویان", kind: preferred}
+      - {lang: fa, form: "دولت صفویه", kind: alternative}
+      - {lang: en, form: "Safavid dynasty", kind: preferred, transliteration: Common}
+    summary_fa: "دولتی که از ۱۵۰۱ میلادی با تاج‌گذاری شاه اسماعیل در تبریز آغاز شد و مذهب شیعهٔ دوازده‌امامی را مذهب رسمی اعلام کرد."
+    summary_en: "A state begun in 1501 with Shah Ismail's coronation in Tabriz, which declared Twelver Shi'ism the official faith."
+    sources: [src_savory_safavid_iran, src_bosworth_dynasties, src_eir_safavid_dynasty]
+
+  - id: pol_azerbaijan_gov_1945
+    kind: autonomous_government
+    slug: azerbaijan-autonomous-government-1945
+    status: in_review
+    importance: 0.5
+    temporal: {from: 1945, to: 1946, precision: range, confidence: medium, display_fa: "۱۳۲۴–۱۳۲۵ ش / ۱۹۴۵–۱۹۴۶ م"}
+    names:
+      - {lang: fa, form: "حکومت خودمختار آذربایجان", kind: preferred}
+      - {lang: en, form: "Azerbaijan Autonomous Government", kind: preferred}
+    summary_fa: "حکومتی کوتاه‌مدت در بحران پس از جنگ جهانی دوم که روایت‌های متفاوتی دربارهٔ آن وجود دارد."
+    summary_en: "A short-lived government during the post-WWII crisis, subject to differing interpretations."
+    sources: [src_eir_azerbaijan_history]
+    coverage_note_fa: "در in_review است؛ روایت‌های رقیب باید به‌صورت assertion جدا با منبع ثبت شوند."

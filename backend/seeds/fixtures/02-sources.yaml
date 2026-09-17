@@ -1,0 +1,291 @@
+# Bibliographic sources. Only metadata + short quotations are stored here; never full texts
+# under copyright (ADR-0013). `reliability`: primary | secondary | tertiary.
+# NOTE for editors: entries marked `needs_review` must be verified against the physical publication
+# before they are used to support a `published` assertion.
+sources:
+  # ---------------------------------------------------------------- primary
+  - id: src_tabari_tarikh
+    kind: chronicle
+    title: "Taʾrīkh al-rusul wa-l-mulūk (History of the Prophets and Kings)"
+    title_fa: "تاریخ الرسل و الملوک"
+    author: "Muḥammad b. Jarīr al-Ṭabarī"
+    author_fa: "محمد بن جریر طبری"
+    origin_year: 915
+    origin_temporal: {calendar: islamic_lunar, from: 302, to: 302, precision: exact_year}
+    reliability: primary
+    language: ar
+    citation: "al-Ṭabarī, Taʾrīkh al-rusul wa-l-mulūk, ed. M. J. de Goeje, Leiden: Brill (series 1879–1901)."
+  - id: src_rashid_al_din_jami
+    kind: chronicle
+    title: "Jāmiʿ al-tawārīkh"
+    title_fa: "جامع التواریخ"
+    author: "Rashīd al-Dīn Faḍl Allāh Hamadānī"
+    author_fa: "رشیدالدین فضل‌الله همدانی"
+    origin_year: 1307
+    origin_temporal: {calendar: islamic_lunar, from: 706, to: 710, precision: circa_year}
+    reliability: primary
+    language: fa
+    citation: "Rashīd al-Dīn, Jāmiʿ al-tawārīkh, ed. B. Karīmī, Tehran: Iqbāl, 1338 SH."
+    note_fa: "منبع اصلی دورهٔ ایلخانی؛ نویسنده خود وزیر ایلخانان بود (منفعت‌دار بودن منبع باید لحاظ شود)."
+  - id: src_mustawfi_nuzha
+    kind: geographical_work
+    title: "Nuzhat al-qulūb"
+    title_fa: "نزهة القلوب"
+    author: "Ḥamd Allāh Mustawfī Qazvīnī"
+    author_fa: "حمدالله مستوفی قزوینی"
+    origin_year: 1340
+    origin_temporal: {calendar: islamic_lunar, from: 740, to: 740, precision: exact_year}
+    reliability: primary
+    language: fa
+    citation: "Ḥamd Allāh Mustawfī, Nuzhat al-qulūb, ed. G. Le Strange, Leiden/London: E. J. W. Gibb Memorial Series, 1915."
+  - id: src_hasan_rumlu_ahsan
+    kind: chronicle
+    title: "Aḥsan al-tawārīkh"
+    title_fa: "احسن التواریخ"
+    author: "Ḥasan Beg Rūmlū"
+    author_fa: "حسن بیگ روملو"
+    origin_year: 1577
+    origin_temporal: {calendar: islamic_lunar, from: 984, to: 985, precision: circa_year}
+    reliability: primary
+    language: fa
+    citation: "Ḥasan Rūmlū, Aḥsan al-tawārīkh, ed. C. N. Seddon, Baroda: Oriental Institute, 1931–34."
+    note_fa: "نزدیک‌ترین روایت معاصر به وقایع اوایل دورهٔ صفوی."
+  - id: src_iskandar_beg_abbasi
+    kind: chronicle
+    title: "Tārīkh-i ʿālam-ārā-yi ʿAbbāsī"
+    title_fa: "تاریخ عالم‌آرای عباسی"
+    author: "Iskandar Beg Munshī"
+    author_fa: "اسکندربیک منشی"
+    origin_year: 1616
+    origin_temporal: {calendar: islamic_lunar, from: 1025, to: 1025, precision: exact_year}
+    reliability: primary
+    language: fa
+    citation: "Iskandar Beg Munshī, Tārīkh-i ʿālam-ārā-yi ʿAbbāsī, ed. Ī. Afshār, Tehran: Amīr-i Kabīr, 1334 SH."
+  - id: src_strabo_geographica
+    kind: classical_author
+    title: "Geographica (Book 11: Media and Atropatene)"
+    title_fa: "جغرافیا، کتاب یازدهم"
+    author: "Strabo"
+    author_fa: "استرابون"
+    origin_year: -18
+    origin_temporal: {calendar: julian, from: -18, to: 7, precision: range, confidence: low}
+    reliability: primary
+    language: grc
+    citation: "Strabo, Geographica, ed. A. Meineke / Loeb Classical Library (H. L. Jones), vol. V."
+  - id: src_inscription_soltaniyeh
+    kind: inscription
+    title: "Foundation inscriptions of the Dome of Soltaniyeh"
+    title_fa: "کتیبه‌های بنای گنبد سلطانیه"
+    reliability: primary
+    language: fa
+    citation: "کتیبه‌های وقفی/بنایی گنبد سلطانیه؛ خوانش و تاریخ‌گذاری در پروندهٔ یونسکو آمده است."
+    needs_review: true
+
+  # ------------------------------------------------------------- secondary
+  - id: src_bosworth_dynasties
+    kind: academic_book
+    title: "The New Islamic Dynasties: A Chronological and Genealogical Manual"
+    author: "C. E. Bosworth"
+    year: 1996
+    publisher: "Edinburgh University Press"
+    reliability: secondary
+    language: en
+    isbn: "978-0748621378"
+    citation: "Bosworth, C. E., The New Islamic Dynasties, Edinburgh: Edinburgh University Press, 1996."
+  - id: src_savory_safavid_iran
+    kind: academic_book
+    title: "Iran Under the Safavids"
+    author: "R. M. Savory"
+    year: 1980
+    publisher: "Cambridge University Press"
+    reliability: secondary
+    language: en
+    isbn: "978-0521042512"
+    citation: "Savory, R. M., Iran Under the Safavids, Cambridge: Cambridge University Press, 1980."
+  - id: src_chiran_vol5
+    kind: academic_book
+    title: "The Cambridge History of Iran, Vol. 5: The Saljuq and Mongol Periods"
+    author: "J. A. Boyle (ed.)"
+    year: 1968
+    publisher: "Cambridge University Press"
+    reliability: secondary
+    language: en
+    citation: "Boyle, J. A. (ed.), The Cambridge History of Iran V, Cambridge, 1968."
+  - id: src_chiran_vol6
+    kind: academic_book
+    title: "The Cambridge History of Iran, Vol. 6: The Timurid and Safavid Periods"
+    author: "P. Jackson & L. Lockhart (eds.)"
+    year: 1986
+    publisher: "Cambridge University Press"
+    reliability: secondary
+    language: en
+    citation: "Jackson, P. & Lockhart, L. (eds.), The Cambridge History of Iran VI, Cambridge, 1986."
+  - id: src_blair_bloom_islam
+    kind: academic_book
+    title: "The Art and Architecture of Islam 1250–1800"
+    author: "Sheila S. Blair & Jonathan M. Bloom"
+    year: 1994
+    publisher: "Yale University Press"
+    reliability: secondary
+    language: en
+    isbn: "978-0300058864"
+    citation: "Blair, S. & Bloom, J., The Art and Architecture of Islam 1250–1800, New Haven: Yale University Press, 1994."
+  - id: src_minorsky_caucasian
+    kind: academic_book
+    title: "Studies in Caucasian History"
+    author: "Vladimir Minorsky"
+    year: 1953
+    publisher: "Cambridge University Press"
+    reliability: secondary
+    language: en
+    citation: "Minorsky, V., Studies in Caucasian History, Cambridge, 1953."
+  - id: src_ambraseys_persian_earthquakes
+    kind: academic_book
+    title: "A History of Persian Earthquakes"
+    author: "N. N. Ambraseys & C. P. Melville"
+    year: 1982
+    publisher: "Cambridge University Press"
+    reliability: secondary
+    language: en
+    isbn: "978-0521021876"
+    citation: "Ambraseys, N. N. & Melville, C. P., A History of Persian Earthquakes, Cambridge, 1982."
+  - id: src_kasravi_mashrute
+    kind: academic_book
+    title: "Tārīkh-i Mashrūṭa-yi Īrān"
+    title_fa: "تاریخ مشروطهٔ ایران"
+    author: "Ahmad Kasravi"
+    author_fa: "احمد کسروی"
+    year: 1940
+    publisher: "Tehran"
+    reliability: secondary
+    language: fa
+    citation: "کسروی، احمد، تاریخ مشروطهٔ ایران، تهران (چاپ‌های متعدد)."
+    note_fa: "کسروی خود از نزدیکان وقایع بود؛ روایت او ارزشمند اما جانب‌دار است."
+  - id: src_hasanlu_reports
+    kind: archaeological_report
+    title: "Hasanlu Excavation Reports"
+    author: "University of Pennsylvania Museum / R. H. Dyson and successors"
+    reliability: secondary
+    language: en
+    citation: "Hasanlu Excavation Reports (I–IV), Philadelphia: University of Pennsylvania Museum, 1989–2011."
+  - id: src_eir_ardabil
+    kind: encyclopedia_entry
+    title: "ARDEBĪL (Encyclopaedia Iranica entry)"
+    title_fa: "مدخل اردبیل در ایرانیکا"
+    publisher: "Encyclopaedia Iranica"
+    reliability: tertiary
+    language: en
+    url: "https://www.iranicaonline.org/"
+    citation: "Encyclopaedia Iranica, s.v. “ARDEBĪL”."
+    note_fa: "لینک دقیق مدخل باید هنگام ویرایش افزوده شود؛ آدرس پایهٔ دانشنامه درج شده است."
+  - id: src_eir_tabriz
+    kind: encyclopedia_entry
+    title: "TABRĪZ (Encyclopaedia Iranica entry)"
+    publisher: "Encyclopaedia Iranica"
+    reliability: tertiary
+    language: en
+    url: "https://www.iranicaonline.org/"
+    citation: "Encyclopaedia Iranica, s.v. “TABRĪZ”."
+  - id: src_eir_safavid_dynasty
+    kind: encyclopedia_entry
+    title: "SAFAVID DYNASTY (Encyclopaedia Iranica entry)"
+    publisher: "Encyclopaedia Iranica"
+    reliability: tertiary
+    language: en
+    url: "https://www.iranicaonline.org/"
+    citation: "Encyclopaedia Iranica, s.v. “SAFAVID DYNASTY”."
+  - id: src_eir_babak
+    kind: encyclopedia_entry
+    title: "BĀBAK (Encyclopaedia Iranica entry)"
+    publisher: "Encyclopaedia Iranica"
+    reliability: tertiary
+    language: en
+    url: "https://www.iranicaonline.org/"
+    citation: "Encyclopaedia Iranica, s.v. “BĀBAK”."
+  - id: src_ei_chaldiran
+    kind: encyclopedia_entry
+    title: "ČĀLDURĀN (Encyclopaedia of Islam, 2nd ed.)"
+    publisher: "Brill"
+    reliability: tertiary
+    language: en
+    citation: "Encyclopaedia of Islam, 2nd ed., s.v. “Čāldurān”."
+  - id: src_eir_azerbaijan_history
+    kind: encyclopedia_entry
+    title: "AZERBAIJAN (Encyclopaedia Iranica, history sections)"
+    publisher: "Encyclopaedia Iranica"
+    reliability: tertiary
+    language: en
+    url: "https://www.iranicaonline.org/"
+    citation: "Encyclopaedia Iranica, s.v. “AZERBAIJAN”."
+
+  # ---------------------------------------------------- heritage dossiers
+  - id: src_unesco_sheikh_safi
+    kind: heritage_dossier
+    title: "Sheikh Safi al-din Khānegāh and Shrine Ensemble in Ardabil (World Heritage List No. 1345)"
+    title_fa: "مجموعهٔ خاندان و بقعهٔ شیخ صفی‌الدین اردبیلی (شمارهٔ ۱۳۴۵ فهرست میراث جهانی)"
+    author: "UNESCO World Heritage Centre"
+    year: 2010
+    reliability: secondary
+    language: en
+    url: "https://whc.unesco.org/en/list/1345"
+    citation: "UNESCO WHC, “Sheikh Safi al-din Khānegāh and Shrine Ensemble in Ardabil”, inscribed 2010, List No. 1345."
+  - id: src_unesco_soltaniyeh
+    kind: heritage_dossier
+    title: "Dome of Soltaniyeh (World Heritage List No. 1188)"
+    title_fa: "گنبد سلطانیه (شمارهٔ ۱۱۱۸۸ فهرست میراث جهانی)"
+    author: "UNESCO World Heritage Centre"
+    year: 2005
+    reliability: secondary
+    language: en
+    url: "https://whc.unesco.org/en/list/1188"
+    citation: "UNESCO WHC, “Dome of Soltaniyeh”, inscribed 2005, List No. 1188."
+  - id: src_unesco_takht_soleyman
+    kind: heritage_dossier
+    title: "Takht-e Soleyman (World Heritage List No. 1077)"
+    title_fa: "تخت سلیمان (شمارهٔ ۱۰۷۷ فهرست میراث جهانی)"
+    author: "UNESCO World Heritage Centre"
+    year: 2003
+    reliability: secondary
+    language: en
+    url: "https://whc.unesco.org/en/list/1077"
+    citation: "UNESCO WHC, “Takht-e Soleyman”, inscribed 2003, List No. 1077."
+  - id: src_unesco_tabriz_bazaar
+    kind: heritage_dossier
+    title: "Tabriz Historic Bazaar Complex (World Heritage List No. 1312)"
+    title_fa: "مجموعهٔ بازار تاریخی تبریز (شمارهٔ ۱۳۱۲ فهرست میراث جهانی)"
+    author: "UNESCO World Heritage Centre"
+    year: 2010
+    reliability: secondary
+    language: en
+    url: "https://whc.unesco.org/en/list/1312"
+    citation: "UNESCO WHC, “Tabriz Historic Bazaar Complex”, inscribed 2010, List No. 1312."
+  - id: src_unesco_armenian_ensembles
+    kind: heritage_dossier
+    title: "Armenian Monastic Ensembles of Iran (World Heritage List No. 1262)"
+    title_fa: "مجموعهٔ صومعه‌های ارمنی ایران (شمارهٔ ۱۲۶۲ فهرست میراث جهانی)"
+    author: "UNESCO World Heritage Centre"
+    year: 2008
+    reliability: secondary
+    language: en
+    url: "https://whc.unesco.org/en/list/1262"
+    citation: "UNESCO WHC, “Armenian Monastic Ensembles of Iran” (Qara Kelisa, St Stepanos, Darashamb), inscribed 2008, List No. 1262."
+  - id: src_national_heritage_register
+    kind: official_register
+    title: "Iranian National Heritage Register (Sāzmān-e Mīrās̱-e Farhangī)"
+    title_fa: "فهرست آثار ملی ایران (سازمان میراث فرهنگی)"
+    reliability: tertiary
+    language: fa
+    citation: "فهرست آثار ثبت‌شدهٔ ملی، سازمان میراث فرهنگی، گردشگری و صنایع دستی."
+    note_fa: "شمارهٔ ثبت هر اثر باید در زمان ویرایش به‌صورت locator ثبت شود."
+    needs_review: true
+
+  # ------------------------------------------------------------- basemap
+  - id: src_osm_modern_admin
+    kind: official_register
+    title: "OpenStreetMap contributors — modern administrative boundaries"
+    reliability: tertiary
+    language: en
+    license: "ODbL"
+    url: "https://www.openstreetmap.org/"
+    citation: "© OpenStreetMap contributors, ODbL. Used only for the modern_admin layer."
+    note_fa: "این منبع فقط برای لایهٔ مرزهای اداری امروزی مجاز است و هرگز به‌عنوان مرز تاریخی استفاده نمی‌شود."

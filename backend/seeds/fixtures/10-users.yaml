@@ -1,0 +1,34 @@
+# Development identities for the fixtures driver (ADR-0010).
+#
+# The fixtures driver is the *development* driver: it cannot run in production
+# (Settings.validate_consistency refuses AZIR_DB_DRIVER=fixtures there), and everything it writes
+# lives in one process's memory. These four accounts exist so the editorial panel is usable the
+# moment `make dev-backend` starts -- no database, no bootstrap step.
+#
+# NO PASSWORD IS STORED HERE. The adapter hashes $AZIR_DEV_PASSWORD (default
+# "atlas-dev-password") at load time, so no credential ever lands in the repository.
+#
+# On PostgreSQL+PostGIS, create real accounts instead:
+#
+#     make dev-users                     # the same four identities, persisted
+#     azir user add --email you@example.org --role admin   # password read from stdin
+users:
+  - id: usr_admin_dev
+    email: admin@atlas.local
+    display_name: "مدیر اطلس"
+    role: admin
+
+  - id: usr_reviewer_dev
+    email: reviewer@atlas.local
+    display_name: "بازبین پژوهشی"
+    role: reviewer
+
+  - id: usr_editor_dev
+    email: editor@atlas.local
+    display_name: "ویرایشگر"
+    role: editor
+
+  - id: usr_contributor_dev
+    email: contributor@atlas.local
+    display_name: "همکار پژوهشی"
+    role: contributor

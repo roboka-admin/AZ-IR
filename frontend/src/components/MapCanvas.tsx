@@ -40,8 +40,7 @@ export interface MapCanvasProps {
 }
 
 const PROBE_TIMEOUT_MS = 4000;
-const RTL_TEXT_PLUGIN_URL =
-  "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js";
+const RTL_TEXT_PLUGIN_URL = "/vendor/mapbox-gl-rtl-text/mapbox-gl-rtl-text.js";
 
 /** Register Arabic shaping and bidirectional-text support once, loading it only when needed. */
 async function ensureRtlTextSupport(): Promise<void> {

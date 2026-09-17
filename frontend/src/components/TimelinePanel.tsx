@@ -71,8 +71,8 @@ export default function TimelinePanel({
   );
   const nearbyNotable = buckets
     .filter((bucket) => bucket.notable.length > 0)
-    .flatMap((bucket) => bucket.notable.map((event) => ({ ...event, bucketFrom: bucket.from })))
-    .filter((event) => Math.abs(event.bucketFrom - year) <= Math.max(6, spanYears / 6))
+    .flatMap((bucket) => bucket.notable)
+    .filter((event) => Math.abs(event.year - year) <= Math.max(6, spanYears / 6))
     .slice(0, 8);
 
   const zoomTime = (factor: number) => {
@@ -106,8 +106,20 @@ export default function TimelinePanel({
         </div>
 
         <div className="row" style={{ gap: 4 }}>
-          <button type="button" className="btn btn-icon" onClick={() => zoomTime(0.5)} title="zoom in time">＋</button>
-          <button type="button" className="btn btn-icon" onClick={() => zoomTime(2)} title="zoom out time">－</button>
+          <button
+            type="button"
+            className="btn btn-icon"
+            onClick={() => zoomTime(0.5)}
+            title={t(locale, "ui.time.zoomIn")}
+            aria-label={t(locale, "ui.time.zoomIn")}
+          >＋</button>
+          <button
+            type="button"
+            className="btn btn-icon"
+            onClick={() => zoomTime(2)}
+            title={t(locale, "ui.time.zoomOut")}
+            aria-label={t(locale, "ui.time.zoomOut")}
+          >－</button>
           <button
             type="button"
             className="btn"
@@ -164,29 +176,43 @@ export default function TimelinePanel({
       </div>
 
       {span ? (
-        <div className="row" style={{ gap: 8, fontSize: 11.5, color: "var(--text-dim)" }}>
-          <input
-            className="field"
-            style={{ width: 92, padding: "3px 8px" }}
-            type="number"
-            value={span[0]}
-            onChange={(event) => onSpanChange([Number(event.target.value), span[1]])}
-            aria-label="from"
-          />
-          <span>—</span>
-          <input
-            className="field"
-            style={{ width: 92, padding: "3px 8px" }}
-            type="number"
-            value={span[1]}
-            onChange={(event) => onSpanChange([span[0], Number(event.target.value)])}
-            aria-label="to"
-          />
-          <span>{t(locale, "ui.mode.during")}</span>
+        <div className="timeline-range-fields">
+          <label>
+            <span>{t(locale, "ui.time.from")}</span>
+            <input
+              key={`from-${span[0]}`}
+              className="field"
+              type="number"
+              min={floor}
+              max={ceil}
+              defaultValue={span[0]}
+              onBlur={(event) => onSpanChange([
+                Number.isFinite(event.currentTarget.valueAsNumber) ? event.currentTarget.valueAsNumber : span[0],
+                span[1],
+              ])}
+            />
+          </label>
+          <span aria-hidden>—</span>
+          <label>
+            <span>{t(locale, "ui.time.to")}</span>
+            <input
+              key={`to-${span[1]}`}
+              className="field"
+              type="number"
+              min={floor}
+              max={ceil}
+              defaultValue={span[1]}
+              onBlur={(event) => onSpanChange([
+                span[0],
+                Number.isFinite(event.currentTarget.valueAsNumber) ? event.currentTarget.valueAsNumber : span[1],
+              ])}
+            />
+          </label>
+          <span className="year-sub">{modeLabel(locale, mode)}</span>
         </div>
       ) : null}
 
-      <div className="periods" aria-hidden>
+      <div className="periods" role="group" aria-label={t(locale, "ui.time.periods")}>
         {meta.periods.map((period, index) => {
           const yearFrom = period.year_from;
           const yearTo = period.year_to;
@@ -196,34 +222,42 @@ export default function TimelinePanel({
           const width = right - left;
           if (width <= 0) return null;
           return (
-            <div
+            <button
               key={period.id}
+              type="button"
               className="period-band"
               style={{
-                insetInlineStart: `${left * 100}%`,
+                left: `${left * 100}%`,
                 width: `${width * 100}%`,
                 background: PERIOD_COLORS[index % PERIOD_COLORS.length],
                 opacity: year >= yearFrom && year <= yearTo ? 0.95 : 0.5,
               }}
-              title={`${period.label} (${yearFrom}–${yearTo})`}
+              title={`${period.label} (${formatYear(yearFrom, locale)}–${formatYear(yearTo, locale)})`}
+              aria-label={`${period.label}: ${formatYear(yearFrom, locale)}–${formatYear(yearTo, locale)}`}
               onClick={() => onYearChange(Math.round((yearFrom + yearTo) / 2))}
             >
               {width > 0.06 ? period.label : ""}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      <div className="histogram" aria-hidden>
+      <div className="histogram" role="group" aria-label={t(locale, "ui.time.distribution")}>
         {buckets.length === 0 ? (
           <div className="year-sub">{t(locale, "ui.loading")}</div>
         ) : (
           buckets.map((bucket) => (
-            <div
+            <button
               key={bucket.from}
+              type="button"
               className={`histogram-bar${bucket.notable.length > 0 ? " notable" : ""}`}
               style={{ height: `${Math.max(4, (bucket.total / maxTotal) * 100)}%` }}
-              title={`${bucket.from}–${bucket.to}: ${bucket.total}`}
+              title={`${formatYear(bucket.from, locale)}–${formatYear(bucket.to, locale)}: ${formatNumber(bucket.total, locale)}`}
+              aria-label={t(locale, "ui.time.bucketLabel", {
+                from: formatYear(bucket.from, locale),
+                to: formatYear(bucket.to, locale),
+                count: formatNumber(bucket.total, locale),
+              })}
               onClick={() => onYearChange(Math.round((bucket.from + bucket.to) / 2))}
             />
           ))

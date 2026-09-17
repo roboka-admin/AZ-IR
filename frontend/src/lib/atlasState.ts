@@ -6,6 +6,7 @@
  * historical is stored here -- only view state (AGENTS.md rule 15).
  */
 
+import { normalizeYearRange, rangeMidpoint } from "./timeline";
 import type { CalendarCode, MetaResponse, TemporalMode, TilesPreference } from "./types";
 
 export interface AtlasState {
@@ -47,10 +48,15 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
   const calendar = calendarParam && CALENDARS.includes(calendarParam) ? calendarParam : "gregorian_proleptic";
   const modeParam = search.get("mode") as TemporalMode | null;
   const mode = modeParam && MODES.includes(modeParam) ? modeParam : "at";
-  const from = integer(search.get("from"));
-  const to = integer(search.get("to"));
-  const year =
-    integer(search.get("t")) ?? (from !== null ? from : meta?.timeline.default_year ?? 1500);
+  const rawFrom = integer(search.get("from"));
+  const rawTo = integer(search.get("to"));
+  const floor = meta?.timeline.floor ?? -800;
+  const ceil = meta?.timeline.ceil ?? 2100;
+  const span = rawFrom !== null && rawTo !== null
+    ? normalizeYearRange([rawFrom, rawTo], floor, ceil)
+    : null;
+  // A range URL has no separate `t`: its stable cursor is the midpoint, not the first year.
+  const year = clampYear(integer(search.get("t")) ?? (span ? rangeMidpoint(span) : meta?.timeline.default_year ?? 1500), meta);
   const layersRaw = search.get("l");
   const knownLayers = new Set((meta?.layers ?? []).map((layer) => layer.id));
 
@@ -60,7 +66,7 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
     year: clampYear(year, meta),
     calendar,
     mode,
-    span: from !== null && to !== null && to >= from ? [from, to] : null,
+    span,
     layers: layersRaw
       ? layersRaw.split(",").filter((id) => knownLayers.size === 0 || knownLayers.has(id))
       : null,

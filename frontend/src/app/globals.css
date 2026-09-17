@@ -33,7 +33,7 @@
   --font-ui: var(--font-vazirmatn), "IRANSansX", "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
   --header-h: 56px;
-  --timeline-h: 132px;
+  --timeline-h: 190px;
 }
 
 * {
@@ -542,6 +542,10 @@ select.field {
 
 /* ------------------------------------------------------------- timeline */
 
+.app:has(.timeline-range-fields) {
+  --timeline-h: 226px;
+}
+
 .timeline {
   position: absolute;
   inset-inline: 14px;
@@ -578,6 +582,7 @@ select.field {
 .periods {
   position: relative;
   height: 16px;
+  direction: ltr;
   border-radius: 4px;
   overflow: hidden;
   background: color-mix(in srgb, var(--ink-900) 65%, transparent);
@@ -595,12 +600,22 @@ select.field {
   overflow: hidden;
   color: #f0e7d6;
   cursor: pointer;
+  border: 0;
+  font-family: inherit;
+}
+
+.period-band:focus-visible,
+.histogram-bar:focus-visible {
+  outline: 2px solid var(--sand-200);
+  outline-offset: 1px;
+  z-index: 2;
 }
 
 .histogram {
   position: relative;
   height: 34px;
   display: flex;
+  direction: ltr;
   align-items: flex-end;
   gap: 1px;
 }
@@ -611,6 +626,9 @@ select.field {
   background: linear-gradient(180deg, var(--teal-400), color-mix(in srgb, var(--teal-400) 40%, transparent));
   border-radius: 2px 2px 0 0;
   opacity: 0.75;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .histogram-bar.notable {
@@ -623,10 +641,32 @@ select.field {
   height: 26px;
   display: flex;
   align-items: center;
+  direction: ltr;
+}
+
+.timeline-range-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+
+.timeline-range-fields label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.timeline-range-fields .field {
+  width: 92px;
+  padding: 3px 8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .scrubber input[type="range"] {
   width: 100%;
+  direction: ltr;
   appearance: none;
   background: transparent;
   cursor: ew-resize;
@@ -867,7 +907,20 @@ select.field {
     max-height: 46dvh;
   }
   :root {
-    --timeline-h: 118px;
+    --timeline-h: 224px;
+  }
+  .app:has(.timeline-range-fields) {
+    --timeline-h: 264px;
+  }
+  .timeline {
+    inset-inline: 8px;
+    bottom: 8px;
+  }
+  .timeline-head {
+    gap: 6px;
+  }
+  .timeline-range-fields {
+    flex-wrap: wrap;
   }
 }
 

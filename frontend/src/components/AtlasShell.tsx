@@ -28,6 +28,13 @@ import {
 } from "@/lib/mapStyle";
 import { resolveTiles, type ResolvedTiles } from "@/lib/tiles";
 import { parseAtlasState, serializeAtlasState, type AtlasState } from "@/lib/atlasState";
+import {
+  centerTimelineWindow,
+  clampTimelineYear,
+  moveRangeToYear,
+  normalizeYearRange,
+  rangeMidpoint,
+} from "@/lib/timeline";
 import type {
   CalendarCode,
   EntityDetail,
@@ -78,7 +85,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         const floor = payload.timeline.floor;
         const ceil = payload.timeline.ceil;
         const initial = parseAtlasState(new URLSearchParams(searchParams.toString()), payload);
-        setTimelineWindow(centerWindow(initial.year, Math.min(600, ceil - floor), floor, ceil));
+        setTimelineWindow(centerTimelineWindow(initial.year, Math.min(600, ceil - floor), floor, ceil));
       })
       .catch((cause: unknown) => {
         if ((cause as Error).name !== "AbortError") {
@@ -296,6 +303,20 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
     if (mapRef.current) setSelectedFeature(mapRef.current, null);
   }, []);
 
+  const setYear = useCallback((year: number) => {
+    if (!meta || !state) return;
+    const clamped = clampTimelineYear(year, meta);
+    const nextSpan = state.span
+      ? moveRangeToYear(state.span, clamped, meta.timeline.floor, meta.timeline.ceil)
+      : null;
+    const cursor = nextSpan ? rangeMidpoint(nextSpan) : clamped;
+    setState((previous) => (previous ? { ...previous, year: cursor, span: nextSpan, playing: false } : previous));
+    const [from, to] = timelineWindow;
+    if (cursor < from || cursor > to) {
+      setTimelineWindow(centerTimelineWindow(cursor, to - from, meta.timeline.floor, meta.timeline.ceil));
+    }
+  }, [meta, state, timelineWindow]);
+
   /* ---------------------------------------------------------- playback */
 
   useEffect(() => {
@@ -309,9 +330,15 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
       if (next > to) {
         next = from;
       }
-      setState({ ...current, year: next });
-      if (next < timelineWindow[0] || next > timelineWindow[1]) {
-        setTimelineWindow(centerWindow(next, timelineWindow[1] - timelineWindow[0], meta.timeline.floor, meta.timeline.ceil));
+      const nextSpan = current.span
+        ? moveRangeToYear(current.span, next, meta.timeline.floor, meta.timeline.ceil)
+        : null;
+      const cursor = nextSpan ? rangeMidpoint(nextSpan) : next;
+      setState({ ...current, year: cursor, span: nextSpan });
+      if (cursor < timelineWindow[0] || cursor > timelineWindow[1]) {
+        setTimelineWindow(
+          centerTimelineWindow(cursor, timelineWindow[1] - timelineWindow[0], meta.timeline.floor, meta.timeline.ceil),
+        );
       }
     }, 90);
     return () => clearInterval(timer);
@@ -330,7 +357,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         const direction = event.key === "ArrowRight" ? 1 : -1;
         // In RTL the arrow keys keep their physical meaning: right is always later in time.
         event.preventDefault();
-        patch({ year: clampYear(current.year + direction * big, meta) });
+        setYear(clampTimelineYear(current.year + direction * big, meta));
       } else if (event.key === " ") {
         event.preventDefault();
         patch({ playing: !current.playing });
@@ -340,21 +367,12 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [meta, closeDetail]);
+  }, [meta, closeDetail, setYear]);
 
   /* ---------------------------------------------------------- helpers */
 
   function patch(changes: Partial<AtlasState>) {
     setState((previous) => (previous ? { ...previous, ...changes } : previous));
-  }
-
-  function setYear(year: number) {
-    if (!meta) return;
-    patch({ year, playing: false });
-    const [from, to] = timelineWindow;
-    if (year < from || year > to) {
-      setTimelineWindow(centerWindow(year, to - from, meta.timeline.floor, meta.timeline.ceil));
-    }
   }
 
   function onSearchPick(hit: SearchHit) {
@@ -497,7 +515,14 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         onWindowChange={setTimelineWindow}
         onCalendarChange={(calendar: CalendarCode) => patch({ calendar })}
         onModeChange={(mode: TemporalMode) => patch({ mode })}
-        onSpanChange={(span) => patch({ span, mode: span ? "overlaps" : "at" })}
+        onSpanChange={(span) => {
+          if (!span) {
+            patch({ span: null, mode: "at" });
+            return;
+          }
+          const normalized = normalizeYearRange(span, meta.timeline.floor, meta.timeline.ceil);
+          patch({ span: normalized, year: rangeMidpoint(normalized), mode: "overlaps" });
+        }}
         onTogglePlay={() => patch({ playing: !state.playing })}
         onOpenEntity={(type, id) => void openEntity(type, id)}
       />
@@ -506,18 +531,6 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
 }
 
 /* ------------------------------------------------------------------ utilities */
-
-function centerWindow(year: number, width: number, floor: number, ceil: number): [number, number] {
-  const span = Math.max(20, Math.min(width, ceil - floor));
-  let from = Math.round(year - span / 2);
-  if (from < floor) from = floor;
-  if (from + span > ceil) from = Math.max(floor, ceil - span);
-  return [from, Math.round(from + span)];
-}
-
-function clampYear(year: number, meta: MetaResponse): number {
-  return Math.min(meta.timeline.ceil, Math.max(meta.timeline.floor, year));
-}
 
 /** `plc_…` -> `place`. The prefix table is an id convention (ADR-0008), not historical data. */
 function typeFromId(id: string): string | null {

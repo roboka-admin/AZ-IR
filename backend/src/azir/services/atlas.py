@@ -100,8 +100,8 @@ class AtlasService:
             projection = FeatureProjection(
                 entity=entity,
                 geometry=entity.primary_geometry(at_year=year),
-                label=entity.display_name(query.locale),
-                label_secondary=entity.secondary_name(query.locale),
+                label=entity.display_name(query.locale, year),
+                label_secondary=entity.secondary_name(query.locale, year),
                 locale=query.locale,
                 fields=fields,
             )

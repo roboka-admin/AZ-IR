@@ -155,10 +155,19 @@ class EntityRecord:
             candidates = list(self.names)
         if not candidates:
             return None
-        preferred = [n for n in candidates if n.lang == locale and n.kind == "preferred"]
+        same_lang = [n for n in candidates if n.lang == locale]
+        if at_year is not None:
+            # A sourced, explicitly time-bounded name describes what this place was called then.
+            # It must outrank the unbounded present-day preferred name, otherwise «رضائیه» can
+            # never appear for Urmia in 1930 despite being modelled correctly (ADR-0006).
+            historical = [
+                n for n in same_lang if n.year_from is not None or n.year_to is not None
+            ]
+            if historical:
+                return historical[0]
+        preferred = [n for n in same_lang if n.kind == "preferred"]
         if preferred:
             return preferred[0]
-        same_lang = [n for n in candidates if n.lang == locale]
         if same_lang:
             return same_lang[0]
         fallback_lang = Locale.EN if locale == Locale.FA else Locale.FA
@@ -173,9 +182,9 @@ class EntityRecord:
             return variant.form
         return self.slug or self.id
 
-    def secondary_name(self, locale: str) -> str | None:
+    def secondary_name(self, locale: str, at_year: int | None = None) -> str | None:
         other = Locale.EN if locale == Locale.FA else Locale.FA
-        variant = self.name_for(other)
+        variant = self.name_for(other, at_year)
         return variant.form if variant else None
 
     def alternates(self, locale: str) -> Sequence[NameVariant]:

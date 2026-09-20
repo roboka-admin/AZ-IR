@@ -41,6 +41,23 @@ export interface MapCanvasProps {
 
 const PROBE_TIMEOUT_MS = 4000;
 const RTL_TEXT_PLUGIN_URL = "/vendor/mapbox-gl-rtl-text/mapbox-gl-rtl-text.js";
+const VIEWPORT_BOUNDS_PADDING = 0.75;
+
+/** Allow geographic context around the pilot area without permitting unbounded full-world queries. */
+function expandedBounds(
+  bounds: [number, number, number, number] | undefined,
+): [number, number, number, number] | undefined {
+  if (!bounds) return undefined;
+  const [west, south, east, north] = bounds;
+  const lonPadding = (east - west) * VIEWPORT_BOUNDS_PADDING;
+  const latPadding = (north - south) * VIEWPORT_BOUNDS_PADDING;
+  return [
+    Math.max(-180, west - lonPadding),
+    Math.max(-85, south - latPadding),
+    Math.min(180, east + lonPadding),
+    Math.min(85, north + latPadding),
+  ];
+}
 
 /** Register Arabic shaping and bidirectional-text support once, loading it only when needed. */
 async function ensureRtlTextSupport(): Promise<void> {
@@ -101,15 +118,16 @@ export default function MapCanvas({
       const resolved = await resolveBasemap();
       if (cancelled || !container.current) return;
       fontRef.current = resolved.font;
+      const navigationBounds = expandedBounds(maxBounds);
 
       map = new maplibregl.Map({
         container: container.current,
         style: resolved.style as never,
         center: [center[1], center[0]],
         zoom,
-        minZoom: 2,
+        minZoom: 1.5,
         maxZoom: 18,
-        maxBounds,
+        maxBounds: navigationBounds,
         attributionControl: { compact: true },
       });
       mapRef.current = map;
@@ -134,7 +152,7 @@ export default function MapCanvas({
       map.on("load", () => {
         const ready = map;
         if (!ready) return;
-        if (resolved.offline && maxBounds) ensureFallbackLayers(ready, maxBounds);
+        if (resolved.offline && navigationBounds) ensureFallbackLayers(ready, navigationBounds);
         // The first add decides the delivery; later swaps go through setDelivery below.
         ensureAtlasLayers(ready, fontRef.current, tilesRef.current);
         ready.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");

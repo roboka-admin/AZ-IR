@@ -97,6 +97,27 @@ def test_invalid_near_coordinates_are_rejected_before_the_repository(client: Tes
         assert response.json()["type"] == "https://errors.azir.dev/validation"
 
 
+def test_map_labels_follow_sourced_time_bounded_name_variants(client: TestClient) -> None:
+    historical = client.get(
+        "/api/v1/atlas/features",
+        params={"zoom": 7, "t": 1930, "locale": "fa", "layers": "places"},
+    ).json()
+    current = client.get(
+        "/api/v1/atlas/features",
+        params={"zoom": 7, "t": 2000, "locale": "fa", "layers": "places"},
+    ).json()
+
+    def label(payload: dict[str, Any]) -> str:
+        return next(
+            feature["properties"]["label"]
+            for feature in payload["features"]
+            if feature["id"] == "plc_urmia"
+        )
+
+    assert label(historical) == "رضائیه"
+    assert label(current) == "ارومیه"
+
+
 def test_time_changes_the_map(client: TestClient) -> None:
     def ids(year: int) -> set[str]:
         body = client.get("/api/v1/atlas/features", params={"zoom": 7, "t": year}).json()

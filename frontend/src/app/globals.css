@@ -291,6 +291,12 @@ select.field {
   cursor: pointer;
 }
 
+/* Native option popovers do not inherit the select's dark background consistently. */
+select.field option {
+  background: var(--ink-800);
+  color: var(--text);
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -509,9 +515,12 @@ select.field {
 }
 
 .rel-object {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
   color: var(--text);
   cursor: pointer;
-  border-bottom: 1px solid transparent;
 }
 
 .rel-object:hover {
@@ -871,6 +880,45 @@ select.field {
   font-size: 12px;
   color: var(--text-dim);
   line-height: 1.7;
+}
+
+/* MapLibre's stock popup is white; keep any map popup readable inside the dark atlas theme. */
+.maplibregl-popup-content {
+  min-width: 180px;
+  padding: 10px 28px 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: var(--ink-800);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-family: var(--font-ui);
+}
+
+.maplibregl-popup-close-button {
+  color: var(--text-dim);
+  padding: 2px 7px;
+  font-size: 18px;
+}
+
+.maplibregl-popup-close-button:hover {
+  background: var(--ink-600);
+  color: var(--text);
+}
+
+.maplibregl-popup[class*="anchor-top"] .maplibregl-popup-tip {
+  border-bottom-color: var(--ink-800);
+}
+
+.maplibregl-popup[class*="anchor-bottom"] .maplibregl-popup-tip {
+  border-top-color: var(--ink-800);
+}
+
+.maplibregl-popup[class*="anchor-left"] .maplibregl-popup-tip {
+  border-right-color: var(--ink-800);
+}
+
+.maplibregl-popup[class*="anchor-right"] .maplibregl-popup-tip {
+  border-left-color: var(--ink-800);
 }
 
 .maplibregl-ctrl-group {

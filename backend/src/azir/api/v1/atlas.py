@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Query
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Query, Request
+from fastapi.responses import JSONResponse, Response
 
 from ...core.config import Settings
 from ...core.errors import ValidationError
@@ -74,6 +74,7 @@ def _normalize_span(calendar: Calendar, year_from: int, year_to: int) -> tuple[i
     responses={200: {"content": {"application/geo+json": {}}}},
 )
 def features(
+    request: Request,
     atlas: AtlasDep,
     settings: SettingsDep,
     locale: LocaleDep,
@@ -92,7 +93,7 @@ def features(
     near: Annotated[str | None, Query(description="lon,lat for radius filtering")] = None,
     radius_km: Annotated[float | None, Query(gt=0, le=500)] = None,
     period: Annotated[str | None, Query()] = None,
-) -> GeoJSONResponse:
+) -> Response:
     area = _bbox_or_default(bbox, settings)
     resolved_layers = _parse_layers(layers, settings, atlas.layers(locale)["data"])
     window = _build_window(t, year_from, year_to, mode, cal, settings)
@@ -112,12 +113,14 @@ def features(
         period_code=period,
     )
     result = atlas.features(query)
+    content = {"type": "FeatureCollection", "features": result.features, "meta": result.meta}
+    etag = _etag(content)
+    cache_control = f"public, max-age={settings.cache_ttl_seconds}, stale-while-revalidate=600"
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"Cache-Control": cache_control, "ETag": etag})
     return GeoJSONResponse(
-        content={"type": "FeatureCollection", "features": result.features, "meta": result.meta},
-        headers={
-            "Cache-Control": f"public, max-age={settings.cache_ttl_seconds}, stale-while-revalidate=600",
-            "ETag": _etag(result),
-        },
+        content=content,
+        headers={"Cache-Control": cache_control, "ETag": etag},
     )
 
 
@@ -156,12 +159,13 @@ def normalize_window(
     )
 
 
-def _etag(result: Any) -> str:
+def _etag(content: Any) -> str:
+    """Strong validator for the exact logical GeoJSON response, not merely its feature count."""
     import hashlib
     import json
 
-    payload = json.dumps(result.meta, ensure_ascii=False, sort_keys=True) + str(len(result.features))
-    return '"' + hashlib.sha1(payload.encode()).hexdigest()[:16] + '"'
+    payload = json.dumps(content, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return '"' + hashlib.sha256(payload.encode()).hexdigest()[:24] + '"'
 
 
 def _bbox_or_default(raw: str | None, settings: Settings) -> BBox:
@@ -183,7 +187,14 @@ def _parse_point(raw: str | None) -> tuple[float, float] | None:
         raise ValidationError("near must be two numbers: lon,lat", parameter="near") from exc
     if len(parts) != 2:
         raise ValidationError("near must be lon,lat", parameter="near")
-    return (parts[0], parts[1])
+    lon, lat = parts
+    if not -180 <= lon <= 180 or not -90 <= lat <= 90:
+        raise ValidationError(
+            "near coordinates are outside valid longitude/latitude bounds",
+            parameter="near",
+            bounds={"longitude": [-180, 180], "latitude": [-90, 90]},
+        )
+    return (lon, lat)
 
 
 

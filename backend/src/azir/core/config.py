@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     api_version: str = "1"
     env: Env = "development"
     debug: bool = False
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     # --- data access -------------------------------------------------------
     db_driver: Driver = "fixtures"
@@ -154,6 +155,14 @@ class Settings(BaseSettings):
             raise RuntimeError("AZIR_DB_DRIVER=postgis requires AZIR_DB_URL")
         if self.default_locale not in self.supported_locales:
             raise RuntimeError("AZIR_DEFAULT_LOCALE must be listed in AZIR_SUPPORTED_LOCALES")
+        if self.default_limit < 1 or self.max_limit < self.default_limit:
+            raise RuntimeError("AZIR limits must satisfy 1 <= DEFAULT_LIMIT <= MAX_LIMIT")
+        if self.payload_budget_bytes < 1024:
+            raise RuntimeError("AZIR_PAYLOAD_BUDGET_BYTES must be at least 1024")
+        if not self.timeline_floor <= self.timeline_default_year <= self.timeline_ceil:
+            raise RuntimeError("AZIR_TIMELINE_DEFAULT_YEAR must be inside FLOOR..CEIL")
+        if not 0 <= self.tiles_min_zoom <= self.tiles_max_zoom <= 22:
+            raise RuntimeError("AZIR tile zooms must satisfy 0 <= MIN_ZOOM <= MAX_ZOOM <= 22")
         if self.editorial_on and self.env == "production" and not self.cookie_secure:
             raise RuntimeError(
                 "the editorial API in production requires secure session cookies "

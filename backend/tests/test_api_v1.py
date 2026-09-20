@@ -77,6 +77,25 @@ def test_etag_is_stable_and_content_dependent(client: TestClient) -> None:
     assert first.headers["ETag"] == second.headers["ETag"]
     assert first.headers["ETag"] != third.headers["ETag"]
 
+    conditional = client.get(
+        "/api/v1/atlas/features",
+        params=params,
+        headers={"If-None-Match": first.headers["ETag"]},
+    )
+    assert conditional.status_code == 304
+    assert conditional.content == b""
+    assert conditional.headers["ETag"] == first.headers["ETag"]
+
+
+def test_invalid_near_coordinates_are_rejected_before_the_repository(client: TestClient) -> None:
+    for near in ("181,38", "48,91", "nan,38", "48,inf"):
+        response = client.get(
+            "/api/v1/atlas/features",
+            params={"zoom": 7, "near": near, "radius_km": 10},
+        )
+        assert response.status_code == 422, near
+        assert response.json()["type"] == "https://errors.azir.dev/validation"
+
 
 def test_time_changes_the_map(client: TestClient) -> None:
     def ids(year: int) -> set[str]:

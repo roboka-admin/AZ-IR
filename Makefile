@@ -15,7 +15,9 @@
 
 # Prefer the project venv once `make install` has created it, so the documented commands work
 # without `PYTHON=…` on every line; fall back to whatever python3 is on PATH.
-PYTHON      ?= $(if $(wildcard $(VENV)/bin/python),$(VENV)/bin/python,python3)
+# Commands below often `cd backend`; keep the interpreter absolute so the project venv remains
+# reachable after that directory change.
+PYTHON      ?= $(if $(wildcard $(VENV)/bin/python),$(abspath $(VENV)/bin/python),python3)
 NPM         ?= npm
 BACKEND     := backend
 FRONTEND    := frontend

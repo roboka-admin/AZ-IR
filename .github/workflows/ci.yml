@@ -156,6 +156,10 @@ jobs:
         run: npm run lint 2>&1 | tee "$CI_LOG_DIR/40-lint.log"
         working-directory: frontend
 
+      - name: Unit tests
+        run: npm test 2>&1 | tee "$CI_LOG_DIR/45-tests.log"
+        working-directory: frontend
+
       # The tile archive is written by our own encoder (backend/src/azir/tiles) and read by somebody
       # else's library, in a browser. Both halves are checked: build it, then let `pmtiles` -- the
       # JavaScript reader MapLibre uses -- open it from disk *and* over HTTP, where it issues range

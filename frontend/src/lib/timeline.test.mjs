@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { parseAtlasState, serializeAtlasState } from "../../.test-build/atlasState.js";
 import {
   centerTimelineWindow,
   moveRangeToYear,
@@ -29,5 +30,15 @@ test("moving a range at the timeline boundary never changes its duration", () =>
   const moved = moveRangeToYear([1500, 1550], 2100, -800, 2100);
   assert.deepEqual(moved, [2050, 2100]);
   assert.equal(moved[1] - moved[0], 50);
+});
+
+test("point URLs cannot retain an interval-only matching mode", () => {
+  const point = parseAtlasState(new URLSearchParams("t=1514&mode=during"), null);
+  assert.equal(point.mode, "at");
+  assert.equal(new URLSearchParams(serializeAtlasState(point, null)).has("mode"), false);
+
+  const span = parseAtlasState(new URLSearchParams("from=1501&to=1524&mode=during"), null);
+  assert.equal(span.mode, "during");
+  assert.match(serializeAtlasState(span, null), /mode=during/);
 });
 

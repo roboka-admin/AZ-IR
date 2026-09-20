@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
@@ -18,7 +20,24 @@ from .services.registry import get_repository
 
 def create_app(settings: Any | None = None) -> FastAPI:
     settings = settings or get_settings()
-    logger = configure_logging("DEBUG" if settings.debug else "INFO", json_output=not settings.debug)
+    logger = configure_logging(
+        "DEBUG" if settings.debug else settings.log_level,
+        json_output=not settings.debug,
+    )
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        repository = get_repository()
+        logger.info(
+            "app_started",
+            extra={
+                "driver": repository.driver_name,
+                "env": settings.env,
+                "version": __version__,
+                "locales": settings.supported_locales,
+            },
+        )
+        yield
 
     app = FastAPI(
         title=settings.app_name,
@@ -32,6 +51,7 @@ def create_app(settings: Any | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url="/api/v1/openapi.json",
         debug=settings.debug,
+        lifespan=lifespan,
     )
     app.state.settings = settings
     app.state.logger = logger
@@ -65,19 +85,6 @@ def create_app(settings: Any | None = None) -> FastAPI:
             "docs": "/docs",
             "api": settings.api_prefix,
         }
-
-    @app.on_event("startup")
-    def _startup() -> None:  # pragma: no cover - thin
-        repository = get_repository()
-        logger.info(
-            "app_started",
-            extra={
-                "driver": repository.driver_name,
-                "env": settings.env,
-                "version": __version__,
-                "locales": settings.supported_locales,
-            },
-        )
 
     return app
 

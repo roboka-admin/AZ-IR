@@ -154,6 +154,8 @@ export default function TimelinePanel({
             className="field"
             style={{ width: "auto", padding: "4px 8px" }}
             value={mode}
+            disabled={!span}
+            title={!span ? t(locale, "ui.time.modeNeedsSpan") : undefined}
             onChange={(event) => onModeChange(event.target.value as TemporalMode)}
           >
             {(["at", "overlaps", "during"] as TemporalMode[]).map((code) => (

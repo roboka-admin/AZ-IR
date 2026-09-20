@@ -47,7 +47,7 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
   const calendarParam = search.get("cal") as CalendarCode | null;
   const calendar = calendarParam && CALENDARS.includes(calendarParam) ? calendarParam : "gregorian_proleptic";
   const modeParam = search.get("mode") as TemporalMode | null;
-  const mode = modeParam && MODES.includes(modeParam) ? modeParam : "at";
+  const requestedMode = modeParam && MODES.includes(modeParam) ? modeParam : "overlaps";
   const rawFrom = integer(search.get("from"));
   const rawTo = integer(search.get("to"));
   const floor = meta?.timeline.floor ?? -800;
@@ -57,6 +57,9 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
     : null;
   // A range URL has no separate `t`: its stable cursor is the midpoint, not the first year.
   const year = clampYear(integer(search.get("t")) ?? (span ? rangeMidpoint(span) : meta?.timeline.default_year ?? 1500), meta);
+  // Matching modes compare intervals. A point selection always means `at`; retaining `during` or
+  // `overlaps` without a range makes the UI, URL and backend disagree about the active filter.
+  const mode: TemporalMode = span ? requestedMode : "at";
   const layersRaw = search.get("l");
   const knownLayers = new Set((meta?.layers ?? []).map((layer) => layer.id));
 

@@ -7,6 +7,7 @@ import {
   moveRangeToYear,
   normalizeYearRange,
   rangeMidpoint,
+  uniqueById,
 } from "../../.test-build/timeline.js";
 
 test("normalizes reversed and out-of-bounds range input", () => {
@@ -40,5 +41,15 @@ test("point URLs cannot retain an interval-only matching mode", () => {
   const span = parseAtlasState(new URLSearchParams("from=1501&to=1524&mode=during"), null);
   assert.equal(span.mode, "during");
   assert.match(serializeAtlasState(span, null), /mode=during/);
+});
+
+test("an event overlapping several timeline buckets is rendered once", () => {
+  const events = [
+    { id: "evt_babak_revolt", year: 816, label: "Babak" },
+    { id: "evt_babak_revolt", year: 816, label: "Babak" },
+    { id: "evt_chaldiran", year: 1514, label: "Chaldiran" },
+  ];
+
+  assert.deepEqual(uniqueById(events), [events[0], events[2]]);
 });
 

@@ -10,6 +10,7 @@
  */
 
 import { calendarLabel, formatNumber, formatYear, localizeDigits, modeLabel, t } from "@/lib/i18n";
+import { uniqueById } from "@/lib/timeline";
 import type { CalendarCode, MetaResponse, TemporalMode, TimelineBucket } from "@/lib/types";
 
 export interface TimelinePanelProps {
@@ -69,11 +70,14 @@ export default function TimelinePanel({
   const currentPeriod = meta.periods.find(
     (period) => period.year_from !== null && period.year_to !== null && year >= period.year_from && year <= period.year_to,
   );
-  const nearbyNotable = buckets
-    .filter((bucket) => bucket.notable.length > 0)
-    .flatMap((bucket) => bucket.notable)
-    .filter((event) => Math.abs(event.year - year) <= Math.max(6, spanYears / 6))
-    .slice(0, 8);
+  // Long-running events can overlap multiple histogram buckets. The API correctly includes them in
+  // each bucket's count, but the entity strip must show one button per event (and one React key).
+  const nearbyNotable = uniqueById(
+    buckets
+      .filter((bucket) => bucket.notable.length > 0)
+      .flatMap((bucket) => bucket.notable)
+      .filter((event) => Math.abs(event.year - year) <= Math.max(6, spanYears / 6)),
+  ).slice(0, 8);
 
   const zoomTime = (factor: number) => {
     const next = Math.min(ceil - floor, Math.max(4, Math.round(spanYears * factor)));

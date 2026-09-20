@@ -35,6 +35,16 @@ export function clampTimelineYear(year: number, meta: MetaResponse): number {
   return clampYear(Math.round(year), meta.timeline.floor, meta.timeline.ceil);
 }
 
+/** Timeline events can legitimately overlap several histogram buckets; render each entity once. */
+export function uniqueById<T extends { id: string }>(items: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 function clampYear(year: number, floor: number, ceil: number): number {
   return Math.min(ceil, Math.max(floor, year));
 }

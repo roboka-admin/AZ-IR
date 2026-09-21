@@ -648,13 +648,31 @@ def test_each_entity_has_at_most_one_dedicated_label_anchor_per_tile(
     tile_service: TileService, center_tile: tuple[int, int, int]
 ) -> None:
     z, x, y = center_tile
-    anchors = [
-        feature["properties"]["id"]
+    features = [
+        feature
         for layer in decode_tile(tile_service.tile(z, x, y))
         for feature in layer["features"]
         if feature["properties"].get("label_anchor") is True
     ]
-    assert anchors, "atlas labels need dedicated anchors in vector delivery"
+    assert features, "atlas labels need dedicated anchors in vector delivery"
+    # Regular entities must have exactly one anchor per tile; capital markers are an
+    # exception: one polity may have several distinct capitals (different places) in the
+    # same tile in all_time mode, so uniqueness is by (polity_id, capital_place_id).
+    regular = [
+        f["properties"]["id"]
+        for f in features
+        if not f["properties"].get("is_capital")
+    ]
+    assert len(regular) == len(set(regular)), "duplicate label anchors for regular entities"
+    capitals = [
+        (f["properties"]["id"], f["properties"].get("capital_place_id") or f["id"])
+        for f in features
+        if f["properties"].get("is_capital")
+    ]
+    assert len(capitals) == len(set(capitals)), "duplicate capital anchors for same place"
+    # Combined check: at least the non-capital anchors are unique, and capital anchors are
+    # unique by place.
+    anchors = regular + [f"{pid}__{place}" for pid, place in capitals]
     assert len(anchors) == len(set(anchors))
 
 

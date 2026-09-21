@@ -103,6 +103,15 @@ export interface MetaResponse {
     color: string;
     t_display: string | null;
     certainty: Certainty | null;
+    capitals?: {
+      place_id: string;
+      label: string;
+      t_from: number | null;
+      t_to: number | null;
+      t_display: string | null;
+      confidence: string;
+      status: string;
+    }[];
   }[];
   coverage: CoverageStats;
   disclaimer: { borders: string };
@@ -154,6 +163,9 @@ export interface FeatureProperties {
   needs_digitisation?: boolean;
   attestation?: string | null;
   alternates?: string[];
+  is_capital?: boolean;
+  capital_place_id?: string | null;
+  capital_label?: string | null;
 }
 
 export interface AtlasFeature {

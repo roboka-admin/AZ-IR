@@ -116,6 +116,7 @@ def features(
         near=near_point,
         radius_km=radius_km,
         period_code=period,
+        all_time=all_time,
     )
     result = atlas.features(query)
     content = {"type": "FeatureCollection", "features": result.features, "meta": result.meta}

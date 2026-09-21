@@ -45,6 +45,7 @@ class FeatureQuery:
     near: tuple[float, float] | None = None
     radius_km: float | None = None
     period_code: str | None = None
+    all_time: bool = False
 
 
 @dataclass(slots=True)
@@ -109,8 +110,6 @@ class AtlasService:
             feature = projection.to_geojson(geometry_override=geometry)
             size = len(json.dumps(feature, ensure_ascii=False)) + 1
             if used + size > budget:
-                # Degrade in the documented order (docs/08 §3): fewer fields first, then drop
-                # the least important features. Never silently.
                 if fields != "min":
                     fields = "min"
                     projection = FeatureProjection(
@@ -127,15 +126,43 @@ class AtlasService:
             features.append(feature)
             used += size
 
+        coverage_gaps = list(page.coverage_gaps)
+        main_features_count = len(features)
+        if "political_entities" in query.layers:
+            # Capital markers are derived from the polity entities already in the page.
+            # They must not cause the response to exceed the caller's requested limit: a
+            # limit=3 viewport must still be 3 features, not 3+capitals, otherwise cursor
+            # pagination breaks (test_limit_and_cursor_pagination).
+            remaining = query.limit - len(features)
+            if remaining > 0:
+                capital_features = self._capital_markers(
+                    page=page,
+                    query=query,
+                    representative_year=year,
+                    used_budget=used,
+                    budget=budget,
+                    coverage_gaps=coverage_gaps,
+                )
+                for feature in capital_features[:remaining]:
+                    size = len(json.dumps(feature, ensure_ascii=False)) + 1
+                    if used + size > budget:
+                        truncated = True
+                        break
+                    features.append(feature)
+                    used += size
+
         from ..core.pagination import Cursor
 
-        # A cursor is owed whenever more matches exist than we shipped -- either because the
-        # payload budget cut us off, or because the caller asked for a small page (ADR-0009).
         next_cursor = None
-        has_more = truncated or page.total_estimate > len(features)
+        # Pagination is over the repository page (main features), not over derived capital
+        # markers, otherwise a polity and its capital would be counted as two separate
+        # pagination steps and cursors would skip or duplicate.
+        has_more = truncated or page.total_estimate > main_features_count
         if has_more and features:
-            last_rank, last_id = page.rows[len(features) - 1]
-            next_cursor = Cursor(rank=last_rank, id=last_id).encode()
+            main_count = min(len(page.rows), main_features_count)
+            if main_count > 0:
+                last_rank, last_id = page.rows[main_count - 1]
+                next_cursor = Cursor(rank=last_rank, id=last_id).encode()
 
         meta: dict[str, Any] = {
             "driver": self._repo.driver_name,
@@ -156,9 +183,149 @@ class AtlasService:
             "truncated": truncated,
             "payload_bytes": used,
             "next_cursor": next_cursor,
-            "coverage_gaps": page.coverage_gaps,
+            "coverage_gaps": coverage_gaps,
         }
         return AtlasResult(features=features, meta=meta, truncated=truncated)
+
+    def _capital_markers(
+        self,
+        *,
+        page: Any,
+        query: FeatureQuery,
+        representative_year: int,
+        used_budget: int,
+        budget: int,
+        coverage_gaps: list[str],
+    ) -> list[dict[str, Any]]:
+        """Derive one point marker per active capital for every polity in the page."""
+        from ..domain.enums import EntityType
+
+        markers: list[dict[str, Any]] = []
+        polity_entities = [
+            entity for entity in page.entities.values()
+            if entity.layer == "political_entities"
+        ]
+        for polity in polity_entities:
+            cap_rels = [
+                rel
+                for rel in polity.relationships
+                if rel.predicate == "capital"
+                and rel.object_type == EntityType.PLACE
+                and rel.object_id
+                and rel.status.value in {"accepted", "disputed", "proposed"}
+            ]
+            if not cap_rels:
+                continue
+            active: list[Any] = []
+            if query.all_time:
+                active = cap_rels
+            else:
+                window_interval = query.window.as_interval()
+                for rel in cap_rels:
+                    if rel.temporal is None:
+                        active.append(rel)
+                    else:
+                        if rel.temporal.overlaps(window_interval):
+                            active.append(rel)
+            if not active:
+                continue
+            by_place: dict[str, list[Any]] = {}
+            for rel in active:
+                by_place.setdefault(rel.object_id, []).append(rel)
+            for place_id, rels in by_place.items():
+                place_entity = self._repo.entity("place", place_id)
+                if place_entity is None:
+                    coverage_gaps.append(f"political_entity:{polity.id}:capital:{place_id}:missing-place")
+                    continue
+                capital_year = representative_year
+                t_from: int | None = None
+                t_to: int | None = None
+                t_display: str | None = None
+                if query.all_time:
+                    years = [(r.temporal.year_from, r.temporal.year_to) for r in rels if r.temporal]
+                    if years:
+                        t_from = min(f for f, _ in years)
+                        t_to = max(t for _, t in years)
+                        capital_year = (t_from + t_to) // 2
+                    displays = [r.temporal.display_text(query.locale) for r in rels if r.temporal]
+                    t_display = displays[0] if displays else None
+                else:
+                    chosen = None
+                    for rel in rels:
+                        if rel.temporal and rel.temporal.contains_year(representative_year):
+                            chosen = rel
+                            break
+                    if chosen is None:
+                        chosen = rels[0]
+                    if chosen.temporal:
+                        t_from = chosen.temporal.year_from
+                        t_to = chosen.temporal.year_to
+                        t_display = chosen.temporal.display_text(query.locale)
+                        capital_year = int(chosen.temporal.midpoint)
+                    else:
+                        t_from = polity.temporal.year_from if polity.temporal else None
+                        t_to = polity.temporal.year_to if polity.temporal else None
+                geom_record = place_entity.primary_geometry(at_year=capital_year)
+                if geom_record is None:
+                    coverage_gaps.append(f"political_entity:{polity.id}:capital:{place_id}:no-geometry")
+                    continue
+                point = geom_record.representative_point()
+                if point is None:
+                    try:
+                        coords = geom_record.geojson.get("coordinates")
+                        if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+                            point = (float(coords[0]), float(coords[1]))
+                    except Exception:
+                        point = None
+                if point is None:
+                    coverage_gaps.append(f"political_entity:{polity.id}:capital:{place_id}:no-point")
+                    continue
+                label = polity.display_name(query.locale, capital_year)
+                capital_label = place_entity.display_name(query.locale, capital_year)
+                is_rtl = any(
+                    "\u0600" <= ch <= "\u06ff" or "\u0590" <= ch <= "\u05ff" or "\u0700" <= ch <= "\u074f"
+                    for ch in label
+                )
+                feature_id = f"{polity.id}__capital__{place_id}"
+                if query.all_time:
+                    feature_id = f"{polity.id}__capital__{place_id}__all"
+                else:
+                    feature_id = f"{polity.id}__capital__{place_id}__{t_from or 0}"
+                props: dict[str, Any] = {
+                    "id": polity.id,
+                    "entity_type": "political_entity",
+                    "kind": "capital",
+                    "layer": "political_entities",
+                    "rank": polity.rank,
+                    "min_zoom": 0,
+                    "max_zoom": 22,
+                    "label": label,
+                    "label_secondary": capital_label,
+                    "label_anchor": True,
+                    "style_color": style_color_for(polity.id),
+                    "is_capital": True,
+                    "capital_place_id": place_id,
+                    "capital_label": capital_label,
+                    "dir": "rtl" if is_rtl else "ltr",
+                    "status": polity.status.value,
+                    "certainty": rels[0].confidence.value if rels else None,
+                    "geometry_kind": "capital",
+                    "t_from": t_from,
+                    "t_to": t_to,
+                    "t_display": t_display or polity.temporal_display(query.locale),
+                    "slug": polity.slug,
+                    "has_disagreements": polity.has_disagreements,
+                    "source_count": polity.counts.sources,
+                    "href": f"/api/v1/entities/political_entity/{polity.slug or polity.id}",
+                }
+                if rels and rels[0].temporal:
+                    props["t_precision"] = rels[0].temporal.precision.value
+                    props["confidence"] = rels[0].temporal.confidence.value
+                geometry = {"type": "Point", "coordinates": [point[0], point[1]]}
+                markers.append(
+                    {"type": "Feature", "id": feature_id, "geometry": geometry, "properties": props}
+                )
+        return markers
 
     # ------------------------------------------------------------------ timeline
 
@@ -310,15 +477,12 @@ def _decode_cursor(token: str | None) -> Any:
 
 
 def _auto_bucket(span_years: int, available: list[int]) -> int:
-    """Pick the smallest configured bucket that keeps the histogram readable (~<=60 bars)."""
     for size in sorted(available):
         if span_years / size <= 60:
             return size
     return max(available)
 
 
-# Deliberately finite, colour-blind-conscious presentation palette. Assignment is stable across
-# drivers and deployments; it identifies a polity in the legend without encoding historical facts.
 _POLITY_COLORS = ("#7b2cbf", "#d1495b", "#00798c", "#edae49", "#30638e", "#6a994e", "#bc6c25", "#8f2d56")
 
 

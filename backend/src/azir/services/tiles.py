@@ -76,7 +76,7 @@ MERCATOR_LAT_LIMIT: Final[float] = 85.05112877980659
 #: the meaning of a tile in time. Bump it when any of those change, because the archive filename
 #: carries it and the frontend style is written against it (AGENTS.md rule 12: contracts are
 #: versioned, never silently changed). The data revision next to it covers content changes.
-TILESET_VERSION: Final[str] = "1.2.0"
+TILESET_VERSION: Final[str] = "1.3.0"
 
 #: TileJSON ``vector_layers`` field types, and the contract the frontend style is written against.
 #: MVT has no null and no nested values, so a property that is unknown is *absent*: styles must
@@ -115,6 +115,9 @@ TILE_PROPERTIES: Final[dict[str, str]] = {
     "g_lod_max_zoom": "Number",
     "has_disagreements": "Boolean",
     "needs_digitisation": "Boolean",
+    "is_capital": "Boolean",
+    "capital_place_id": "String",
+    "capital_label": "String",
 }
 
 #: Layers in paint order: areas first, then lines, then points and labels on top. MapLibre paints in
@@ -216,16 +219,46 @@ class TileService:
                 # limit is a ceiling on pathological density rather than a page size.
                 fields="default",
                 limit=limit,
+                all_time=True,
             )
         )
 
         by_layer: dict[str, list[MvtFeature]] = {}
         count = 0
         for feature in result.features:
+            props_raw = feature.get("properties") or {}
+            # Capital markers are derived presentation features: their geometry is already the
+            # capital point, not the polity's extent. Encode them directly without re-deriving
+            # geometries from the polity entity, otherwise the extent would be drawn twice.
+            if props_raw.get("is_capital"):
+                # The feature's own geometry is the capital location
+                geom_dict = feature.get("geometry") or {}
+                try:
+                    geom_record = GeometryRecord(geojson=geom_dict)
+                except Exception:
+                    continue
+                encoded = self._encode_geometry(geom_record, z, x, y, clip_bbox)
+                if encoded is None:
+                    continue
+                geometry_type, positions = encoded
+                properties = _tile_properties(props_raw)
+                # Preserve label_anchor=True so the capital label is rendered, but also allow
+                # the point layer to draw it (via is_capital filter in the style).
+                by_layer.setdefault(properties.get("layer", "political_entities"), []).append(
+                    MvtFeature(
+                        geometry_type=geometry_type,
+                        geometry=positions,
+                        properties=properties,
+                        feature_id=_numeric_id(str(feature.get("id") or props_raw.get("id", ""))),
+                    )
+                )
+                count += 1
+                continue
+
             entity = self._entity_of(feature)
             if entity is None:
                 continue
-            properties = _tile_properties(feature.get("properties") or {})
+            properties = _tile_properties(props_raw)
             properties["importance"] = round(entity.importance, 4)
             # Polygon fragments can span many tiles. They draw the extent but must not each host a
             # copy of the entity name; one dedicated point below is the sole label anchor.

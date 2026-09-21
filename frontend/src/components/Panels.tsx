@@ -259,8 +259,8 @@ export function PoliticalLegendPanel({
       <div className="legend">
         <p className="legend-explanation">
           {locale === "fa"
-            ? "هر رنگ یک حکومت را نشان می‌دهد. خطوط، بازسازی ناحیهٔ نفوذ در داده‌های پژوهشی‌اند؛ مرز قطعی یا امروزی نیستند."
-            : "Each colour identifies a polity. Lines are researched reconstructions of influence, not exact or modern borders."}
+            ? "هر رنگ یک حکومت را نشان می‌دهد. خطوط، بازسازی ناحیهٔ نفوذ در داده‌های پژوهشی‌اند؛ مرز قطعی یا امروزی نیستند. نام حکومت در پایتختِ معتبرِ همان سال نمایش داده می‌شود."
+            : "Each colour identifies a polity. Lines are researched reconstructions of influence, not exact or modern borders. The polity name appears at its valid capital for the selected year."}
         </p>
         {entities.map((entity) => (
           <div className="legend-row polity-key" key={entity.id}>
@@ -268,6 +268,11 @@ export function PoliticalLegendPanel({
             <span className="grow">
               <strong>{entity.label}</strong>
               {entity.t_display ? <small>{entity.t_display}</small> : null}
+              {entity.capitals && entity.capitals.length > 0 ? (
+                <small style={{ display: "block", color: "var(--text-dim)", marginTop: 2 }}>
+                  {locale === "fa" ? "پایتخت" : "Capital"}: {entity.capitals.map((c) => `${c.label}${c.t_display ? ` (${c.t_display})` : ""}`).join(locale === "fa" ? "، " : ", ")}
+                </small>
+              ) : null}
             </span>
           </div>
         ))}

@@ -94,19 +94,49 @@ def _periods(repo: Any, locale: str) -> list[dict[str, Any]]:
 
 
 def _political_entities(repo: Any, locale: str) -> list[dict[str, Any]]:
-    """Published, spatially modelled polities for the map's data-driven colour key."""
+    """Published, spatially modelled polities for the map's data-driven colour key.
+
+    Each entry now also carries its sourced capital history (if any) so the legend can
+    explain that a polity's name on the map is placed at its capital, not at a polygon
+    centre, and so the frontend never hard-codes a capital (AGENTS.md rule 17).
+    """
     rows = []
     for record in repo.all_published():
         if record.entity_type is not EntityType.POLITICAL_ENTITY or not record.has_geometry:
             continue
         geometry = record.primary_geometry()
-        rows.append({
-            "id": record.id,
-            "label": record.display_name(locale),
-            "color": style_color_for(record.id),
-            "t_display": record.temporal_display(locale),
-            "certainty": geometry.certainty.value if geometry else None,
-        })
+        # Resolve capital assertions for this polity
+        capitals: list[dict[str, Any]] = []
+        for rel in record.relationships:
+            if rel.predicate != "capital" or not rel.object_id:
+                continue
+            if rel.status.value not in {"accepted", "disputed", "proposed"}:
+                continue
+            place = repo.entity("place", rel.object_id) if rel.object_id else None
+            place_label = place.display_name(locale) if place else rel.object_label or rel.object_id
+            capitals.append(
+                {
+                    "place_id": rel.object_id,
+                    "label": place_label,
+                    "t_from": rel.temporal.year_from if rel.temporal else None,
+                    "t_to": rel.temporal.year_to if rel.temporal else None,
+                    "t_display": rel.temporal.display_text(locale) if rel.temporal else None,
+                    "confidence": rel.confidence.value,
+                    "status": rel.status.value,
+                }
+            )
+        # Sort capitals by start year for stable presentation
+        capitals.sort(key=lambda c: (c["t_from"] is None, c["t_from"] or 0, c["label"]))
+        rows.append(
+            {
+                "id": record.id,
+                "label": record.display_name(locale),
+                "color": style_color_for(record.id),
+                "t_display": record.temporal_display(locale),
+                "certainty": geometry.certainty.value if geometry else None,
+                "capitals": capitals,
+            }
+        )
     return sorted(rows, key=lambda row: row["label"])
 
 

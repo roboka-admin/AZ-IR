@@ -24,7 +24,17 @@ export const BASEMAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 export const ATLAS_SOURCE = "azir-atlas";
 export const GRATICULE_SOURCE = "azir-graticule";
 /** The paint stack, bottom to top. Ids on the map are these, or `<id>@<source-layer>` for tiles. */
-export const DATA_LAYERS = ["azir-fill", "azir-fill-outline", "azir-line", "azir-point-halo", "azir-point", "azir-label"];
+export const DATA_LAYERS = [
+  "azir-fill",
+  "azir-fill-outline",
+  "azir-line",
+  "azir-point-halo",
+  "azir-point",
+  "azir-capital-halo",
+  "azir-capital",
+  "azir-label",
+  "azir-capital-label",
+];
 
 /** Font stacks differ per basemap; both are presentation choices, not data. */
 export const LIBERTY_FONT = ["Noto Sans Regular"];
@@ -185,7 +195,7 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
     {
       id: "azir-point-halo",
       type: "circle",
-      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true]],
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true], ["!=", ["get", "is_capital"], true]],
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 5, 100, 15],
         "circle-color": "#ffffff",
@@ -196,7 +206,7 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
     {
       id: "azir-point",
       type: "circle",
-      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true]],
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true], ["!=", ["get", "is_capital"], true]],
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 2.5, 40, 4.5, 70, 6.5, 100, 9],
         "circle-color": pointColour(),
@@ -205,6 +215,33 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
         "circle-stroke-color": ["match", ["get", "certainty"],
           "reconstructed", "#c58b1a", "uncertain", "#c58b1a", "#ffffff"],
         "circle-stroke-width": ["match", ["get", "geometry_kind"], "uncertain_locus", 2.2, 1.4],
+        "circle-stroke-opacity": 0.95,
+      },
+    },
+    {
+      id: "azir-capital-halo",
+      type: "circle",
+      // Capital markers are points whose label_anchor is true (they are the sole anchor for the polity
+      // name), but they must still draw a halo so the coloured dot is legible over both light and dark
+      // basemap areas. The filter therefore allows label_anchor=true when is_capital=true.
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "is_capital"], true]],
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 8, 100, 18],
+        "circle-color": "#ffffff",
+        "circle-opacity": 0.7,
+        "circle-stroke-width": 0,
+      },
+    },
+    {
+      id: "azir-capital",
+      type: "circle",
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "is_capital"], true]],
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 4, 40, 6, 70, 8, 100, 11],
+        "circle-color": ["coalesce", ["get", "style_color"], PALETTE.political_entities],
+        "circle-opacity": 0.95,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
         "circle-stroke-opacity": 0.95,
       },
     },
@@ -225,7 +262,9 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       minzoom: 2,
       // The API marks exactly one presentation anchor per entity. In vector tiles that anchor is a
       // dedicated point, avoiding one polity label on every clipped polygon/tile fragment.
-      filter: ["all", ["==", ["get", "label_anchor"], true], ["!=", ["get", "layer"], "political_entities"]],
+      // Political extents no longer have polygon labels; their names appear only at the capital
+      // marker (is_capital=true), so this layer excludes both political_entities and capitals.
+      filter: ["all", ["==", ["get", "label_anchor"], true], ["!=", ["get", "layer"], "political_entities"], ["!=", ["get", "is_capital"], true]],
       layout: {
         // A data label must read as an atlas annotation rather than a basemap place-name.
         // The marker is presentation only; label content and temporal naming still come from API.
@@ -244,6 +283,32 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
         "text-halo-color": "#ffffff",
         "text-halo-width": 1.4,
         "text-opacity": ["case", ["<=", ["get", "rank"], 20], 0.72, 1],
+      },
+    },
+    {
+      id: "azir-capital-label",
+      type: "symbol",
+      minzoom: 2,
+      // Polity names are placed at their valid capital for the selected year. The backend decides
+      // which capital is valid when; the map only renders the result (AGENTS.md rule 5).
+      filter: ["all", ["==", ["get", "label_anchor"], true], ["==", ["get", "is_capital"], true]],
+      layout: {
+        "text-field": ["concat", "⬢ ", ["get", "label"]],
+        "text-font": font,
+        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 13.5, 14, 15],
+        "text-anchor": "top",
+        "text-offset": [0, 1.1],
+        "text-max-width": 10,
+        "text-allow-overlap": false,
+        "text-optional": true,
+        "symbol-sort-key": ["-", 100, ["get", "rank"]],
+      },
+      paint: {
+        "text-color": ["coalesce", ["get", "style_color"], PALETTE.political_entities],
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1.6,
+        "text-halo-blur": 0.5,
+        "text-opacity": 1,
       },
     },
   ];

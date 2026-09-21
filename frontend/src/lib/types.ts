@@ -117,6 +117,7 @@ export interface FeatureProperties {
   min_zoom: number;
   max_zoom: number;
   label: string;
+  label_anchor?: boolean;
   dir: Direction;
   status: string;
   certainty: Certainty | null;

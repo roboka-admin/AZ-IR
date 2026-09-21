@@ -108,6 +108,7 @@ export interface FeaturesParams {
   cursor?: string;
   locale?: Locale;
   period?: string;
+  all_time?: boolean;
 }
 
 export function getFeatures(params: FeaturesParams, signal?: AbortSignal): Promise<FeatureCollection> {

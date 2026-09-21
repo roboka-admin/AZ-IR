@@ -93,10 +93,15 @@ def features(
     near: Annotated[str | None, Query(description="lon,lat for radius filtering")] = None,
     radius_km: Annotated[float | None, Query(gt=0, le=500)] = None,
     period: Annotated[str | None, Query()] = None,
+    all_time: Annotated[bool, Query(description="Return the complete configured timeline extent")] = False,
 ) -> Response:
     area = _bbox_or_default(bbox, settings)
     resolved_layers = _parse_layers(layers, settings, atlas.layers(locale)["data"])
-    window = _build_window(t, year_from, year_to, mode, cal, settings)
+    window = (
+        TimeWindow.span(settings.timeline_floor, settings.timeline_ceil, TemporalMode.OVERLAPS)
+        if all_time
+        else _build_window(t, year_from, year_to, mode, cal, settings)
+    )
     near_point = _parse_point(near)
     query = FeatureQuery(
         bbox=area,

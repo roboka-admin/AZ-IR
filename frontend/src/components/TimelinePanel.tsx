@@ -24,6 +24,8 @@ export interface TimelinePanelProps {
   buckets: TimelineBucket[];
   playing: boolean;
   calendarDisplay: { from: number; to: number; calendar: CalendarCode } | null;
+  active: boolean;
+  onActiveChange: (active: boolean) => void;
   onYearChange: (year: number) => void;
   onWindowChange: (window: [number, number]) => void;
   onCalendarChange: (calendar: CalendarCode) => void;
@@ -53,6 +55,8 @@ export default function TimelinePanel({
   buckets,
   playing,
   calendarDisplay,
+  active,
+  onActiveChange,
   onYearChange,
   onWindowChange,
   onCalendarChange,
@@ -87,6 +91,23 @@ export default function TimelinePanel({
   };
 
   const calendars = meta.timeline.calendars.filter((code) => code !== "unknown");
+
+  if (!active) {
+    return (
+      <section className="panel timeline timeline-collapsed" aria-label={t(locale, "ui.time.title")}>
+        <button
+          type="button"
+          className="btn timeline-activate"
+          onClick={() => onActiveChange(true)}
+          aria-expanded="false"
+        >
+          <strong>{t(locale, "ui.time.title")}</strong>
+          <span>{locale === "fa" ? "نمایش همهٔ دوره‌ها — برای فیلتر زمانی باز کنید" : "All periods shown — open to filter by time"}</span>
+          <span aria-hidden>⌃</span>
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="panel timeline" aria-label={t(locale, "ui.time.title")}>
@@ -139,6 +160,14 @@ export default function TimelinePanel({
         </div>
 
         <div className="grow" />
+
+        <button
+          type="button"
+          className="btn btn-icon"
+          onClick={() => onActiveChange(false)}
+          aria-expanded="true"
+          title={locale === "fa" ? "بستن فیلتر زمانی و نمایش همهٔ دوره‌ها" : "Close time filter and show all periods"}
+        >⌄</button>
 
         <label className="row" style={{ gap: 6, fontSize: 11.5, color: "var(--text-dim)" }}>
           {t(locale, "ui.time.calendar")}

@@ -20,6 +20,8 @@ export interface AtlasState {
   entity: string | null;
   query: string | null;
   playing: boolean;
+  /** Whether time filters the map. Off is the default overview of the complete corpus. */
+  timelineActive: boolean;
   /** How the map gets its features. View state, not data: it changes nothing about what is true. */
   source: TilesPreference;
 }
@@ -76,6 +78,7 @@ export function parseAtlasState(search: URLSearchParams, meta: MetaResponse | nu
     entity: search.get("entity"),
     query: search.get("q"),
     playing: search.get("play") === "1",
+    timelineActive: search.get("time") === "1",
     source: SOURCES.includes(search.get("src") as TilesPreference)
       ? (search.get("src") as TilesPreference)
       : "auto",
@@ -98,6 +101,7 @@ export function serializeAtlasState(state: AtlasState, meta: MetaResponse | null
   if (state.entity) params.set("entity", state.entity);
   if (state.query) params.set("q", state.query);
   if (state.playing) params.set("play", "1");
+  if (state.timelineActive) params.set("time", "1");
   if (state.source !== "auto") params.set("src", state.source);
   void meta;
   return params.toString();

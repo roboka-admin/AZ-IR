@@ -76,7 +76,7 @@ MERCATOR_LAT_LIMIT: Final[float] = 85.05112877980659
 #: the meaning of a tile in time. Bump it when any of those change, because the archive filename
 #: carries it and the frontend style is written against it (AGENTS.md rule 12: contracts are
 #: versioned, never silently changed). The data revision next to it covers content changes.
-TILESET_VERSION: Final[str] = "1.0.0"
+TILESET_VERSION: Final[str] = "1.1.0"
 
 #: TileJSON ``vector_layers`` field types, and the contract the frontend style is written against.
 #: MVT has no null and no nested values, so a property that is unknown is *absent*: styles must
@@ -88,6 +88,7 @@ TILE_PROPERTIES: Final[dict[str, str]] = {
     "layer": "String",
     "slug": "String",
     "label": "String",
+    "label_anchor": "Boolean",
     "label_secondary": "String",
     "dir": "String",
     "href": "String",
@@ -225,6 +226,9 @@ class TileService:
                 continue
             properties = _tile_properties(feature.get("properties") or {})
             properties["importance"] = round(entity.importance, 4)
+            # Polygon fragments can span many tiles. They draw the extent but must not each host a
+            # copy of the entity name; one dedicated point below is the sole label anchor.
+            properties["label_anchor"] = False
             for index, geometry in enumerate(_geometries_for_zoom(entity, float(z))):
                 encoded = self._encode_geometry(geometry, z, x, y, clip_bbox)
                 if encoded is None:
@@ -241,6 +245,27 @@ class TileService:
                     )
                 )
                 count += 1
+
+            primary = entity.primary_geometry()
+            anchor = primary.representative_point() if primary else None
+            if anchor and _point_in_tile(anchor, bounds):
+                anchor_geometry = GeometryRecord(
+                    geojson={"type": "Point", "coordinates": [anchor[0], anchor[1]]}
+                )
+                encoded_anchor = self._encode_geometry(anchor_geometry, z, x, y, clip_bbox)
+                if encoded_anchor is not None:
+                    geometry_type, positions = encoded_anchor
+                    anchor_properties = dict(properties)
+                    anchor_properties["label_anchor"] = True
+                    by_layer.setdefault(entity.layer, []).append(
+                        MvtFeature(
+                            geometry_type=geometry_type,
+                            geometry=positions,
+                            properties=anchor_properties,
+                            feature_id=_numeric_id(f"{entity.id}#label"),
+                        )
+                    )
+                    count += 1
 
         degraded = False
         layers: list[MvtLayer] = []
@@ -633,10 +658,13 @@ class TileService:
         usable: dict[str, dict[str, Any]] = {}
         for key, entry in entries.items():
             filename = entry.get("filename")
-            if isinstance(filename, str) and (path.parent / filename).is_file():
+            compatible = entry.get("tileset_version") == TILESET_VERSION
+            if isinstance(filename, str) and (path.parent / filename).is_file() and compatible:
                 usable[key] = entry
             else:
-                logger.warning("tile pointer at %s names a missing archive for %s", path, key)
+                logger.warning(
+                    "tile pointer at %s names a missing or incompatible archive for %s", path, key
+                )
         return usable
 
     def archive_path(self, filename: str) -> Path | None:
@@ -676,6 +704,15 @@ class _BuildStats:
     written: int = 0
     empty: int = 0
     degraded: int = 0
+
+
+def _point_in_tile(
+    point: tuple[float, float], bounds: tuple[float, float, float, float]
+) -> bool:
+    """Assign a label anchor to exactly one tile, even when geometry buffers overlap."""
+    lon, lat = point
+    west, south, east, north = bounds
+    return west <= lon < east and south <= lat < north
 
 
 def _project_array(coords: Any, z: int, x: int, y: int) -> Any:

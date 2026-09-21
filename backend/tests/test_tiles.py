@@ -644,6 +644,20 @@ def test_a_tile_carries_the_layers_and_properties_the_style_needs(
     assert properties["dir"] in {"rtl", "ltr"}
 
 
+def test_each_entity_has_at_most_one_dedicated_label_anchor_per_tile(
+    tile_service: TileService, center_tile: tuple[int, int, int]
+) -> None:
+    z, x, y = center_tile
+    anchors = [
+        feature["properties"]["id"]
+        for layer in decode_tile(tile_service.tile(z, x, y))
+        for feature in layer["features"]
+        if feature["properties"].get("label_anchor") is True
+    ]
+    assert anchors, "atlas labels need dedicated anchors in vector delivery"
+    assert len(anchors) == len(set(anchors))
+
+
 def test_a_tile_is_time_agnostic_and_says_when_each_feature_was_true(
     tile_service: TileService, center_tile: tuple[int, int, int]
 ) -> None:
@@ -835,19 +849,23 @@ def test_a_locale_without_an_archive_gets_no_pointer(
     assert tile_service.pointer() == tile_service.pointer("fa")  # the default locale
 
 
-def test_a_pointer_written_before_per_locale_archives_is_still_read(
+def test_an_archive_from_an_older_tile_contract_is_ignored(
     tile_service: TileService, tmp_path: Path, settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """An old flat ``latest.json`` keeps working, filed under the locale it declares."""
+    """A stale archive must fall back to GeoJSON instead of silently losing new label anchors."""
     monkeypatch.setattr(settings, "tiles_dir", str(tmp_path))
     (tmp_path / "old.pmtiles").write_bytes(b"PMTiles\x03")
     (tmp_path / "latest.json").write_text(
-        json.dumps({"filename": "old.pmtiles", "url": "/old.pmtiles", "locale": "en"}),
+        json.dumps({
+            "filename": "old.pmtiles",
+            "url": "/old.pmtiles",
+            "locale": "en",
+            "tileset_version": "1.0.0",
+        }),
         encoding="utf-8",
     )
-    assert tile_service.pointer("en")["filename"] == "old.pmtiles"
-    assert tile_service.pointer("fa") == {}
-    assert tile_service.pointer_locales() == ["en"]
+    assert tile_service.pointer("en") == {}
+    assert tile_service.pointer_locales() == []
 
 
 def test_a_nonsense_zoom_range_is_refused(tile_service: TileService, tmp_path: Path) -> None:

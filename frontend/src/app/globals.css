@@ -555,6 +555,10 @@ select.field option {
   --timeline-h: 226px;
 }
 
+.app:has(.timeline-collapsed) {
+  --timeline-h: 46px;
+}
+
 .timeline {
   position: absolute;
   inset-inline: 14px;
@@ -565,6 +569,24 @@ select.field option {
   flex-direction: column;
   padding: 8px 12px 10px;
   gap: 6px;
+}
+
+.timeline.timeline-collapsed {
+  padding: 4px 8px;
+}
+
+.timeline-activate {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timeline-activate span:nth-child(2) {
+  color: var(--text-dim);
+  font-size: 11.5px;
 }
 
 .timeline-head {

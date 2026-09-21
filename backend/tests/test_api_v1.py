@@ -140,6 +140,14 @@ def test_semantic_zoom_ladder(client: TestClient) -> None:
     assert not any(f["properties"]["kind"] in {"mosque", "bazaar"} for f in region["features"])
 
 
+def test_all_time_features_are_not_limited_to_the_default_year(client: TestClient) -> None:
+    body = client.get("/api/v1/atlas/features", params={"zoom": 9, "all_time": True}).json()
+    ids = {feature["id"] for feature in body["features"]}
+    assert "plc_babak_castle" in ids
+    assert body["meta"]["time"]["from"] < 900
+    assert body["meta"]["time"]["to"] >= 2000
+
+
 def test_non_gregorian_calendars_are_accepted(client: TestClient) -> None:
     ah = client.get("/api/v1/atlas/features", params={"zoom": 7, "cal": "islamic_lunar", "t": 907}).json()
     assert ah["meta"]["time"]["calendar"] == "islamic_lunar"

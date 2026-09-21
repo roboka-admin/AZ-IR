@@ -256,6 +256,9 @@ class FeatureProjection:
             "min_zoom": entity.min_zoom,
             "max_zoom": entity.max_zoom,
             "label": self.label,
+            # GeoJSON has one whole geometry per entity, so this feature is its single label host.
+            # Tiles override this and emit one dedicated anchor to avoid a label per clipped tile.
+            "label_anchor": True,
             "dir": "rtl" if self.label and _is_rtl(self.label) else "ltr",
             "status": entity.status.value,
             # Certainty is not a nicety: the renderer must never draw a reconstructed extent like

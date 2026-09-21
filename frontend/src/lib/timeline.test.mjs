@@ -43,6 +43,16 @@ test("point URLs cannot retain an interval-only matching mode", () => {
   assert.match(serializeAtlasState(span, null), /mode=during/);
 });
 
+test("timeline filtering is opt-in and survives URL round trips", () => {
+  const overview = parseAtlasState(new URLSearchParams("t=1514"), null);
+  assert.equal(overview.timelineActive, false);
+  assert.equal(new URLSearchParams(serializeAtlasState(overview, null)).has("time"), false);
+
+  const filtered = parseAtlasState(new URLSearchParams("t=1514&time=1"), null);
+  assert.equal(filtered.timelineActive, true);
+  assert.equal(new URLSearchParams(serializeAtlasState(filtered, null)).get("time"), "1");
+});
+
 test("an event overlapping several timeline buckets is rendered once", () => {
   const events = [
     { id: "evt_babak_revolt", year: 816, label: "Babak" },

@@ -166,9 +166,11 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         locale,
         fields: "default" as const,
         limit: 400,
-        ...(state.span
-          ? { from: state.span[0], to: state.span[1] }
-          : { t: state.year }),
+        ...(state.timelineActive
+          ? state.span
+            ? { from: state.span[0], to: state.span[1] }
+            : { t: state.year }
+          : { all_time: true }),
       };
       getFeatures(params, controller.signal)
         .then((payload) => {
@@ -203,9 +205,11 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
   /** The map and tiles always filter on canonical normalized years. Calendar choice is display-only. */
   useEffect(() => {
     if (!state || !mapReady) return;
-    setTemporalWindow(mapRef.current, state.span
-      ? { from: state.span[0], to: state.span[1], mode: state.mode }
-      : { from: state.year, to: state.year, mode: state.mode });
+    setTemporalWindow(mapRef.current, !state.timelineActive
+      ? { from: null, to: null, mode: "overlaps" }
+      : state.span
+        ? { from: state.span[0], to: state.span[1], mode: state.mode }
+        : { from: state.year, to: state.year, mode: state.mode });
   }, [state, mapReady, tilesBinding]);
 
   // Conversion remains an auditable backend/domain operation; the browser only renders its result.
@@ -249,12 +253,30 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
   /* ---------------------------------------------------------- selection */
 
   const openEntity = useCallback(
-    async (entityType: string, idOrSlug: string) => {
+    async (entityType: string, idOrSlug: string, revealOnActiveTimeline = false) => {
       setDetailLoading(true);
       try {
         const payload = await getEntity(entityType, idOrSlug, locale);
         setDetail(payload);
-        setState((previous) => (previous ? { ...previous, entity: payload.id } : previous));
+        const temporal = payload.temporal;
+        const revealYear = temporal && temporal.year_from !== null
+          ? Math.round((temporal.year_from + (temporal.year_to ?? temporal.year_from)) / 2)
+          : null;
+        setState((previous) => {
+          if (!previous) return previous;
+          if (!revealOnActiveTimeline || !previous.timelineActive || revealYear === null) {
+            return { ...previous, entity: payload.id };
+          }
+          return { ...previous, entity: payload.id, year: revealYear, span: null, mode: "at", playing: false };
+        });
+        if (revealOnActiveTimeline && stateRef.current?.timelineActive && revealYear !== null && meta) {
+          setTimelineWindow((current) => centerTimelineWindow(
+            revealYear,
+            current[1] - current[0],
+            meta.timeline.floor,
+            meta.timeline.ceil,
+          ));
+        }
         const center = payload.geometry?.center;
         if (center && mapRef.current) {
           mapRef.current.easeTo({ center: [center[0], center[1]], zoom: Math.max(mapRef.current.getZoom(), 8), duration: 700 });
@@ -266,7 +288,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         setDetailLoading(false);
       }
     },
-    [locale],
+    [locale, meta],
   );
 
   useEffect(() => {
@@ -359,7 +381,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
     if (hit.center && mapRef.current) {
       mapRef.current.flyTo({ center: [hit.center[1], hit.center[0]], zoom: Math.max(9, hit.center ? 9 : 6), duration: 900 });
     }
-    void openEntity(hit.entity_type, hit.slug ?? hit.id);
+    void openEntity(hit.entity_type, hit.slug ?? hit.id, true);
   }
 
   const zoomLevel: ZoomLevelInfo | null = useMemo(() => {
@@ -494,6 +516,8 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
           to: displayYear,
           calendar: state.calendar,
         }}
+        active={state.timelineActive}
+        onActiveChange={(timelineActive) => patch({ timelineActive, playing: false })}
         onYearChange={setYear}
         onWindowChange={setTimelineWindow}
         onCalendarChange={(calendar: CalendarCode) => patch({ calendar })}

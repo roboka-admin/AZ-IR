@@ -182,7 +182,7 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
     {
       id: "azir-point-halo",
       type: "circle",
-      filter: ["==", ["geometry-type"], "Point"],
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true]],
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 5, 100, 15],
         "circle-color": "#ffffff",
@@ -193,7 +193,7 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
     {
       id: "azir-point",
       type: "circle",
-      filter: ["==", ["geometry-type"], "Point"],
+      filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "label_anchor"], true]],
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["get", "rank"], 0, 2.5, 40, 4.5, 70, 6.5, 100, 9],
         "circle-color": pointColour(),
@@ -220,8 +220,9 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       id: "azir-label",
       type: "symbol",
       minzoom: 2,
-      // No geometry filter: points get offset labels, polygons get a centred one.
-      filter: ["all"],
+      // The API marks exactly one presentation anchor per entity. In vector tiles that anchor is a
+      // dedicated point, avoiding one polity label on every clipped polygon/tile fragment.
+      filter: ["==", ["get", "label_anchor"], true],
       layout: {
         // A data label must read as an atlas annotation rather than a basemap place-name.
         // The marker is presentation only; label content and temporal naming still come from API.

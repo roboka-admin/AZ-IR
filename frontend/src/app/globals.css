@@ -814,9 +814,47 @@ select.field option {
   border-top: 2px solid var(--sand-300);
 }
 
-.legend-swatch.dashed {
-  border-top-style: dashed;
+.legend-explanation {
+  margin: 0 0 7px;
+  line-height: 1.55;
+  color: var(--text-faint);
+}
+
+.certainty-exact {
+  border-top-width: 3px;
+  border-top-color: var(--sand-100);
+}
+
+.certainty-approximate {
+  border-top-color: var(--sand-300);
+  opacity: 0.55;
+}
+
+.certainty-uncertain {
+  border-top-style: dotted;
   border-top-color: var(--amber-500);
+  border-top-width: 3px;
+}
+
+.certainty-reconstructed {
+  border-top-style: dashed;
+  border-top-color: var(--violet-400);
+}
+
+.polity-line {
+  width: 24px;
+  height: 8px;
+  border-top: 3px solid;
+  border-bottom: 1px solid;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  flex: 0 0 auto;
+}
+
+.polity-key small {
+  display: block;
+  margin-top: 1px;
+  color: var(--text-faint);
+  font-size: 10px;
 }
 
 .legend-swatch.hollow {

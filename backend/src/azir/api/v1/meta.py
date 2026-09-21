@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from ...domain.enums import LOCALE_DIRECTION, EntityType
 from ...domain.semantic_zoom import KIND_WEIGHT
+from ...services.atlas import style_color_for
 from ..deps import AtlasDep, LocaleDep, RepositoryDep, SettingsDep
 
 router = APIRouter(prefix="/meta", tags=["meta"])
@@ -60,6 +61,7 @@ def meta(
         "layers": atlas.layers(locale)["data"],
         "zoom_levels": atlas.zoom_levels(locale),
         "periods": _periods(repo, locale),
+        "political_entities": _political_entities(repo, locale),
         "coverage": stats,
         "disclaimer": {
             "borders": BORDERS_DISCLAIMER_FA if locale == "fa" else BORDERS_DISCLAIMER_EN,
@@ -89,6 +91,23 @@ def _periods(repo: Any, locale: str) -> list[dict[str, Any]]:
         )
     rows.sort(key=lambda r: (r["year_from"] is None, r["year_from"] or 0))
     return rows
+
+
+def _political_entities(repo: Any, locale: str) -> list[dict[str, Any]]:
+    """Published, spatially modelled polities for the map's data-driven colour key."""
+    rows = []
+    for record in repo.all_published():
+        if record.entity_type is not EntityType.POLITICAL_ENTITY or not record.has_geometry:
+            continue
+        geometry = record.primary_geometry()
+        rows.append({
+            "id": record.id,
+            "label": record.display_name(locale),
+            "color": style_color_for(record.id),
+            "t_display": record.temporal_display(locale),
+            "certainty": geometry.certainty.value if geometry else None,
+        })
+    return sorted(rows, key=lambda row: row["label"])
 
 
 atlas_layers_router = APIRouter(prefix="/atlas", tags=["atlas"])

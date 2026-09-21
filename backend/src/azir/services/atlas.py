@@ -104,6 +104,7 @@ class AtlasService:
                 label_secondary=entity.secondary_name(query.locale, year),
                 locale=query.locale,
                 fields=fields,
+                style_color=style_color_for(entity.id) if entity.layer == "political_entities" else None,
             )
             feature = projection.to_geojson(geometry_override=geometry)
             size = len(json.dumps(feature, ensure_ascii=False)) + 1
@@ -116,6 +117,7 @@ class AtlasService:
                         entity=entity, geometry=entity.primary_geometry(at_year=year),
                         label=projection.label, label_secondary=projection.label_secondary,
                         locale=query.locale, fields="min",
+                        style_color=projection.style_color,
                     )
                     feature = projection.to_geojson(geometry_override=geometry)
                     size = len(json.dumps(feature, ensure_ascii=False)) + 1
@@ -313,6 +315,18 @@ def _auto_bucket(span_years: int, available: list[int]) -> int:
         if span_years / size <= 60:
             return size
     return max(available)
+
+
+# Deliberately finite, colour-blind-conscious presentation palette. Assignment is stable across
+# drivers and deployments; it identifies a polity in the legend without encoding historical facts.
+_POLITY_COLORS = ("#7b2cbf", "#d1495b", "#00798c", "#edae49", "#30638e", "#6a994e", "#bc6c25", "#8f2d56")
+
+
+def style_color_for(entity_id: str) -> str:
+    import hashlib
+
+    digest = hashlib.blake2b(entity_id.encode("utf-8"), digest_size=2).digest()
+    return _POLITY_COLORS[int.from_bytes(digest, "big") % len(_POLITY_COLORS)]
 
 
 _LAYER_LABELS: dict[str, tuple[str, str]] = {

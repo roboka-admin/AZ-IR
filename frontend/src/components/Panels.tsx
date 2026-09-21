@@ -212,10 +212,10 @@ export function SearchPanel({ locale, onPick }: SearchPanelProps) {
 
 export function LegendPanel({ locale }: { locale: Locale }) {
   const rows: { certainty: "exact" | "approximate" | "uncertain" | "reconstructed"; className: string }[] = [
-    { certainty: "exact", className: "legend-swatch" },
-    { certainty: "approximate", className: "legend-swatch" },
-    { certainty: "uncertain", className: "legend-swatch dashed" },
-    { certainty: "reconstructed", className: "legend-swatch dashed" },
+    { certainty: "exact", className: "legend-swatch certainty-exact" },
+    { certainty: "approximate", className: "legend-swatch certainty-approximate" },
+    { certainty: "uncertain", className: "legend-swatch certainty-uncertain" },
+    { certainty: "reconstructed", className: "legend-swatch certainty-reconstructed" },
   ];
   return (
     <section className="panel">
@@ -223,6 +223,11 @@ export function LegendPanel({ locale }: { locale: Locale }) {
         <span>{locale === "fa" ? "راهنمای دقت" : "Certainty legend"}</span>
       </header>
       <div className="legend">
+        <p className="legend-explanation">
+          {locale === "fa"
+            ? "نوع خط و میزان شفافیت نشان می‌دهد مکان یا مرز با چه درجه‌ای از اطمینان پژوهشی ترسیم شده است."
+            : "Line pattern and opacity show the research certainty of a location or boundary."}
+        </p>
         {rows.map((row) => (
           <div className="legend-row" key={row.certainty}>
             <span className={row.className} />
@@ -233,6 +238,39 @@ export function LegendPanel({ locale }: { locale: Locale }) {
           <span className="legend-swatch hollow" />
           <span>{t(locale, "ui.entity.derivedLocus")}</span>
         </div>
+      </div>
+    </section>
+  );
+}
+
+export function PoliticalLegendPanel({
+  locale,
+  entities,
+}: {
+  locale: Locale;
+  entities: MetaResponse["political_entities"];
+}) {
+  if (entities.length === 0) return null;
+  return (
+    <section className="panel">
+      <header className="panel-title">
+        <span>{locale === "fa" ? "قلمرو حکومت‌ها" : "Political extents"}</span>
+      </header>
+      <div className="legend">
+        <p className="legend-explanation">
+          {locale === "fa"
+            ? "هر رنگ یک حکومت را نشان می‌دهد. خطوط، بازسازی ناحیهٔ نفوذ در داده‌های پژوهشی‌اند؛ مرز قطعی یا امروزی نیستند."
+            : "Each colour identifies a polity. Lines are researched reconstructions of influence, not exact or modern borders."}
+        </p>
+        {entities.map((entity) => (
+          <div className="legend-row polity-key" key={entity.id}>
+            <span className="polity-line" style={{ borderColor: entity.color }} />
+            <span className="grow">
+              <strong>{entity.label}</strong>
+              {entity.t_display ? <small>{entity.t_display}</small> : null}
+            </span>
+          </div>
+        ))}
       </div>
     </section>
   );

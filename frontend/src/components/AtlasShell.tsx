@@ -15,7 +15,7 @@ import type maplibregl from "maplibre-gl";
 
 import EntityDrawer from "./EntityDrawer";
 import MapCanvas from "./MapCanvas";
-import { CoveragePanel, LayersPanel, LegendPanel, LocaleSwitcher, NavLinks, SearchPanel, StatusBar } from "./Panels";
+import { CoveragePanel, LayersPanel, LegendPanel, LocaleSwitcher, NavLinks, PoliticalLegendPanel, SearchPanel, StatusBar } from "./Panels";
 import TimelinePanel from "./TimelinePanel";
 import { ApiError, getCalendarYear, getEntity, getFeatures, getMeta, getTilesIndex, getTimeline, roundZoom } from "@/lib/api";
 import { t } from "@/lib/i18n";
@@ -469,6 +469,9 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
           archiveLocales={tilesIndex?.archive_locales ?? []}
           onSourceChange={(source) => patch({ source })}
         />
+        {activeLayers.includes("political_entities") ? (
+          <PoliticalLegendPanel locale={locale} entities={meta.political_entities} />
+        ) : null}
         <LegendPanel locale={locale} />
         <CoveragePanel
           locale={locale}

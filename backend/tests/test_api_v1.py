@@ -44,6 +44,8 @@ def test_meta_bootstraps_the_frontend(client: TestClient) -> None:
     assert {"places", "buildings", "political_entities", "modern_borders"} <= layer_ids
     assert body["timeline"]["floor"] < body["timeline"]["ceil"]
     assert body["coverage"]["provisional_geometries"] > 0
+    assert body["political_entities"]
+    assert all(row["color"].startswith("#") and row["label"] for row in body["political_entities"])
     assert "disclaimer" in body and body["license"]["data"]
 
 

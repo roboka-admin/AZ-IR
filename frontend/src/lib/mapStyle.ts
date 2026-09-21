@@ -119,11 +119,11 @@ const FILL_OPACITY = [
 const DASH = ["match", ["get", "certainty"], "reconstructed", [2, 2], "uncertain", [1.5, 1.5], [0]];
 
 function fillColour(): unknown[] {
-  return ["match", ["get", "layer"],
-    "political_entities", PALETTE.political_entities,
-    "modern_borders", PALETTE.modern_borders,
-    "archaeology", PALETTE.archaeology,
-    "places", PALETTE.places,
+  return ["case",
+    ["==", ["get", "layer"], "political_entities"], ["coalesce", ["get", "style_color"], PALETTE.political_entities],
+    ["==", ["get", "layer"], "modern_borders"], PALETTE.modern_borders,
+    ["==", ["get", "layer"], "archaeology"], PALETTE.archaeology,
+    ["==", ["get", "layer"], "places"], PALETTE.places,
     DEFAULT_COLOR];
 }
 
@@ -163,8 +163,11 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       filter: ["==", ["geometry-type"], "Polygon"],
       paint: {
         "line-color": fillColour(),
-        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1, 10, 2],
-        "line-opacity": 0.92,
+        "line-width": ["case",
+          ["==", ["get", "certainty"], "exact"], ["interpolate", ["linear"], ["zoom"], 3, 1.6, 10, 3],
+          ["interpolate", ["linear"], ["zoom"], 3, 1.1, 10, 2.2],
+        ],
+        "line-opacity": ["match", ["get", "certainty"], "exact", 1, "approximate", 0.72, "uncertain", 0.82, "reconstructed", 0.9, 0.85],
         "line-dasharray": DASH,
       },
     },
@@ -222,7 +225,7 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       minzoom: 2,
       // The API marks exactly one presentation anchor per entity. In vector tiles that anchor is a
       // dedicated point, avoiding one polity label on every clipped polygon/tile fragment.
-      filter: ["==", ["get", "label_anchor"], true],
+      filter: ["all", ["==", ["get", "label_anchor"], true], ["!=", ["get", "layer"], "political_entities"]],
       layout: {
         // A data label must read as an atlas annotation rather than a basemap place-name.
         // The marker is presentation only; label content and temporal naming still come from API.

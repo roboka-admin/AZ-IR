@@ -97,6 +97,13 @@ export interface MetaResponse {
   layers: LayerInfo[];
   zoom_levels: ZoomLevelInfo[];
   periods: PeriodInfo[];
+  political_entities: {
+    id: string;
+    label: string;
+    color: string;
+    t_display: string | null;
+    certainty: Certainty | null;
+  }[];
   coverage: CoverageStats;
   disclaimer: { borders: string };
   kind_weights: Record<string, number>;
@@ -118,6 +125,7 @@ export interface FeatureProperties {
   max_zoom: number;
   label: string;
   label_anchor?: boolean;
+  style_color?: string | null;
   dir: Direction;
   status: string;
   certainty: Certainty | null;

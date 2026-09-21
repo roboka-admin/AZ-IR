@@ -243,6 +243,7 @@ class FeatureProjection:
     label_secondary: str | None
     locale: str
     fields: str = "default"
+    style_color: str | None = None
 
     def to_geojson(self, geometry_override: Mapping[str, Any] | None = None) -> dict[str, Any]:
         entity = self.entity
@@ -259,6 +260,7 @@ class FeatureProjection:
             # GeoJSON has one whole geometry per entity, so this feature is its single label host.
             # Tiles override this and emit one dedicated anchor to avoid a label per clipped tile.
             "label_anchor": True,
+            "style_color": self.style_color,
             "dir": "rtl" if self.label and _is_rtl(self.label) else "ltr",
             "status": entity.status.value,
             # Certainty is not a nicety: the renderer must never draw a reconstructed extent like

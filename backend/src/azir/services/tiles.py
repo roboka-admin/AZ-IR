@@ -76,7 +76,7 @@ MERCATOR_LAT_LIMIT: Final[float] = 85.05112877980659
 #: the meaning of a tile in time. Bump it when any of those change, because the archive filename
 #: carries it and the frontend style is written against it (AGENTS.md rule 12: contracts are
 #: versioned, never silently changed). The data revision next to it covers content changes.
-TILESET_VERSION: Final[str] = "1.1.0"
+TILESET_VERSION: Final[str] = "1.2.0"
 
 #: TileJSON ``vector_layers`` field types, and the contract the frontend style is written against.
 #: MVT has no null and no nested values, so a property that is unknown is *absent*: styles must
@@ -93,6 +93,7 @@ TILE_PROPERTIES: Final[dict[str, str]] = {
     "dir": "String",
     "href": "String",
     "status": "String",
+    "style_color": "String",
     "certainty": "String",
     "geometry_kind": "String",
     "t_display": "String",

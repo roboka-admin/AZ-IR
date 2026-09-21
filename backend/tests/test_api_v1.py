@@ -174,6 +174,27 @@ def test_the_window_endpoint_agrees_with_features(client: TestClient, params: di
     assert window["normalized_calendar"] == "gregorian_proleptic"
 
 
+def test_timeline_exposes_selected_calendar_labels_without_changing_bucket_coordinates(client: TestClient) -> None:
+    gregorian = client.get("/api/v1/atlas/timeline", params={"from": 1500, "to": 1520}).json()
+    hijri = client.get(
+        "/api/v1/atlas/timeline",
+        params={"from": 1500, "to": 1520, "cal": "islamic_lunar"},
+    ).json()
+    assert [(row["from"], row["to"]) for row in hijri["data"]] == [
+        (row["from"], row["to"]) for row in gregorian["data"]
+    ]
+    assert hijri["meta"]["display_calendar"] == "islamic_lunar"
+    assert all("display_from" in row and "display_to" in row for row in hijri["data"])
+
+
+def test_calendar_year_preserves_the_historical_instant(client: TestClient) -> None:
+    solar = client.get("/api/v1/atlas/calendar-year", params={"t": 2024, "cal": "persian_solar"}).json()["data"]
+    hijri = client.get("/api/v1/atlas/calendar-year", params={"t": 2024, "cal": "islamic_lunar"}).json()["data"]
+    assert solar == {"year": 1403, "calendar": "persian_solar", "normalized_year": 2024}
+    assert hijri["year"] == 1445
+    assert hijri["normalized_year"] == 2024
+
+
 def test_the_window_endpoint_normalizes_calendars(client: TestClient) -> None:
     hijri = client.get("/api/v1/atlas/window", params={"t": 900, "cal": "islamic_lunar"}).json()["data"]
     assert (hijri["from"], hijri["to"]) == (1494, 1495)  # AH 900 spans two Gregorian years

@@ -182,10 +182,12 @@ export interface FeatureCollection {
 export interface TimelineBucket {
   from: number;
   to: number;
+  display_from?: number;
+  display_to?: number;
   counts: Record<string, number>;
   total: number;
   top_kinds: string[];
-  notable: { id: string; label: string; year: number; kind: string | null }[];
+  notable: { id: string; label: string; year: number; display_year?: number; kind: string | null }[];
 }
 
 export interface TimelineResponse {

@@ -127,11 +127,10 @@ export function LayersPanel({
 
 export interface SearchPanelProps {
   locale: Locale;
-  year: number;
   onPick: (hit: SearchHit) => void;
 }
 
-export function SearchPanel({ locale, year, onPick }: SearchPanelProps) {
+export function SearchPanel({ locale, onPick }: SearchPanelProps) {
   const [term, setTerm] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -146,7 +145,9 @@ export function SearchPanel({ locale, year, onPick }: SearchPanelProps) {
     const controller = new AbortController();
     setBusy(true);
     const timer = setTimeout(() => {
-      fetch(`/api/v1/search?q=${encodeURIComponent(query)}&locale=${locale}&limit=12&t=${year}`, {
+      // Catalog search is intentionally timeless: selecting a year filters the map, not the
+      // research corpus. A result outside the current view can still be opened and inspected.
+      fetch(`/api/v1/search?q=${encodeURIComponent(query)}&locale=${locale}&limit=12`, {
         signal: controller.signal,
       })
         .then(async (response) => {
@@ -164,7 +165,7 @@ export function SearchPanel({ locale, year, onPick }: SearchPanelProps) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [term, locale, year]);
+  }, [term, locale]);
 
   return (
     <section className="panel">

@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, Response
 
 from ...core.config import Settings
 from ...core.errors import ValidationError
-from ...domain.calendar import CalendarDate, convert
+from ...domain.calendar import CalendarDate, convert, from_gregorian_year
 from ...domain.enums import Calendar
 from ...domain.geo import BBox
 from ...domain.temporal import TemporalMode, TimeWindow
@@ -198,6 +198,21 @@ def _parse_point(raw: str | None) -> tuple[float, float] | None:
 
 
 
+@router.get("/calendar-year", summary="Normalized Gregorian year -> display-calendar year")
+def calendar_year(
+    settings: SettingsDep,
+    t: Annotated[int, Query(description="Normalized astronomical Gregorian year")],
+    cal: CalendarParam = "gregorian_proleptic",
+) -> dict[str, Any]:
+    """Convert the timeline's canonical cursor without moving it in historical time."""
+    calendar = Calendar(cal)
+    value = t if calendar is Calendar.GREGORIAN_PROLEPTIC else from_gregorian_year(calendar, t).year
+    return {
+        "data": {"year": value, "calendar": cal, "normalized_year": t},
+        "meta": {"driver": settings.db_driver},
+    }
+
+
 @router.get("/timeline", summary="Density buckets for the timeline histogram")
 def timeline(
     atlas: AtlasDep,
@@ -208,6 +223,7 @@ def timeline(
     year_to: Annotated[int | None, Query(alias="to")] = None,
     bucket: Annotated[int | None, Query(ge=1, le=500)] = None,
     layers: Annotated[str | None, Query()] = None,
+    cal: CalendarParam = "gregorian_proleptic",
 ) -> dict[str, Any]:
     area = _bbox_or_default(bbox, settings)
     lo = year_from if year_from is not None else settings.timeline_floor
@@ -216,7 +232,16 @@ def timeline(
         raise ValidationError("from must be <= to")
     resolved_layers = _parse_layers(layers, settings, atlas.layers(locale)["data"])
     window = TimeWindow.span(lo, hi, TemporalMode.OVERLAPS)
-    return atlas.timeline(area, window, resolved_layers, locale, bucket)
+    result = atlas.timeline(area, window, resolved_layers, locale, bucket)
+    calendar = Calendar(cal)
+    if calendar is not Calendar.GREGORIAN_PROLEPTIC:
+        for row in result["data"]:
+            row["display_from"] = from_gregorian_year(calendar, row["from"]).year
+            row["display_to"] = from_gregorian_year(calendar, row["to"]).year
+            for notable in row["notable"]:
+                notable["display_year"] = from_gregorian_year(calendar, notable["year"]).year
+    result["meta"]["display_calendar"] = cal
+    return result
 
 
 @router.get("/context", summary='"What was here?" — everything around a place or point, in time')

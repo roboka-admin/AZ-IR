@@ -97,7 +97,11 @@ export default function TimelinePanel({
         </button>
 
         <div>
-          <div className="year-big">{formatYear(year, locale)}</div>
+          <div className="year-big">
+            {calendarDisplay && calendarDisplay.calendar !== "gregorian_proleptic"
+              ? localizeDigits(calendarDisplay.from, locale)
+              : formatYear(year, locale)}
+          </div>
           <div className="year-sub">
             {calendarDisplay && calendarDisplay.calendar !== "gregorian_proleptic"
               ? `${calendarLabel(locale, calendarDisplay.calendar)}: ${formatYear(calendarDisplay.from, locale)}${
@@ -258,10 +262,10 @@ export default function TimelinePanel({
               type="button"
               className={`histogram-bar${bucket.notable.length > 0 ? " notable" : ""}`}
               style={{ height: `${Math.max(4, (bucket.total / maxTotal) * 100)}%` }}
-              title={`${formatYear(bucket.from, locale)}–${formatYear(bucket.to, locale)}: ${formatNumber(bucket.total, locale)}`}
+              title={`${localizeDigits(bucket.display_from ?? bucket.from, locale)}–${localizeDigits(bucket.display_to ?? bucket.to, locale)}: ${formatNumber(bucket.total, locale)}`}
               aria-label={t(locale, "ui.time.bucketLabel", {
-                from: formatYear(bucket.from, locale),
-                to: formatYear(bucket.to, locale),
+                from: localizeDigits(bucket.display_from ?? bucket.from, locale),
+                to: localizeDigits(bucket.display_to ?? bucket.to, locale),
                 count: formatNumber(bucket.total, locale),
               })}
               onClick={() => onYearChange(Math.round((bucket.from + bucket.to) / 2))}
@@ -306,9 +310,9 @@ export default function TimelinePanel({
               type="button"
               className="notable-pill"
               onClick={() => onOpenEntity("event", event.id)}
-              title={`${event.label} (${formatYear(event.year, locale)})`}
+              title={`${event.label} (${localizeDigits(event.display_year ?? event.year, locale)})`}
             >
-              {event.label} · {localizeDigits(event.year, locale)}
+              {event.label} · {localizeDigits(event.display_year ?? event.year, locale)}
             </button>
           ))}
         </div>

@@ -17,7 +17,7 @@ import EntityDrawer from "./EntityDrawer";
 import MapCanvas from "./MapCanvas";
 import { CoveragePanel, LayersPanel, LegendPanel, LocaleSwitcher, NavLinks, SearchPanel, StatusBar } from "./Panels";
 import TimelinePanel from "./TimelinePanel";
-import { ApiError, getEntity, getFeatures, getMeta, getTilesIndex, getTimeline, getWindow, roundZoom } from "@/lib/api";
+import { ApiError, getCalendarYear, getEntity, getFeatures, getMeta, getTilesIndex, getTimeline, roundZoom } from "@/lib/api";
 import { t } from "@/lib/i18n";
 import {
   setSelectedFeature,
@@ -62,6 +62,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
   const [collection, setCollection] = useState<FeatureCollection | null>(null);
   const [buckets, setBuckets] = useState<TimelineBucket[]>([]);
   const [timelineWindow, setTimelineWindow] = useState<[number, number]>([1200, 1800]);
+  const [displayYear, setDisplayYear] = useState<number | null>(null);
   const [detail, setDetail] = useState<EntityDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [hovered, setHovered] = useState<FeatureProperties | null>(null);
@@ -158,7 +159,8 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
       const params = {
         bbox: view.bbox.map((value) => value.toFixed(3)).join(","),
         zoom: roundZoom(view.zoom),
-        cal: state.calendar === "gregorian_proleptic" ? undefined : state.calendar,
+        // Timeline state is canonical Gregorian. The selected calendar changes presentation only,
+        // so switching calendars never jumps to a different historical instant.
         mode: state.mode,
         layers: activeLayers.join(","),
         locale,
@@ -198,51 +200,27 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
     setSelectedFeature(mapRef.current, state?.entity ?? null);
   }, [state?.entity, mapReady, tilesBinding]);
 
-  /**
-   * The timeline, as a filter on the map.
-   *
-   * With tiles this *is* the temporal mechanism (ADR-0018): one archive holds every period and the
-   * browser narrows it, so scrubbing costs no request at all. With GeoJSON it is a safety net over
-   * what the server already filtered -- the same predicate, so nothing legitimate can disappear.
-   *
-   * A non-Gregorian calendar is normalized by the server first. Calendar conversion is historical
-   * logic, and historical logic does not live in the browser (AGENTS.md rule 5).
-   */
+  /** The map and tiles always filter on canonical normalized years. Calendar choice is display-only. */
   useEffect(() => {
     if (!state || !mapReady) return;
-    const window = state.span
+    setTemporalWindow(mapRef.current, state.span
       ? { from: state.span[0], to: state.span[1], mode: state.mode }
-      : { from: state.year, to: state.year, mode: state.mode };
-    if (state.calendar === "gregorian_proleptic") {
-      if (mapRef.current) setTemporalWindow(mapRef.current, window);
-      return;
-    }
-    let cancelled = false;
+      : { from: state.year, to: state.year, mode: state.mode });
+  }, [state, mapReady, tilesBinding]);
+
+  // Conversion remains an auditable backend/domain operation; the browser only renders its result.
+  useEffect(() => {
+    if (!state) return;
     const controller = new AbortController();
-    getWindow(
-      state.span
-        ? { ...window, cal: state.calendar }
-        : { t: state.year, mode: state.mode, cal: state.calendar },
-      controller.signal,
-    )
-      .then((payload) => {
-        if (cancelled || !mapRef.current) return;
-        setTemporalWindow(mapRef.current, {
-          from: payload.data.from,
-          to: payload.data.to,
-          mode: payload.data.mode,
-        });
-      })
+    getCalendarYear(state.year, state.calendar, controller.signal)
+      .then((payload) => setDisplayYear(payload.data.year))
       .catch((cause: unknown) => {
-        if ((cause as Error).name !== "AbortError") console.error("calendar normalization failed", cause);
+        if ((cause as Error).name !== "AbortError") console.error("calendar display failed", cause);
       });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-    // Deliberately narrow: a pan or a zoom must not re-normalize the calendar.
+    return () => controller.abort();
+    // Only time/calendar changes require conversion; map pans and layer toggles must not refetch it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.year, state?.span, state?.mode, state?.calendar, mapReady, tilesBinding]);
+  }, [state?.year, state?.calendar]);
 
   /* ---------------------------------------------------------- timeline */
 
@@ -257,6 +235,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         bbox: view.bbox.map((value) => value.toFixed(3)).join(","),
         layers: activeLayers.join(","),
         locale,
+        cal: state?.calendar,
       },
       controller.signal,
     )
@@ -265,7 +244,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         if ((cause as Error).name !== "AbortError") console.error("timeline failed", cause);
       });
     return () => controller.abort();
-  }, [meta, view, timelineWindow, activeLayers, locale]);
+  }, [meta, view, timelineWindow, activeLayers, locale, state?.calendar]);
 
   /* ---------------------------------------------------------- selection */
 
@@ -451,7 +430,7 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
       </header>
 
       <div className="stack">
-        <SearchPanel locale={locale} year={state.year} onPick={onSearchPick} />
+        <SearchPanel locale={locale} onPick={onSearchPick} />
         <LayersPanel
           locale={locale}
           layers={meta.layers}
@@ -510,7 +489,11 @@ export default function AtlasShell({ locale }: { locale: Locale }) {
         window={timelineWindow}
         buckets={buckets}
         playing={state.playing}
-        calendarDisplay={collection?.meta.time ?? null}
+        calendarDisplay={displayYear === null ? null : {
+          from: displayYear,
+          to: displayYear,
+          calendar: state.calendar,
+        }}
         onYearChange={setYear}
         onWindowChange={setTimelineWindow}
         onCalendarChange={(calendar: CalendarCode) => patch({ calendar })}

@@ -223,7 +223,9 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       // No geometry filter: points get offset labels, polygons get a centred one.
       filter: ["all"],
       layout: {
-        "text-field": ["get", "label"],
+        // A data label must read as an atlas annotation rather than a basemap place-name.
+        // The marker is presentation only; label content and temporal naming still come from API.
+        "text-field": ["concat", "◆ ", ["get", "label"]],
         "text-font": font,
         "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10, 8, 12.5, 14, 14],
         "text-anchor": "top",

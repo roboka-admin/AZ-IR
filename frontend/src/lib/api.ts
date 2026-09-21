@@ -115,10 +115,18 @@ export function getFeatures(params: FeaturesParams, signal?: AbortSignal): Promi
 }
 
 export function getTimeline(
-  params: { from: number; to: number; bucket?: number; bbox?: string; layers?: string; locale?: Locale },
+  params: { from: number; to: number; bucket?: number; bbox?: string; layers?: string; locale?: Locale; cal?: string },
   signal?: AbortSignal,
 ): Promise<TimelineResponse> {
   return request<TimelineResponse>("/atlas/timeline", params, { signal });
+}
+
+export function getCalendarYear(
+  year: number,
+  calendar: string,
+  signal?: AbortSignal,
+): Promise<{ data: { year: number; calendar: string; normalized_year: number } }> {
+  return request("/atlas/calendar-year", { t: year, cal: calendar }, { signal, memoize: true });
 }
 
 export function getContext(

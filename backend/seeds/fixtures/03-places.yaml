@@ -1,0 +1,630 @@
+# Pilot dataset: Ardabil + regional anchors (docs/07 §5, handoff §28).
+# RULES: never fabricate (AGENTS.md #10). Coordinates that could not be verified against a cited
+# source are marked `certainty: approximate` or `uncertain` and carry a `note`.
+# `importance` is the only human ranking input (docs/04 §4); everything else is derived.
+places:
+  # ---------------------------------------------------------------- Ardabil
+  - id: plc_ardabil
+    kind: city
+    slug: ardabil
+    status: published
+    importance: 0.95
+    temporal: {from: 450, to: 2026, precision: range, confidence: low,
+               display_fa: "دورهٔ ساسانی تا امروز (قدمت پیش از آن محل بحث)"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [48.2934, 38.2464]}
+    names:
+      - {lang: fa, form: "اردبیل", kind: preferred}
+      - {lang: fa, form: "اردبيل", kind: alternative}
+      - {lang: en, form: "Ardabil", kind: preferred, transliteration: Common}
+      - {lang: en, form: "Ardebil", kind: alternative, transliteration: Common}
+      - {lang: azb-Latn, form: "Ərdəbil", kind: endonym}
+    summary_fa: "شهری در دامنه‌های شرقی کوه سبلان و مرکز طریقت صفویه؛ از سدهٔ هشتم قمری/چهاردهم میلادی به‌عنوان کانون زیارتی و سپس خاستگاه دولت صفوی اهمیت یافت."
+    summary_en: "A city on the eastern flanks of Mount Sabalan and the centre of the Safaviyya order; from the 14th century CE it became a pilgrimage centre and later the cradle of the Safavid state."
+    sources: [src_eir_ardabil, src_mustawfi_nuzha, src_unesco_sheikh_safi]
+    coverage_note_fa: "هندسهٔ محدودهٔ تاریخی شهر رقومی‌سازی نشده است؛ فعلاً فقط نقطهٔ مرکزی ثبت شده."
+
+  - id: plc_sheikh_safi_complex
+    kind: mausoleum
+    slug: sheikh-safi-complex
+    status: published
+    importance: 1.0
+    temporal: {calendar: islamic_lunar, from: 735, to: 1245, precision: range, confidence: medium,
+               display_fa: "از ۷۳۵ ق تا سدهٔ ۱۳ ق (الحاقات پیوسته)"}
+    geometry: {kind: footprint, certainty: exact, type: Point, coordinates: [48.2931, 38.2506],
+               note: "Coordinates of the inscribed property (UNESCO WHC list No. 1345)."}
+    names:
+      - {lang: fa, form: "بقعهٔ شیخ صفی‌الدین اردبیلی", kind: preferred}
+      - {lang: fa, form: "مجموعهٔ خاندان و بقعهٔ شیخ صفی", kind: alternative}
+      - {lang: fa, form: "بقعه شیخ صفی الدین", kind: alternative}
+      - {lang: en, form: "Sheikh Safi al-din Khānegāh and Shrine Ensemble", kind: preferred, transliteration: EI3}
+    summary_fa: "مجموعهٔ خانقاه و آرامگاه شیخ صفی‌الدین اردبیلی که طی سده‌ها به‌ویژه در دورهٔ صفوی گسترش یافت و در ۲۰۱۰ در فهرست میراث جهانی یونسکو ثبت شد."
+    summary_en: "The khānegāh and shrine ensemble of Sheikh Safi al-Din, expanded over centuries and especially under the Safavids; inscribed on the UNESCO World Heritage List in 2010."
+    sources: [src_unesco_sheikh_safi, src_blair_bloom_islam, src_eir_ardabil]
+
+  - id: plc_ardabil_bazaar
+    kind: bazaar
+    slug: ardabil-bazaar
+    status: published
+    importance: 0.5
+    temporal: {calendar: islamic_lunar, from: 900, to: 1350, precision: range, confidence: low,
+               display_fa: "گسترش عمده در دورهٔ صفوی؛ ساختار کنونی متأخرتر"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [48.2880, 38.2470],
+               note: "مکان تقریبی؛ نیازمند تأیید میدانی/رقومی‌سازی دقیق."}
+    names:
+      - {lang: fa, form: "بازار تاریخی اردبیل", kind: preferred}
+      - {lang: en, form: "Ardabil Historic Bazaar", kind: preferred}
+    summary_fa: "بافت تجاری تاریخی اردبیل؛ بخش عمدهٔ ساختار کنونی به دوره‌های متأخرتر بازمی‌گردد."
+    summary_en: "The historic commercial fabric of Ardabil; much of the surviving structure belongs to later periods."
+    sources: [src_national_heritage_register]
+    coverage_note_fa: "تاریخ‌گذاری دقیق بناها انجام نشده است."
+
+  - id: plc_azerbaijan_historical
+    kind: historical_region
+    slug: historical-azerbaijan
+    status: in_review
+    importance: 0.9
+    temporal: {from: -300, to: 1925, precision: range, confidence: low,
+               display_fa: "از آتروپاتن تا پایان قاجار (محدوده در دوره‌ها متفاوت است)"}
+    names:
+      - {lang: fa, form: "آذربایجان (منطقهٔ تاریخی)", kind: preferred}
+      - {lang: en, form: "Azerbaijan (historical region)", kind: preferred}
+      - {lang: fa, form: "آذربایگان", kind: historical, note: "شکل میانه/کهن نام."}
+      - {lang: grc, form: "Atropatene", kind: historical, script: Latn}
+    summary_fa: "منطقه‌ای تاریخی که محدودهٔ آن در دوره‌های گوناگون تغییر کرده و با تقسیمات استانی امروزی یکسان نیست."
+    summary_en: "A historical region whose extent changed across periods and does not coincide with today's provinces."
+    sources: [src_strabo_geographica, src_mustawfi_nuzha, src_eir_azerbaijan_history]
+    coverage_note_fa: >-
+      عمداً بدون هندسه: ترسیم محدودهٔ تاریخی یک تصمیم پژوهشی است که نیاز به منبع و certainty دارد
+      (ADR-0013). این رکورد نمونهٔ تفاوت «منطقهٔ تاریخی» و «استان امروزی» است.
+
+  - id: plc_sabalan
+    kind: mountain
+    slug: mount-sabalan
+    status: published
+    importance: 0.6
+    temporal: {from: -800, to: 2026, precision: range, confidence: medium, display_fa: "پدیدهٔ طبیعی؛ حضور انسانی از دوران باستان"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [47.8333, 38.1667]}
+    names:
+      - {lang: fa, form: "کوه سبلان", kind: preferred}
+      - {lang: en, form: "Mount Sabalan", kind: preferred}
+      - {lang: azb-Latn, form: "Savalan", kind: endonym}
+    summary_fa: "کوه آتشفشانی خاموش غرب اردبیل که در روایات محلی و متون کهن با جایگاه‌های زیارتی و افسانه‌ای پیوند دارد."
+    summary_en: "A dormant stratovolcano west of Ardabil, linked in local tradition and older texts to pilgrimage and legendary associations."
+    sources: [src_eir_ardabil]
+
+  - id: plc_mughan
+    kind: historical_region
+    slug: mughan-plain
+    status: published
+    importance: 0.7
+    temporal: {calendar: islamic_lunar, from: 200, to: 1300, precision: range, confidence: medium,
+               display_fa: "از سدهٔ ۳ ق تا دورهٔ معاصر"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [47.7000, 39.2000],
+               note: "نقطهٔ معرف دشت مغان؛ محدودهٔ دقیق تاریخی آن در منابع متفاوت است."}
+    names:
+      - {lang: fa, form: "دشت مغان", kind: preferred}
+      - {lang: en, form: "Mughan Plain", kind: preferred}
+      - {lang: fa, form: "مغان", kind: alternative}
+    summary_fa: "دشتی در شمال اردبیل و دو سوی رود ارس که به‌عنوان قشلاق ایلات و منطقهٔ رخداد چند رویداد تاریخی شناخته می‌شود."
+    summary_en: "A plain north of Ardabil on both sides of the Aras, known as winter quarters (qishlāq) of tribal confederations and as the setting of several historical events."
+    sources: [src_mustawfi_nuzha, src_minorsky_caucasian]
+    coverage_note_fa: "محدودهٔ تاریخی مغان در منابع گوناگون متفاوت است و باید به‌صورت چند هندسهٔ زمان‌دار مدل شود."
+
+  # ------------------------------------------------------------------ Tabriz
+  - id: plc_tabriz
+    kind: city
+    slug: tabriz
+    status: published
+    importance: 1.0
+    temporal: {from: 200, to: 2026, precision: range, confidence: medium, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [46.2738, 38.0962]}
+    names:
+      - {lang: fa, form: "تبریز", kind: preferred}
+      - {lang: en, form: "Tabriz", kind: preferred, transliteration: Common}
+      - {lang: en, form: "Tauris", kind: historical, transliteration: Common,
+         note: "Latin/European exonym used in early modern travel accounts."}
+      - {lang: azb-Latn, form: "Təbriz", kind: endonym}
+    summary_fa: "شهری در شمال غرب ایران که در دورهٔ ایلخانی به مرکز سیاسی و علمی بدل شد، نخستین پایتخت صفویان بود و در مشروطه نقش تعیین‌کننده داشت."
+    summary_en: "A city in north-western Iran that became a political and scholarly centre under the Ilkhanids, served as the first Safavid capital, and played a decisive role in the Constitutional Revolution."
+    sources: [src_eir_tabriz, src_rashid_al_din_jami, src_mustawfi_nuzha, src_unesco_tabriz_bazaar]
+
+  - id: plc_blue_mosque_tabriz
+    kind: mosque
+    slug: blue-mosque-tabriz
+    status: published
+    importance: 0.85
+    temporal: {calendar: islamic_lunar, from: 870, to: 1295, precision: range, confidence: high,
+               display_fa: "ساخت ۸۷۰ ق؛ آسیب ۱۱۵۹ ش و مرمت‌های بعدی"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.2960, 38.0789],
+               note: "مکان تقریبی بر اساس بافت تاریخی تبریز؛ نیازمند رقومی‌سازی دقیق."}
+    names:
+      - {lang: fa, form: "مسجد کبود تبریز", kind: preferred}
+      - {lang: fa, form: "مسجد جهان‌شاه", kind: alternative}
+      - {lang: en, form: "Blue Mosque (Masjed-e Kabūd), Tabriz", kind: preferred}
+    summary_fa: "مسجدی با کاشی‌کاری لاجوردی که به سفارش جهان‌شاه قره‌قویونلو در سدهٔ نهم قمری ساخته شد و در زمین‌لرزهٔ ۱۷۸۰ میلادی آسیب دید."
+    summary_en: "A mosque famed for its cobalt tilework, commissioned by Jahan Shah of the Qara Qoyunlu in the 9th/15th century and damaged in the 1780 earthquake."
+    sources: [src_blair_bloom_islam, src_chiran_vol6, src_national_heritage_register]
+
+  - id: plc_arg_tabriz
+    kind: citadel
+    slug: arg-of-tabriz
+    status: published
+    importance: 0.75
+    temporal: {calendar: islamic_lunar, from: 710, to: 1350, precision: range, confidence: medium,
+               display_fa: "سدهٔ ۸ ق تا امروز"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.2967, 38.0837]}
+    names:
+      - {lang: fa, form: "ارگ تبریز", kind: preferred}
+      - {lang: fa, form: "ارگ علیشاه", kind: alternative}
+      - {lang: fa, form: "مسجد علیشاه", kind: historical}
+      - {lang: en, form: "Arg of Tabriz (Arg-e Alishah)", kind: preferred}
+    summary_fa: "بنای آجری بلند دورهٔ ایلخانی که بخشی از یک مجموعهٔ مذهبی-شهری بود و بعدها کاربری نظامی یافت."
+    summary_en: "A monumental Ilkhanid brick structure originally part of a religious-civic ensemble, later put to military use."
+    sources: [src_blair_bloom_islam, src_national_heritage_register]
+
+  - id: plc_tabriz_bazaar
+    kind: bazaar
+    slug: tabriz-bazaar
+    status: published
+    importance: 0.9
+    temporal: {from: 900, to: 2026, precision: range, confidence: medium,
+               display_fa: "شکوفایی از دورهٔ صفوی تا امروز"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.2930, 38.0810],
+               note: "نقطهٔ معرف مجموعهٔ بازار؛ محدودهٔ دقیق باید از پروندهٔ یونسکو رقومی‌سازی شود."}
+    names:
+      - {lang: fa, form: "بازار تاریخی تبریز", kind: preferred}
+      - {lang: en, form: "Tabriz Historic Bazaar Complex", kind: preferred}
+    summary_fa: "مجموعهٔ بازار سرپوشیدهٔ تبریز، از بزرگ‌ترین بازارهای تاریخی جهان که در ۲۰۱۰ در فهرست میراث جهانی ثبت شد."
+    summary_en: "The covered bazaar complex of Tabriz, one of the largest historic bazaars in the world, inscribed on the UNESCO World Heritage List in 2010."
+    sources: [src_unesco_tabriz_bazaar, src_eir_tabriz]
+
+  - id: plc_rab_rashidi
+    kind: archaeological_site
+    slug: rab-e-rashidi
+    status: in_review
+    importance: 0.7
+    temporal: {calendar: islamic_lunar, from: 700, to: 1100, precision: range, confidence: low,
+               display_fa: "تأسیس اوایل سدهٔ ۸ ق؛ ویرانی تدریجی"}
+    geometry: {kind: uncertain_locus, certainty: uncertain, type: Point, coordinates: [46.3300, 38.1200],
+               note: "محل دقیق ربع رشیدی در شمال شرق تبریز همچنان موضوع بررسی‌های باستان‌شناختی است."}
+    names:
+      - {lang: fa, form: "ربع رشیدی", kind: preferred}
+      - {lang: en, form: "Rab'-e Rashidi", kind: preferred}
+    summary_fa: "مجموعهٔ علمی-خیریه‌ای که رشیدالدین فضل‌الله همدانی در حومهٔ تبریز بنیان نهاد؛ محل دقیق و محدودهٔ آن نیازمند پژوهش بیشتر است."
+    summary_en: "A scholarly-charitable complex founded by Rashid al-Din Hamadani on the outskirts of Tabriz; its exact location and extent remain under investigation."
+    sources: [src_rashid_al_din_jami, src_chiran_vol5]
+    coverage_note_fa: "این رکورد در وضعیت in_review است زیرا مکان‌یابی قطعی انجام نشده."
+
+  # ----------------------------------------------------------------- Maragheh
+  - id: plc_maragheh
+    kind: city
+    slug: maragheh
+    status: published
+    importance: 0.8
+    temporal: {from: 500, to: 2026, precision: range, confidence: medium, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [46.2376, 37.3920]}
+    names:
+      - {lang: fa, form: "مراغه", kind: preferred}
+      - {lang: en, form: "Maragheh", kind: preferred, transliteration: Common}
+      - {lang: en, form: "Marāgha", kind: alternative, transliteration: EI3}
+    summary_fa: "شهری در جنوب دریاچهٔ ارومیه که در دورهٔ ایلخانی از مراکز مهم سیاسی و علمی بود و رصدخانهٔ مراغه در نزدیکی آن ساخته شد."
+    summary_en: "A city south of Lake Urmia that became an important Ilkhanid political and scholarly centre; the Maragheh observatory was built nearby."
+    sources: [src_mustawfi_nuzha, src_chiran_vol5, src_eir_azerbaijan_history]
+
+  - id: plc_maragheh_observatory
+    kind: archaeological_site
+    slug: maragheh-observatory
+    status: published
+    importance: 0.85
+    temporal: {calendar: islamic_lunar, from: 657, to: 800, precision: range, confidence: medium,
+               display_fa: "بنیان‌گذاری ۶۵۷ ق؛ فعالیت تا اواخر سدهٔ ۸ ق"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.2361, 37.3833],
+               note: "تپهٔ رصدخانه در غرب مراغه؛ مکان تقریبی بر اساس گزارش‌های موجود."}
+    names:
+      - {lang: fa, form: "رصدخانهٔ مراغه", kind: preferred}
+      - {lang: en, form: "Maragheh Observatory", kind: preferred}
+    summary_fa: "رصدخانه‌ای که به حمایت هولاکو و به مدیریت خواجه نصیرالدین طوسی بنیان گذاشته شد و زیج ایلخانی از آن برخاست."
+    summary_en: "An observatory founded under the patronage of Hülegü and directed by Nasir al-Din al-Tusi; the Ilkhanid Zij was produced there."
+    sources: [src_chiran_vol5, src_rashid_al_din_jami]
+
+  - id: plc_gonbad_sorkh
+    kind: mausoleum
+    slug: gonbad-e-sorkh
+    status: published
+    importance: 0.55
+    temporal: {calendar: islamic_lunar, from: 544, to: 560, precision: circa_year, confidence: medium,
+               display_fa: "حدود ۵۴۵ ق / ۱۱۵۰ م"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.2322, 37.3883]}
+    names:
+      - {lang: fa, form: "گنبد سرخ مراغه", kind: preferred}
+      - {lang: en, form: "Gonbad-e Sorkh (Maragheh)", kind: preferred}
+    summary_fa: "آرامگاهی آجری از سدهٔ ششم قمری با کتیبه‌های بنایی، از نمونه‌های شاخص معماری پیش‌ایلخانی در آذربایجان."
+    summary_en: "A 6th/12th-century brick mausoleum with building inscriptions, a key example of pre-Ilkhanid architecture in Azerbaijan."
+    sources: [src_blair_bloom_islam, src_national_heritage_register]
+
+  # --------------------------------------------------------------- Soltaniyeh
+  - id: plc_soltaniyeh
+    kind: town
+    slug: soltaniyeh
+    status: published
+    importance: 0.7
+    temporal: {calendar: islamic_lunar, from: 687, to: 2026, precision: range, confidence: high,
+               display_fa: "بنیان‌گذاری به‌عنوان پایتخت از ۶۸۷ ق"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [48.7980, 36.4350]}
+    names:
+      - {lang: fa, form: "سلطانیه", kind: preferred}
+      - {lang: en, form: "Soltaniyeh", kind: preferred, transliteration: Common}
+    summary_fa: "شهری که ارغون ایلخانی بنیان نهاد و الجایتو آن را به پایتخت و مرکز ساختمانی بزرگ تبدیل کرد."
+    summary_en: "Founded as a royal seat by Arghun and turned into an Ilkhanid capital with a major building programme by Öljaitü."
+    sources: [src_chiran_vol5, src_unesco_soltaniyeh]
+
+  - id: plc_dome_soltaniyeh
+    kind: mausoleum
+    slug: dome-of-soltaniyeh
+    status: published
+    importance: 0.95
+    temporal: {calendar: islamic_lunar, from: 703, to: 712, precision: range, confidence: high,
+               display_fa: "ساخت ۷۰۳–۷۱۲ ق / ۱۳۰۲–۱۳۱۲ م"}
+    geometry: {kind: footprint, certainty: exact, type: Point, coordinates: [48.7972, 36.4355],
+               note: "مختصات اثر ثبت‌شده در فهرست میراث جهانی (شمارهٔ ۱۱۸۸)."}
+    names:
+      - {lang: fa, form: "گنبد سلطانیه", kind: preferred}
+      - {lang: en, form: "Dome of Soltaniyeh", kind: preferred}
+    summary_fa: "آرامگاه الجایتو با یکی از بزرگ‌ترین گنبدهای آجری جهان، ثبت‌شده در فهرست میراث جهانی در ۲۰۰۵."
+    summary_en: "The mausoleum of Öljaitü with one of the largest brick domes in the world, inscribed on the UNESCO World Heritage List in 2005."
+    sources: [src_unesco_soltaniyeh, src_blair_bloom_islam, src_inscription_soltaniyeh]
+
+  # ---------------------------------------------------------- West Azerbaijan
+  - id: plc_takht_soleyman
+    kind: archaeological_site
+    slug: takht-e-soleyman
+    status: published
+    importance: 0.9
+    temporal: {from: -300, to: 1300, precision: range, confidence: medium,
+               display_fa: "اشکانی تا ایلخانی؛ اوج اهمیت در دورهٔ ساسانی"}
+    geometry: {kind: footprint, certainty: exact, type: Point, coordinates: [47.2350, 36.6036],
+               note: "مختصات اثر ثبت‌شده در فهرست میراث جهانی (شمارهٔ ۱۰۷۷)."}
+    names:
+      - {lang: fa, form: "تخت سلیمان", kind: preferred}
+      - {lang: fa, form: "آذرگشنسب", kind: historical, note: "نام آتشکدهٔ ساسانی محل."}
+      - {lang: en, form: "Takht-e Soleyman", kind: preferred}
+      - {lang: en, form: "Adur Gushnasp", kind: historical, transliteration: EI3}
+    summary_fa: "محوطه‌ای با آتشکدهٔ ساسانی آذرگشنسب و بناهای ایلخانی که در ۲۰۰۳ در فهرست میراث جهانی ثبت شد."
+    summary_en: "A site containing the Sasanian fire temple of Adur Gushnasp plus Ilkhanid structures, inscribed on the UNESCO World Heritage List in 2003."
+    sources: [src_unesco_takht_soleyman, src_chiran_vol5]
+
+  - id: plc_urmia
+    kind: city
+    slug: urmia
+    status: published
+    importance: 0.8
+    temporal: {from: 500, to: 2026, precision: range, confidence: medium, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [45.0761, 37.5527]}
+    names:
+      - {lang: fa, form: "ارومیه", kind: preferred}
+      - {lang: fa, form: "رضائیه", kind: historical, year_from: 1927, year_to: 1979,
+         note: "نام رسمی شهر در بخشی از سدهٔ بیستم."}
+      - {lang: en, form: "Urmia", kind: preferred, transliteration: Common}
+      - {lang: azb-Latn, form: "Urmu", kind: endonym}
+    summary_fa: "شهری در کرانهٔ غربی دریاچهٔ ارومیه که در دورهٔ اسلامی از مراکز اداری آذربایجان بود و در سدهٔ بیستم تغییر نام داد."
+    summary_en: "A city on the western shore of Lake Urmia, an administrative centre of Azerbaijan in the Islamic period and renamed during the 20th century."
+    sources: [src_eir_azerbaijan_history, src_mustawfi_nuzha]
+
+  - id: plc_urmia_jameh_mosque
+    kind: mosque
+    slug: urmia-jameh-mosque
+    status: in_review
+    importance: 0.5
+    temporal: {calendar: islamic_lunar, from: 500, to: 600, precision: century, confidence: low,
+               display_fa: "سدهٔ ۶ ق (تاریخ‌گذاری دقیق محل بررسی)"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [45.0755, 37.5540],
+               note: "مکان تقریبی."}
+    names:
+      - {lang: fa, form: "مسجد جامع ارومیه", kind: preferred}
+      - {lang: en, form: "Jameh Mosque of Urmia", kind: preferred}
+    summary_fa: "مسجدی با هستهٔ سلجوقی که تاریخ‌گذاری و تحول معماری آن نیازمند بررسی تخصصی است."
+    summary_en: "A mosque with a Seljuk-period core whose dating and architectural development require specialist review."
+    sources: [src_national_heritage_register]
+    coverage_note_fa: "به‌دلیل نبود منبع معتبر دربارهٔ تاریخ ساخت، در وضعیت in_review است."
+
+  - id: plc_lake_urmia
+    kind: lake
+    slug: lake-urmia
+    status: published
+    importance: 0.65
+    temporal: {from: -800, to: 2026, precision: range, confidence: high, display_fa: "پدیدهٔ طبیعی"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [45.3000, 37.7000],
+               note: "نقطهٔ معرف؛ محدودهٔ دریاچه باید از دادهٔ هیدرولوژیک معتبر رقومی‌سازی شود (تغییر مساحت در دهه‌های اخیر هم زمان‌دار است)."}
+    names:
+      - {lang: fa, form: "دریاچهٔ ارومیه", kind: preferred}
+      - {lang: en, form: "Lake Urmia", kind: preferred}
+    summary_fa: "دریاچهٔ شور بزرگی که در منابع تاریخی با نام‌های مختلف یاد شده و مرز طبیعی میان بخش‌های آذربایجان بوده است."
+    summary_en: "A large saline lake recorded under various names in historical sources and forming a natural divide within Azerbaijan."
+    sources: [src_mustawfi_nuzha]
+    coverage_note_fa: "تغییر سطح دریاچه در سدهٔ اخیر یک موضوع زمان‌دار است که باید به‌صورت چند هندسه ثبت شود."
+
+  - id: plc_hasanlu
+    kind: archaeological_site
+    slug: hasanlu-tepe
+    status: published
+    importance: 0.75
+    temporal: {from: -1500, to: -500, precision: range, confidence: medium,
+               display_fa: "عصر آهن (حدود ۱۵۰۰ تا ۵۰۰ ق.م)"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [46.1542, 37.0067]}
+    names:
+      - {lang: fa, form: "تپهٔ حسنلو", kind: preferred}
+      - {lang: en, form: "Hasanlu Tepe", kind: preferred}
+    summary_fa: "محوطهٔ عصر آهن در درهٔ سلدوز که کاوش‌های دانشگاه پنسیلوانیا لایه‌های مهمی از آن را آشکار کرد."
+    summary_en: "An Iron Age site in the Solduz valley excavated by the University of Pennsylvania project, with major occupation layers."
+    sources: [src_hasanlu_reports]
+
+  - id: plc_st_stepanos
+    kind: building
+    slug: st-stepanos-monastery
+    status: published
+    importance: 0.6
+    temporal: {from: 900, to: 1800, precision: century, confidence: medium,
+               display_fa: "هستهٔ اولیه سدهٔ ۱۰ م؛ بازسازی‌های بعدی تا سدهٔ ۱۷ م"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [45.6167, 38.9167],
+               note: "مختصات تقریبی؛ پروندهٔ یونسکو مرجع دقیق است."}
+    names:
+      - {lang: fa, form: "کلیسای سنت استپانوس", kind: preferred}
+      - {lang: en, form: "St Stepanos Monastery", kind: preferred}
+      - {lang: hy, form: "Սուրբ Ստեփանոս", kind: endonym}
+    summary_fa: "صومعه‌ای ارمنی در درهٔ ارس نزدیک جلفا، بخشی از مجموعهٔ صومعه‌های ارمنی ایران که در ۲۰۰۸ در فهرست میراث جهانی ثبت شد."
+    summary_en: "An Armenian monastery in the Aras valley near Jolfa, part of the Armenian Monastic Ensembles of Iran inscribed on the UNESCO World Heritage List in 2008."
+    sources: [src_unesco_armenian_ensembles]
+
+  - id: plc_qara_kelisa
+    kind: building
+    slug: qara-kelisa
+    status: published
+    importance: 0.6
+    temporal: {from: 1300, to: 1900, precision: century, confidence: medium,
+               display_fa: "ساختار موجود عمدتاً سدهٔ ۱۴–۱۹ م؛ انتساب بنیان به سدهٔ ۴ م روایت سنتی است"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [44.5517, 39.0883],
+               note: "مختصات تقریبی."}
+    names:
+      - {lang: fa, form: "قره‌کلیسا", kind: preferred}
+      - {lang: fa, form: "کلیسای تادئوس مقدس", kind: alternative}
+      - {lang: en, form: "Qara Kelisa (St Thaddeus Monastery)", kind: preferred}
+      - {lang: hy, form: "Սուրբ Թադևոս", kind: endonym}
+    summary_fa: "صومعهٔ ارمنی نزدیک چالدران که بنیان‌گذاری آن به تادئوس رسول منسوب است؛ این انتساب روایتی سنتی است و ساختار موجود متأخرتر است."
+    summary_en: "An Armenian monastery near Chaldoran whose foundation is traditionally attributed to the apostle Thaddeus; that attribution is traditional, and the standing structure is later."
+    sources: [src_unesco_armenian_ensembles]
+    coverage_note_fa: "تفاوت میان روایت سنتی بنیان‌گذاری و تاریخ‌گذاری ساختار موجود باید در UI نمایش داده شود."
+
+  - id: plc_jolfa
+    kind: town
+    slug: jolfa
+    status: published
+    importance: 0.4
+    temporal: {from: 900, to: 2026, precision: range, confidence: low, display_fa: "قرون وسطی تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [45.6306, 38.9406]}
+    names:
+      - {lang: fa, form: "جلفا", kind: preferred}
+      - {lang: en, form: "Jolfa", kind: preferred}
+    summary_fa: "شهری در کرانهٔ ارس که به‌عنوان گذرگاه تجاری و سپس نقطهٔ انتقال جمعیت ارمنی در دورهٔ صفوی اهمیت یافت."
+    summary_en: "A town on the Aras that mattered as a trade crossing and later in the Safavid-era relocation of Armenian populations."
+    sources: [src_minorsky_caucasian]
+
+  - id: plc_chaldoran
+    kind: town
+    slug: chaldoran
+    status: published
+    importance: 0.6
+    temporal: {from: 1000, to: 2026, precision: range, confidence: low, display_fa: "قرون وسطی تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [44.3833, 39.0667]}
+    names:
+      - {lang: fa, form: "چالدران", kind: preferred}
+      - {lang: en, form: "Chaldoran", kind: preferred, transliteration: Common}
+      - {lang: en, form: "Čāldurān", kind: alternative, transliteration: EI3}
+    summary_fa: "منطقه‌ای در شمال غرب آذربایجان غربی که محل نبرد ۱۵۱۴ میان صفویه و عثمانی بود."
+    summary_en: "An area in north-western West Azerbaijan, the setting of the 1514 battle between the Safavids and the Ottomans."
+    sources: [src_ei_chaldiran]
+
+  - id: plc_chaldoran_battlefield
+    kind: battlefield
+    slug: chaldoran-battlefield
+    status: published
+    importance: 0.75
+    temporal: {from: 1514, to: 1514, precision: exact_year, confidence: high, display_fa: "۱۵۱۴ م / ۹۲۰ ق"}
+    geometry: {kind: uncertain_locus, certainty: uncertain, type: Point, coordinates: [44.3800, 39.0800],
+               note: "محل دقیق میدان نبرد در منابع اختلافی است؛ این نقطه صرفاً محل تقریبی ناحیه است و نباید قطعی نمایش داده شود."}
+    names:
+      - {lang: fa, form: "میدان نبرد چالدران", kind: preferred}
+      - {lang: en, form: "Chaldiran battlefield", kind: preferred}
+    summary_fa: "ناحیهٔ وقوع نبرد چالدران؛ تعیین نقطهٔ دقیق میدان نبرد میان منابع مختلف اختلاف دارد."
+    summary_en: "The area of the Battle of Chaldiran; pinpointing the battlefield itself differs across sources."
+    sources: [src_ei_chaldiran, src_hasan_rumlu_ahsan]
+    coverage_note_fa: "نمونهٔ عمدی از «عدم‌قطعیت مکانی» که باید در UI با هاشور/نقطه‌چین نمایش داده شود."
+
+  - id: plc_sharur
+    kind: battlefield
+    slug: sharur
+    status: in_review
+    importance: 0.45
+    temporal: {from: 1501, to: 1501, precision: exact_year, confidence: medium, display_fa: "۱۵۰۱ م / ۹۰۷ ق"}
+    geometry: {kind: uncertain_locus, certainty: uncertain, type: Point, coordinates: [45.3500, 39.4500],
+               note: "منطقهٔ شروور در شمال ارس؛ محدودهٔ دقیق محل نبرد نامعلوم است و خارج از هستهٔ حوزهٔ مطالعهٔ فعلی است."}
+    names:
+      - {lang: fa, form: "شروور", kind: preferred}
+      - {lang: en, form: "Sharur", kind: preferred}
+    summary_fa: "ناحیه‌ای در شمال ارس که نخستین پیروزی نظامی شاه اسماعیل در ۱۵۰۱ میلادی در آن رخ داد."
+    summary_en: "An area north of the Aras where Shah Ismail won his first decisive military victory in 1501."
+    sources: [src_hasan_rumlu_ahsan, src_savory_safavid_iran]
+    coverage_note_fa: "خارج از bbox پیش‌فرض اطلس است؛ عمداً نگه داشته شده تا رفتار فیلتر مکانی آزموده شود."
+
+  - id: plc_babak_castle
+    kind: castle
+    slug: babak-castle
+    status: published
+    importance: 0.7
+    temporal: {from: 700, to: 1000, precision: range, confidence: low, display_fa: "عمدتاً سده‌های ۹–۱۰ م (میان شورش بابک و پس از آن)"}
+    geometry: {kind: footprint, certainty: approximate, type: Point, coordinates: [47.0411, 38.9053]}
+    names:
+      - {lang: fa, form: "قلعهٔ بابک", kind: preferred}
+      - {lang: fa, form: "قلعهٔ بذ", kind: alternative, note: "در منابع تاریخی با نام «بذ» یاد شده است."}
+      - {lang: en, form: "Babak Castle (Qalʿa-ye Bābak)", kind: preferred}
+    summary_fa: "دژ کوهستانی در نزدیکی کلیبر که در منابع با مقر جنبش خرمدینان به رهبری بابک پیوند خورده است."
+    summary_en: "A mountain fortress near Kalibar associated in the sources with the Khurramiyya movement led by Babak."
+    sources: [src_tabari_tarikh, src_eir_babak]
+    coverage_note_fa: "همسان‌سازی «بذ» تاریخی با این قلعه پذیرفته‌شده اما قطعی نیست؛ باید به‌صورت ادعای منبع‌دار ثبت شود."
+
+  - id: plc_kalibar
+    kind: town
+    slug: kalibar
+    status: published
+    importance: 0.3
+    temporal: {from: 1000, to: 2026, precision: range, confidence: low, display_fa: "قرون وسطی تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [47.0333, 38.8667]}
+    names:
+      - {lang: fa, form: "کلیبر", kind: preferred}
+      - {lang: en, form: "Kalibar", kind: preferred}
+    summary_fa: "شهری در منطقهٔ قره‌داغ، نزدیک‌ترین سکونتگاه مهم به قلعهٔ بابک."
+    summary_en: "A town in the Qaradagh area, the nearest significant settlement to Babak Castle."
+    sources: [src_eir_azerbaijan_history]
+
+  - id: plc_sarab
+    kind: town
+    slug: sarab
+    status: published
+    importance: 0.4
+    temporal: {from: 500, to: 2026, precision: range, confidence: low, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [46.9419, 37.9411]}
+    names:
+      - {lang: fa, form: "سراب", kind: preferred}
+      - {lang: en, form: "Sarab", kind: preferred}
+    summary_fa: "شهری در مسیر تاریخی تبریز به اردبیل در جنوب کوهستان بزقوش."
+    summary_en: "A town on the historic Tabriz–Ardabil route south of the Bozgush range."
+    sources: [src_mustawfi_nuzha]
+
+  - id: plc_ahar
+    kind: town
+    slug: ahar
+    status: published
+    importance: 0.4
+    temporal: {from: 700, to: 2026, precision: range, confidence: low, display_fa: "دورهٔ اسلامی تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [47.0697, 38.4789]}
+    names:
+      - {lang: fa, form: "اهر", kind: preferred}
+      - {lang: en, form: "Ahar", kind: preferred}
+    summary_fa: "مرکز منطقهٔ قره‌داغ که زادگاه ستارخان است."
+    summary_en: "Centre of the Qaradagh region and the birthplace of Sattar Khan."
+    sources: [src_kasravi_mashrute]
+
+  - id: plc_zanjan
+    kind: city
+    slug: zanjan
+    status: in_review
+    importance: 0.6
+    temporal: {from: 400, to: 2026, precision: range, confidence: low, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: approximate, type: Point, coordinates: [48.4787, 36.6736]}
+    names:
+      - {lang: fa, form: "زنجان", kind: preferred}
+      - {lang: en, form: "Zanjan", kind: preferred}
+    summary_fa: "شهری در جنوب حوزهٔ مطالعه؛ شمول آن در دامنهٔ پژوهشی اطلس یک تصمیم باز است."
+    summary_en: "A city south of the study area; whether it belongs to the atlas' research scope is an open editorial decision."
+    sources: [src_mustawfi_nuzha]
+    coverage_note_fa: "در status=in_review است چون شمول پژوهشی زنجان هنوز تصمیم‌گیری نشده (design review §8 سؤال ۳)."
+
+  - id: plc_qazvin
+    kind: city
+    slug: qazvin
+    status: published
+    importance: 0.7
+    temporal: {from: 400, to: 2026, precision: range, confidence: medium, display_fa: "پیش از اسلام تا امروز"}
+    geometry: {kind: point, certainty: exact, type: Point, coordinates: [50.0000, 36.2700]}
+    names:
+      - {lang: fa, form: "قزوین", kind: preferred}
+      - {lang: en, form: "Qazvin", kind: preferred}
+    summary_fa: "شهری که شاه طهماسب در ۱۵۴۸ میلادی پایتخت صفوی را به آن منتقل کرد؛ خارج از هستهٔ حوزهٔ مطالعهٔ آذربایجان است."
+    summary_en: "The city to which Shah Tahmasp moved the Safavid capital in 1548; outside the core Azerbaijan study area but historically linked to it."
+    sources: [src_savory_safavid_iran, src_chiran_vol6]
+    coverage_note_fa: "خارج از bbox پیش‌فرض اطلس؛ نگه داشته شده تا جابه‌جایی پایتخت و فیلتر viewport آزموده شود."
+
+  # --------------------------------------- rivers, routes (LineString support)
+  - id: plc_aras_river
+    kind: river
+    slug: aras-river
+    status: published
+    importance: 0.6
+    temporal: {from: -800, to: 2026, precision: range, confidence: high, display_fa: "پدیدهٔ طبیعی"}
+    geometry:
+      kind: route_alignment
+      certainty: approximate
+      type: LineString
+      coordinates: [[44.8500, 39.6200], [45.3000, 39.4400], [45.9000, 39.1200], [46.3000, 39.0000],
+                    [46.8000, 39.1000], [47.4000, 39.2200], [48.0000, 39.3600], [48.4000, 39.6000]]
+      note: "مسیر ساده‌شدهٔ ارس؛ باید از دادهٔ هیدرولوژیک معتبر رقومی‌سازی شود. رود در دوره‌های مختلف مرز سیاسی هم بوده است."
+    names:
+      - {lang: fa, form: "رود ارس", kind: preferred}
+      - {lang: en, form: "Aras River", kind: preferred}
+      - {lang: fa, form: "ارس", kind: alternative}
+      - {lang: hy, form: "Արաքս", kind: alternative}
+    summary_fa: "رودی که از شمال حوزهٔ مطالعه می‌گذرد و در منابع تاریخی هم‌چون مرز طبیعی و سیاسی یاد شده است."
+    summary_en: "A river crossing the north of the study area, recorded in historical sources as both a natural and a political boundary."
+    sources: [src_strabo_geographica, src_minorsky_caucasian]
+
+  - id: plc_route_tabriz_ardabil
+    kind: route
+    slug: route-tabriz-ardabil
+    status: published
+    importance: 0.65
+    temporal: {from: 1000, to: 1900, precision: range, confidence: low,
+               display_fa: "مسیر پرکاربرد در دوره‌های اسلامی تا پیش از راه‌سازی مدرن"}
+    geometry:
+      kind: route_alignment
+      certainty: approximate
+      type: LineString
+      coordinates: [[46.2738, 38.0962], [46.8300, 37.8400], [46.9419, 37.9411],
+                    [47.6000, 38.0500], [47.9800, 38.0500], [48.2934, 38.2464]]
+      note: "مسیر تقریبی شاخهٔ تبریز–سراب–نیر–اردبیل؛ بر پایهٔ مسیرهای سنتی و گزارش‌های سفرنامه‌ای، نیازمند تأیید تخصصی."
+    names:
+      - {lang: fa, form: "مسیر تبریز–اردبیل", kind: preferred}
+      - {lang: en, form: "Tabriz–Ardabil route", kind: preferred}
+    summary_fa: "یکی از مسیرهای ارتباطی اصلی میان دو کانون مهم آذربایجان که در دورهٔ صفوی به‌سبب زیارت اردبیل اهمیت ویژه داشت."
+    summary_en: "A main communication route between two key centres of Azerbaijan, of special importance in the Safavid period because of pilgrimage to Ardabil."
+    sources: [src_mustawfi_nuzha]
+    coverage_note_fa: "مسیرها در زمان جابه‌جا می‌شوند؛ باید به route_segment زمان‌دار تفکیک شود (ADR-0004)."
+
+  # --------------------- modern administrative units: intentionally NO geometry
+  - id: plc_ardabil_province
+    kind: province_modern
+    slug: ardabil-province
+    status: draft
+    importance: 0.2
+    temporal: {from: 1993, precision: after, confidence: high, display_fa: "استان از ۱۳۷۲ ش تاکنون"}
+    names:
+      - {lang: fa, form: "استان اردبیل", kind: preferred}
+      - {lang: en, form: "Ardabil Province", kind: preferred}
+    summary_fa: "واحد اداری امروزی؛ هرگز به‌عنوان مرز تاریخی استفاده نمی‌شود."
+    summary_en: "A present-day administrative unit; never used as a historical boundary."
+    sources: [src_osm_modern_admin]
+    coverage_note_fa: "عمداً بدون هندسه: مرزهای اداری هنوز از منبع معتبر (ODbL) رقومی‌سازی نشده‌اند. این رکورد نمونهٔ «خلأ پوشش» است (AGENTS.md #9)."
+
+  - id: plc_east_azerbaijan_province
+    kind: province_modern
+    slug: east-azerbaijan-province
+    status: draft
+    importance: 0.2
+    temporal: {from: 1937, to: 2026, precision: circa_year, confidence: medium, display_fa: "تقسیمات استانی از سدهٔ ۱۴ ش"}
+    names:
+      - {lang: fa, form: "استان آذربایجان شرقی", kind: preferred}
+      - {lang: en, form: "East Azerbaijan Province", kind: preferred}
+    summary_fa: "واحد اداری امروزی؛ هرگز به‌عنوان مرز تاریخی استفاده نمی‌شود."
+    summary_en: "A present-day administrative unit; never used as a historical boundary."
+    sources: [src_osm_modern_admin]
+
+  - id: plc_west_azerbaijan_province
+    kind: province_modern
+    slug: west-azerbaijan-province
+    status: draft
+    importance: 0.2
+    temporal: {from: 1937, to: 2026, precision: circa_year, confidence: medium, display_fa: "تقسیمات استانی از سدهٔ ۱۴ ش"}
+    names:
+      - {lang: fa, form: "استان آذربایجان غربی", kind: preferred}
+      - {lang: en, form: "West Azerbaijan Province", kind: preferred}
+    summary_fa: "واحد اداری امروزی؛ هرگز به‌عنوان مرز تاریخی استفاده نمی‌شود."
+    summary_en: "A present-day administrative unit; never used as a historical boundary."
+    sources: [src_osm_modern_admin]

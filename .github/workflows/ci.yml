@@ -1,0 +1,222 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # The failure-report step comments the failing log back on the pull request: the Actions log
+  # endpoint is not reachable from every network, and a red check without a traceback is useless.
+  pull-requests: write
+
+env:
+  CI_LOG_DIR: /tmp/azir-ci
+
+jobs:
+  backend:
+    name: backend (lint, types, tests, PostGIS parity)
+    runs-on: ubuntu-latest
+
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: azir
+          POSTGRES_PASSWORD: azir
+          POSTGRES_DB: azir_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U azir -d azir_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      AZIR_DB_URL: postgresql+psycopg2://azir:azir@localhost:5432/azir_test
+      AZIR_TEST_DB_URL: postgresql+psycopg2://azir:azir@localhost:5432/azir_test
+      AZIR_FIXTURES_DIR: backend/seeds/fixtures
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Log directory
+        run: mkdir -p "$CI_LOG_DIR"
+
+      - name: Install
+        run: pip install -e ".[dev]" 2>&1 | tee "$CI_LOG_DIR/10-install.log"
+
+      - name: Lint (ruff)
+        run: python -m ruff check src tests 2>&1 | tee "$CI_LOG_DIR/20-lint.log"
+
+      - name: Types (mypy --strict)
+        run: python -m mypy src 2>&1 | tee "$CI_LOG_DIR/30-types.log"
+
+      - name: Migrate
+        run: python -m alembic upgrade head 2>&1 | tee "$CI_LOG_DIR/40-migrate.log"
+
+      - name: Seed
+        run: python -m azir.cli seed 2>&1 | tee "$CI_LOG_DIR/50-seed.log"
+
+      - name: Data health
+        run: AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs doctor 2>&1 | tee "$CI_LOG_DIR/55-doctor.log"
+
+      # The corpus must pass its own gates: a blocking finding (D2-D5, D11) fails the build, and the
+      # report says which rules were *not* machine-checked, so coverage never looks better than it is.
+      - name: Data lint
+        shell: bash
+        run: |
+          set -o pipefail
+          AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs lint --json \
+            2>&1 | tee "$CI_LOG_DIR/57-lint.log"
+
+      # With AZIR_TEST_DB_URL set, the repository contract suite runs against *both* drivers, so a
+      # behavioural difference between fixtures and PostGIS fails the build (ADR-0014). The
+      # editorial write suite is part of that: it creates, submits, publishes and forks records on
+      # the real database, then deletes exactly what its own audit trail says it touched.
+      - name: Tests
+        run: python -m pytest tests 2>&1 | tee "$CI_LOG_DIR/60-tests.log"
+
+      # The same contract, over HTTP, against the real database: shapes, budgets, error format.
+      - name: Smoke test on PostGIS
+        run: |
+          # Development identities for the editorial half of the smoke test (ADR-0017). The
+          # password comes from AZIR_DEV_PASSWORD and is never stored in the repository.
+          AZIR_DB_DRIVER=postgis python -m azir.cli --human-logs user sync-dev \
+            2>&1 | tee "$CI_LOG_DIR/65-dev-users.log"
+          AZIR_DB_DRIVER=postgis nohup python -m uvicorn azir.main:app --app-dir src \
+            --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-postgis.log" 2>&1 &
+          for _ in $(seq 1 40); do
+            curl -sf http://127.0.0.1:8000/readyz > /dev/null && break
+            sleep 1
+          done
+          curl -sS http://127.0.0.1:8000/readyz || cat "$CI_LOG_DIR/api-postgis.log"
+          bash "$GITHUB_WORKSPACE/scripts/smoke.sh" 2>&1 | tee "$CI_LOG_DIR/70-smoke.log"
+
+      - name: Report failure to the PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/ci-report.sh" \
+            "${{ github.event.pull_request.number }}" "${{ github.job }}" "$CI_LOG_DIR" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  frontend:
+    name: frontend (types, lint, production build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log directory
+        run: mkdir -p "$CI_LOG_DIR"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install the API (the build renders pages from it)
+        run: pip install ./backend 2>&1 | tee "$CI_LOG_DIR/10-install-api.log"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund 2>&1 | tee "$CI_LOG_DIR/20-npm-ci.log"
+        working-directory: frontend
+
+      - name: Types (tsc)
+        run: npm run typecheck 2>&1 | tee "$CI_LOG_DIR/30-types.log"
+        working-directory: frontend
+
+      - name: Lint (eslint)
+        run: npm run lint 2>&1 | tee "$CI_LOG_DIR/40-lint.log"
+        working-directory: frontend
+
+      - name: Unit tests
+        run: npm test 2>&1 | tee "$CI_LOG_DIR/45-tests.log"
+        working-directory: frontend
+
+      # The tile archive is written by our own encoder (backend/src/azir/tiles) and read by somebody
+      # else's library, in a browser. Both halves are checked: build it, then let `pmtiles` -- the
+      # JavaScript reader MapLibre uses -- open it from disk *and* over HTTP, where it issues range
+      # requests the way the map does (ADR-0018). A proxy that swallows `Range` fails here.
+      - name: Build the tile archives (one per locale)
+        run: |
+          # Labels are baked into tiles at build time, so every shipped language needs its own
+          # archive; serving the Persian file to an English reader would be a silent lie.
+          for locale in fa en; do
+            echo "--- locale $locale"
+            AZIR_FIXTURES_DIR=seeds/fixtures AZIR_TILES_DIR=/tmp/azir-tiles \
+              python -m azir.cli --human-logs tiles build --locale "$locale" --max-zoom 10 \
+              2>&1 | tee -a "$CI_LOG_DIR/52-tiles-build.log"
+          done
+        working-directory: backend
+
+      - name: Start the API on the fixtures driver
+        run: |
+          cd backend
+          AZIR_FIXTURES_DIR=seeds/fixtures AZIR_TILES_DIR=/tmp/azir-tiles \
+            nohup python -m uvicorn azir.main:app \
+            --app-dir src --host 127.0.0.1 --port 8000 > "$CI_LOG_DIR/api-fixtures.log" 2>&1 &
+          for _ in $(seq 1 40); do
+            curl -sf http://127.0.0.1:8000/healthz > /dev/null && exit 0
+            sleep 1
+          done
+          echo "API did not become healthy:"; cat "$CI_LOG_DIR/api-fixtures.log"; exit 1
+
+      - name: Verify the archive with the reference reader
+        run: |
+          # Both locales from disk, and one of them over HTTP through the running API: that is the
+          # path the browser takes, range requests and all.
+          FIRST=$(ls /tmp/azir-tiles/*.pmtiles | head -1)
+          node "$GITHUB_WORKSPACE/scripts/verify-pmtiles.mjs" --tiles 4 \
+            /tmp/azir-tiles/*.pmtiles \
+            "http://127.0.0.1:8000/api/v1/tiles/archive/$(basename "$FIRST")" \
+            2>&1 | tee "$CI_LOG_DIR/54-tiles-verify.log"
+        working-directory: frontend
+
+      # The same contract the backend job checks against PostGIS, here against the fixtures driver
+      # *with* archives built: it adds the tile checks that need an archive (range requests, the
+      # reference reader over HTTP, and "never hand a locale another locale's archive").
+      - name: Smoke test on the fixtures driver
+        run: bash "$GITHUB_WORKSPACE/scripts/smoke.sh" 2>&1 | tee "$CI_LOG_DIR/56-smoke.log"
+
+      - name: Production build
+        run: npm run build 2>&1 | tee "$CI_LOG_DIR/50-build.log"
+        working-directory: frontend
+        env:
+          AZIR_BACKEND_URL: http://127.0.0.1:8000
+
+      - name: Report failure to the PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/ci-report.sh" \
+            "${{ github.event.pull_request.number }}" "${{ github.job }}" "$CI_LOG_DIR" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

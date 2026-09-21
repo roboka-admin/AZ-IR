@@ -1,0 +1,370 @@
+# Articles are PRESENTATIONS of data, never the source of truth (AGENTS.md #8).
+# Every fact used here must also exist as an entity/assertion with evidence; the article only
+# narrates it and points back to the map (`map_state`) -- the two-way Article <-> Map link.
+articles:
+  - id: art_rise_of_safavids
+    slug: rise-of-the-safavids
+    lang: fa
+    status: published
+    importance: 0.95
+    revision: 3
+    published_at: "2026-08-01"
+    author: "AZ-IR editorial"
+    reading_time_min: 7
+    temporal: {from: 1301, to: 1524, precision: range, confidence: high, display_fa: "۱۳۰۱–۱۵۲۴ م"}
+    names:
+      - {lang: fa, form: "از طریقت تا دولت: ظهور صفویان در آذربایجان", kind: preferred}
+      - {lang: en, form: "From Sufi Order to State: The Rise of the Safavids in Azerbaijan", kind: preferred}
+    summary_fa: "چگونه یک خانقاه در اردبیل در دو سده به یک دولت بدل شد، و چرا این تحول را باید روی نقشه و در زمان دید."
+    summary_en: "How a khānegāh in Ardabil became a state over two centuries, and why that transformation is best read on a map and along a timeline."
+    body_fa_md: |
+      ## یک خانقاه، یک دولت
+
+      داستان صفویان در **اردبیل** آغاز می‌شود، نه در تبریز. شیخ صفی‌الدین اردبیلی (۶۵۰–۷۳۵ ق)
+      محفل عرفانی خود را در شهری در دامنهٔ سبلان بنیان گذاشت و در همان‌جا به خاک سپرده شد.
+      آرامگاه او هستهٔ مجموعه‌ای شد که امروز به‌نام «مجموعهٔ خاندان و بقعهٔ شیخ صفی» در فهرست
+      میراث جهانی ثبت شده است.
+
+      در سه نسل نخست، جانشینان شیخ صفی — صدرالدین موسی، خواجه علی صفوی و سپس شیخ جنید —
+      شبکهٔ مریدان را گسترش دادند. نقطهٔ چرخش، دورهٔ **شیخ جنید** است: طریقت از یک محفل
+      عرفانی به نیرویی نظامی-سیاسی بدل می‌شود. شیخ حیدر این سازمان‌دهی را ادامه داد و
+      ساختار نظامی قزلباش در همین دوره شکل گرفت.
+
+      اسماعیل، پسر شیخ حیدر، در ۹۰۷ ق / ۱۵۰۱ م پس از پیروزی در **نبرد شروور** وارد **تبریز** شد
+      و تاج‌گذاری کرد. این رویداد، نه مرگ شیخ صفی، آغاز دولت صفوی به شمار می‌رود.
+
+      ## چرا زمان‌بندی اهمیت دارد
+
+      در اطلس، تایم‌لاین را میان ۱۳۰۰ تا ۱۵۱۰ حرکت دهید: چیزی که می‌بینید تغییر تدریجی یک
+      «مکان زیارتی» به یک «مرکز سیاسی» است. طریقت صفویه و دولت صفوی دو موجودیت جدا در پایگاه
+      داده‌اند، چون یکی مقدمهٔ دیگری است نه همان.
+
+      ## جای احتیاط
+
+      تاریخ‌های این زنجیره یکدست نیستند. سال بنیان‌گذاری طریقت به‌صورت تقریبی ثبت شده و
+      سال درگذشت خواجه علی در منابع متفاوت است (۱۴۲۷ یا ۱۴۲۹ میلادی). این اختلاف در اطلس
+      پنهان نشده، بلکه به‌صورت یک «مورد اختلاف» با منبع نشان داده می‌شود.
+    body_en_md: |
+      The Safavid story begins in **Ardabil**, not Tabriz. Sheikh Safi al-Din (650–735 AH) founded
+      a Sufi circle at the foot of Mount Sabalan and was buried there; his tomb became the core of
+      the ensemble now inscribed as World Heritage.
+
+      Three generations of successors — Sadr al-Din Musa, Khwāja ʿAlī and then Shaykh Junayd —
+      expanded the network of disciples. The turning point is **Shaykh Junayd**, when the order
+      became a military-political force; Shaykh Haydar completed the Qizilbash organisation.
+
+      Ismail, Haydar's son, entered **Tabriz** in 907 AH / 1501 CE after his victory at **Sharur**
+      and was crowned. That coronation — not Sheikh Safi's death — marks the start of the Safavid state.
+
+      Dates in this chain are not uniform: the order's foundation is approximate and Khwāja ʿAlī's
+      death year differs between sources (1427 or 1429). The atlas shows that disagreement rather
+      than hiding it.
+    map_state:
+      center: [38.17, 47.28]
+      zoom: 7.0
+      time: {from: 1300, to: 1510, mode: overlaps}
+      layers: [places, buildings, political_entities, events, people]
+    entities:
+      - {type: political_entity, id: pol_safaviyya, relation: about}
+      - {type: political_entity, id: pol_safavid, relation: about}
+      - {type: person, id: prs_sheikh_safi, relation: mentions}
+      - {type: person, id: prs_shaykh_junayd, relation: mentions}
+      - {type: person, id: prs_shah_ismail_i, relation: about}
+      - {type: place, id: plc_ardabil, relation: related_to}
+      - {type: place, id: plc_tabriz, relation: related_to}
+      - {type: event, id: evt_coronation_tabriz_1501, relation: mentions}
+      - {type: event, id: evt_battle_sharur_1501, relation: mentions}
+    sources: [src_eir_safavid_dynasty, src_savory_safavid_iran, src_hasan_rumlu_ahsan, src_chiran_vol6]
+
+  - id: art_ardabil_shrine_city
+    slug: ardabil-shrine-city
+    lang: fa
+    status: published
+    importance: 0.9
+    revision: 2
+    published_at: "2026-08-05"
+    author: "AZ-IR editorial"
+    reading_time_min: 5
+    temporal: {from: 1252, to: 1736, precision: range, confidence: medium, display_fa: "۱۲۵۲–۱۷۳۶ م"}
+    names:
+      - {lang: fa, form: "اردبیل: شهرِ زیارتگاهِ یک طریقت", kind: preferred}
+      - {lang: en, form: "Ardabil: The Shrine City of an Order", kind: preferred}
+    summary_fa: "اردبیل چگونه از یک شهر منطقه‌ای به کانون زیارتی طریقت صفویه تبدیل شد و چه چیزی از آن دوره باقی مانده است."
+    summary_en: "How Ardabil became the pilgrimage centre of the Safaviyya order, and what survives from that period."
+    body_fa_md: |
+      ## شهری که با یک آرامگاه تعریف می‌شود
+
+      اهمیت تاریخی اردبیل در اطلس نه به‌سبب وسعت یا جمعیت آن، بلکه به‌سبب **مجموعهٔ شیخ صفی** است.
+      وقتی تایم‌لاین را از ۱۳۰۰ به ۱۶۰۰ می‌برید، اردبیل از یک شهر منطقه‌ای به مقصدی زیارتی و
+      سپس به نماد مشروعیت یک سلسله بدل می‌شود.
+
+      شاه اسماعیل در همان‌جا زاده شد و در همان مجموعه به خاک سپرده شد؛ این پیوند، اردبیل را از
+      یک «مکان زادگاه» به یک «مکان مشروعیت‌بخش» تبدیل می‌کند. در مدل داده، این دو رابطه دو
+      assertion جدا با منبع و بازهٔ زمانی‌اند: `born_in` و `burial_place`.
+
+      ## جغرافیا
+
+      اردبیل در دامنهٔ شرقی **سبلان** و در مسیر تاریخی **تبریز–اردبیل** قرار دارد. این موقعیت،
+      هم دسترسی زیارت‌کنندگان را ممکن می‌کرد و هم شهر را در مسیر جابه‌جایی نیروها قرار می‌داد.
+
+      ## چه چیزی هنوز نامعلوم است
+
+      محدودهٔ تاریخی شهر رقومی‌سازی نشده است؛ در اطلس این به‌صورت «خلأ پوشش» نشان داده می‌شود
+      نه به‌صورت یک مرز ساختگی. همچنین قدمت پیش از اسلام اردبیل محل بحث است و با confidence پایین
+      ثبت شده است.
+    body_en_md: |
+      Ardabil's historical weight in this atlas comes from the **Sheikh Safi ensemble** rather than
+      from size or population. Move the timeline from 1300 to 1600 and the city changes from a
+      regional town into a pilgrimage destination and then into the symbol of a dynasty's legitimacy.
+
+      Shah Ismail was born there and buried in the same ensemble: in the data model these are two
+      separate, sourced, time-bounded assertions (`born_in` and `burial_place`).
+
+      The historic extent of the city has not been digitized yet; the atlas reports that as a
+      coverage gap instead of drawing an invented boundary.
+    map_state:
+      center: [38.2506, 48.2934]
+      zoom: 13.0
+      time: {from: 1250, to: 1750, mode: overlaps}
+      layers: [places, buildings, people, events]
+    entities:
+      - {type: place, id: plc_ardabil, relation: about}
+      - {type: place, id: plc_sheikh_safi_complex, relation: about}
+      - {type: person, id: prs_sheikh_safi, relation: mentions}
+      - {type: person, id: prs_shah_ismail_i, relation: mentions}
+      - {type: place, id: plc_sabalan, relation: related_to}
+      - {type: place, id: plc_route_tabriz_ardabil, relation: related_to}
+    sources: [src_eir_ardabil, src_unesco_sheikh_safi, src_mustawfi_nuzha]
+
+  - id: art_sheikh_safi_architecture
+    slug: sheikh-safi-architecture
+    lang: fa
+    status: published
+    importance: 0.85
+    revision: 2
+    published_at: "2026-08-12"
+    author: "AZ-IR editorial"
+    reading_time_min: 6
+    temporal: {from: 1334, to: 1736, precision: range, confidence: medium, display_fa: "۱۳۳۴–۱۷۳۶ م"}
+    names:
+      - {lang: fa, form: "مجموعهٔ شیخ صفی: معماری و الحاقات", kind: preferred}
+      - {lang: en, form: "The Sheikh Safi Ensemble: Architecture and Additions", kind: preferred}
+    summary_fa: "مجموعه‌ای که یک‌جا ساخته نشد؛ خوانش الحاقات به‌عنوان لایه‌های زمانی روی نقشه."
+    summary_en: "An ensemble that was not built at once: reading its additions as temporal layers on the map."
+    body_fa_md: |
+      ## مجموعه‌ای که یک‌جا ساخته نشد
+
+      اشتباه رایج دربارهٔ بناهای تاریخی، تصور یک «تاریخ ساخت» واحد است. مجموعهٔ شیخ صفی از
+      هستهٔ آرامگاه شیخ صفی‌الدین (درگذشتهٔ ۷۳۵ ق) آغاز شد و طی سده‌ها با الحاقات صفوی گسترش یافت.
+      به همین دلیل در پایگاه داده، بازهٔ زمانی آن یک نقطه نیست: یک **range** با confidence متوسط است.
+
+      این همان جایی است که **semantic zoom** معنا پیدا می‌کند. در zoom پایین مجموعه یک نقطهٔ مهم روی
+      نقشهٔ اردبیل است؛ در zoom بالا باید بتوان اجزای آن را دید و در هر جزء، زمان الحاق را.
+
+      ## آنچه ثبت شده و آنچه نشده
+
+      موقعیت مجموعه از پروندهٔ یونسکو گرفته شده و certainty=exact دارد. اما هندسهٔ دقیق footprint
+      و تفکیک اجزا هنوز رقومی‌سازی نشده است؛ در اطلس این به‌صورت خلأ پوشش ثبت شده تا کسی مرز
+      ساختگی نبیند.
+
+      > **قاعدهٔ پروژه:** هیچ هندسه‌ای بدون منبع و certainty ثبت نمی‌شود. نبودن داده بهتر از
+      > دادهٔ ساختگی است.
+    body_en_md: |
+      A common mistake about historic buildings is to assume a single construction date. The Sheikh
+      Safi ensemble began with the tomb of Sheikh Safi al-Din (d. 735 AH) and grew through Safavid
+      additions; in the database its temporal extent is therefore a *range* with medium confidence.
+
+      The site location comes from the UNESCO dossier with `certainty=exact`, but the precise
+      footprint and the breakdown into components have not been digitized yet — recorded as a
+      coverage gap rather than invented geometry.
+    map_state:
+      center: [38.2506, 48.2931]
+      zoom: 16.0
+      time: {from: 1334, to: 1736, mode: overlaps}
+      layers: [buildings, places, events]
+    entities:
+      - {type: place, id: plc_sheikh_safi_complex, relation: about}
+      - {type: person, id: prs_sheikh_safi, relation: mentions}
+      - {type: place, id: plc_ardabil, relation: related_to}
+      - {type: political_entity, id: pol_safavid, relation: related_to}
+      - {type: event, id: evt_unesco_sheikh_safi_2010, relation: mentions}
+    sources: [src_unesco_sheikh_safi, src_blair_bloom_islam, src_eir_ardabil]
+
+  - id: art_chaldiran_1514
+    slug: chaldiran-1514
+    lang: fa
+    status: published
+    importance: 0.9
+    revision: 4
+    published_at: "2026-08-20"
+    author: "AZ-IR editorial"
+    reading_time_min: 8
+    temporal: {from: 1514, to: 1555, precision: range, confidence: high, display_fa: "۱۵۱۴–۱۵۵۵ م"}
+    names:
+      - {lang: fa, form: "چالدران ۱۵۱۴: نبرد، روایت‌ها و محل میدان", kind: preferred}
+      - {lang: en, form: "Chaldiran 1514: The Battle, Its Accounts and Its Location", kind: preferred}
+    summary_fa: "نمونهٔ کارکرد «عدم‌قطعیت» در اطلس: نبردی که تاریخش روشن و محل دقیق میدان آن نامطمئن است."
+    summary_en: "A working example of uncertainty in the atlas: a battle whose date is clear but whose exact field is not."
+    body_fa_md: |
+      ## دو چیز را از هم جدا کنیم
+
+      در اطلس، «چه وقتی» و «دقیقاً کجا» دو پرسش جدا هستند. برای نبرد چالدران:
+
+      - **زمان:** ۲۳ اوت ۱۵۱۴ میلادی (۲ رجب ۹۲۰ ق). دقت `exact_day`، اطمینان بالا.
+      - **مکان:** ناحیهٔ چالدان در شمال غرب آذربایجان غربی. نقطهٔ دقیق میدان نبرد با
+        `certainty=uncertain` ثبت شده است.
+
+      این تفکیک عمدی است. اگر یک نقطهٔ ساختگی روی نقشه بگذاریم، کاربر آن را فکت می‌گیرد. به همین
+      دلیل نقطهٔ میدان نبرد با زبان بصری «نامطمئن» (هاشور/نقطه‌چین) رندر می‌شود و در کارت موجودیت
+      به‌عنوان **مورد اختلاف** با دو منبع نشان داده می‌شود.
+
+      ## نبرد در گراف
+
+      چالدران یک `battle` است که با `part_of` به رویداد والد «جنگ‌های عثمانی و صفوی» متصل می‌شود.
+      این پاسخ پرسش طراحی اولیه است: **War یک موجودیت جدا نیست**؛ یک Event با فرزندانش است.
+
+      شرکت‌کنندگان با نقش و سمت ثبت شده‌اند: شاه اسماعیل (فرمانده، سمت صفوی) و سلیم یکم
+      (فرمانده، سمت عثمانی). نتیجهٔ نبرد به تغییر توازن نظامی و در درازمدت به جابه‌جایی پایتخت
+      صفوی به قزوین در ۱۵۴۸ انجامید — رابطه‌ای که به‌صورت `led_to` ثبت شده است.
+    body_en_md: |
+      The atlas separates two questions. **When**: 23 August 1514 (2 Rajab 920 AH), `exact_day`,
+      high confidence. **Where exactly**: the Chaldoran area, recorded with `certainty=uncertain`.
+
+      That separation is deliberate. A fabricated point would be read as fact, so the battlefield is
+      rendered with the "uncertain" visual language and surfaced as a disagreement with two sources.
+
+      Chaldiran is a `battle` linked by `part_of` to a parent `war` event — which is why a War needs
+      no separate entity type. Participants carry role and side; the outcome links forward via
+      `led_to` to the 1548 move of the capital to Qazvin.
+    map_state:
+      center: [39.07, 44.38]
+      zoom: 10.0
+      time: {from: 1500, to: 1560, mode: overlaps}
+      layers: [events, battles, places, political_entities]
+    entities:
+      - {type: event, id: evt_battle_chaldiran, relation: about}
+      - {type: event, id: evt_ottoman_safavid_war, relation: related_to}
+      - {type: person, id: prs_shah_ismail_i, relation: mentions}
+      - {type: person, id: prs_selim_i, relation: mentions}
+      - {type: place, id: plc_chaldoran, relation: related_to}
+      - {type: place, id: plc_chaldoran_battlefield, relation: about}
+      - {type: event, id: evt_capital_to_qazvin, relation: related_to}
+    sources: [src_ei_chaldiran, src_hasan_rumlu_ahsan, src_chiran_vol6, src_savory_safavid_iran]
+
+  - id: art_ilkhanid_centres
+    slug: ilkhanid-centres
+    lang: fa
+    status: published
+    importance: 0.85
+    revision: 2
+    published_at: "2026-08-28"
+    author: "AZ-IR editorial"
+    reading_time_min: 7
+    temporal: {from: 1256, to: 1335, precision: range, confidence: high, display_fa: "۱۲۵۶–۱۳۳۵ م"}
+    names:
+      - {lang: fa, form: "مراغه و سلطانیه: مراکز ایلخانی آذربایجان", kind: preferred}
+      - {lang: en, form: "Maragheh and Soltaniyeh: Ilkhanid Centres of Azerbaijan", kind: preferred}
+    summary_fa: "چگونه پایتخت ایلخانی جابه‌جا شد و چرا این جابه‌جایی یک رابطهٔ زمان‌دار است نه یک ویژگی ثابت."
+    summary_en: "How the Ilkhanid capital moved, and why that is a time-bounded relation rather than a fixed attribute."
+    body_fa_md: |
+      ## پایتخت یک ویژگی ثابت نیست
+
+      «پایتخت ایلخانان» یک شهر نیست؛ یک **رابطهٔ زمان‌دار** است. در مدل داده، هر جابه‌جایی یک
+      assertion با بازهٔ زمانی خودش است:
+
+      | بازه | مرکز | اطمینان |
+      |------|------|---------|
+      | حدود ۱۲۵۶–۱۲۶۵ | مراغه | پایین |
+      | حدود ۱۲۶۵–۱۳۰۵ | تبریز | متوسط |
+      | حدود ۱۳۰۵–۱۳۳۵ | سلطانیه | متوسط |
+
+      به همین دلیل وقتی تایم‌لاین را از ۱۲۶۰ به ۱۳۱۰ می‌برید، نقطهٔ «مرکز» روی نقشه جابه‌جا می‌شود
+      — و این جابه‌جایی داده است، نه انیمیشن تزئینی.
+
+      ## رصدخانه و گنبد
+
+      دو میراث شاخص این دوره در اطلس به هم مرتبط‌اند: **رصدخانهٔ مراغه** که در ۶۵۷ ق / ۱۲۵۹ م به
+      حمایت هولاکو و به مدیریت خواجه نصیرالدین طوسی بنیان گذاشته شد، و **گنبد سلطانیه** که
+      الجایتو میان ۷۰۳ و ۷۱۲ ق ساخت.
+
+      ## احتیاط
+
+      عنوان «پایتخت» برای دورهٔ مراغه در منابع یکدست نیست؛ آن assertion با `confidence=low` و
+      stance=`qualifies` ثبت شده است. محل درگذشت هولاکو هم در منابع متفاوت آمده و به‌صورت
+      **مورد اختلاف** نمایش داده می‌شود.
+    body_en_md: |
+      "Capital of the Ilkhanate" is not a city but a **time-bounded relation**: Maragheh
+      (c. 1256–1265, low confidence), Tabriz (c. 1265–1305), Soltaniyeh (c. 1305–1335). Dragging the
+      timeline moves the centre — and that movement is data, not decoration.
+
+      Two landmarks are linked in the graph: the Maragheh observatory founded in 657 AH / 1259 CE
+      under Hülegü's patronage and Nasir al-Din al-Tusi's direction, and the Dome of Soltaniyeh
+      built by Öljaitü between 703 and 712 AH.
+
+      The title "capital" for the Maragheh phase is not uniform across sources, so that assertion is
+      stored with `confidence=low`; the place of Hülegü's death is stored as a disagreement.
+    map_state:
+      center: [37.4, 47.4]
+      zoom: 7.5
+      time: {from: 1256, to: 1335, mode: overlaps}
+      layers: [places, buildings, archaeology, political_entities, people]
+    entities:
+      - {type: political_entity, id: pol_ilkhanate, relation: about}
+      - {type: place, id: plc_maragheh, relation: about}
+      - {type: place, id: plc_soltaniyeh, relation: about}
+      - {type: place, id: plc_maragheh_observatory, relation: mentions}
+      - {type: place, id: plc_dome_soltaniyeh, relation: mentions}
+      - {type: person, id: prs_hulagu, relation: mentions}
+      - {type: person, id: prs_nasir_al_din_tusi, relation: mentions}
+      - {type: person, id: prs_oljeitu, relation: mentions}
+      - {type: event, id: evt_observatory_founding, relation: mentions}
+    sources: [src_chiran_vol5, src_unesco_soltaniyeh, src_rashid_al_din_jami, src_blair_bloom_islam]
+
+  - id: art_tabriz_constitutional
+    slug: tabriz-constitutional-era
+    lang: fa
+    status: in_review
+    importance: 0.8
+    revision: 1
+    author: "AZ-IR editorial"
+    reading_time_min: 6
+    temporal: {from: 1906, to: 1909, precision: range, confidence: high, display_fa: "۱۹۰۶–۱۹۰۹ م"}
+    names:
+      - {lang: fa, form: "تبریز در مشروطه (۱۹۰۶–۱۹۰۹)", kind: preferred}
+      - {lang: en, form: "Tabriz in the Constitutional Revolution (1906–1909)", kind: preferred}
+    summary_fa: "پیش‌نویس در حال بازبینی: نقش تبریز در مشروطه و محاصرهٔ شهر، با تکیه بر کسروی و منابع بعدی."
+    summary_en: "Draft under review: Tabriz's role in the Constitutional Revolution and the siege of the city."
+    body_fa_md: |
+      > **وضعیت: در حال بازبینی.** این مقاله هنوز منتشر نشده است زیرا نیاز دارد روایت‌های رقیب
+      > دربارهٔ نقش انجمن‌های ایالتی و نیروهای خارجی به‌صورت assertion جدا با منبع ثبت شود.
+
+      تبریز در مشروطه تنها یک صحنهٔ رویداد نیست؛ یکی از دو کانون اصلی جنبش است. ستارخان (زادهٔ
+      قره‌داغ/اهر) و باقرخان (زادهٔ تبریز) رهبری مقاومت شهری را بر عهده داشتند و محاصرهٔ تبریز
+      در ۱۹۰۸–۱۹۰۹ به یکی از رویدادهای محوری این دوره تبدیل شد.
+
+      در مدل داده، «جنبش مشروطه در تبریز» یک رویداد والد است و «محاصرهٔ تبریز» با `part_of` به آن
+      متصل می‌شود — همان الگویی که برای جنگ/نبرد به کار رفت.
+
+      **کار باقی‌ماندهٔ ویرایشی:** افزودن منابع دانشگاهی جدیدتر در کنار کسروی (که خود از نزدیکان
+      وقایع بود و روایتش جانب‌دار است)، و ثبت اختلاف‌ها دربارهٔ نقش نیروهای روسیه و عثمانی.
+    body_en_md: |
+      *Status: in review.* Tabriz was one of the two main centres of the Constitutional movement.
+      Sattar Khan (from the Qaradagh/Ahar region) and Baqer Khan (born in Tabriz) led the urban
+      resistance, and the 1908–1909 siege became a defining episode.
+
+      Remaining editorial work: add recent scholarship alongside Kasravi (a participant whose account
+      is partisan), and record disagreements about the role of Russian and Ottoman forces as separate
+      sourced assertions.
+    map_state:
+      center: [38.0962, 46.2738]
+      zoom: 12.0
+      time: {from: 1905, to: 1912, mode: overlaps}
+      layers: [places, events, people, buildings]
+    entities:
+      - {type: event, id: evt_constitutional_tabriz, relation: about}
+      - {type: event, id: evt_siege_tabriz_1908, relation: about}
+      - {type: person, id: prs_sattar_khan, relation: mentions}
+      - {type: person, id: prs_bagher_khan, relation: mentions}
+      - {type: place, id: plc_tabriz, relation: related_to}
+      - {type: place, id: plc_ahar, relation: related_to}
+    sources: [src_kasravi_mashrute]

@@ -1,0 +1,26 @@
+# The project is developed and deployed on Linux (WSL counts). Force LF in the working tree so
+# shell scripts, Python and TypeScript never pick up CRLF from a Windows checkout.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.mako text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

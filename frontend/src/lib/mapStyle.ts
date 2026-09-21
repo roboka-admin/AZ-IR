@@ -116,14 +116,15 @@ export function fallbackStyle(): StyleSpecification {
 
 /* ------------------------------------------------------------------ data layers */
 
-/** Certainty decides how confident a mark looks. */
+/** Certainty decides how confident a mark looks. Opacity bumped for reconstructed so
+ *  polity extents (all reconstructed in pilot) are actually visible; 0.14 was near-invisible. */
 const FILL_OPACITY = [
   "match", ["get", "certainty"],
-  "exact", 0.3,
-  "approximate", 0.24,
-  "uncertain", 0.15,
-  "reconstructed", 0.14,
-  0.2,
+  "exact", 0.42,
+  "approximate", 0.36,
+  "uncertain", 0.28,
+  "reconstructed", 0.32,
+  0.3,
 ];
 
 const DASH = ["match", ["get", "certainty"], "reconstructed", [2, 2], "uncertain", [1.5, 1.5], [0]];
@@ -174,10 +175,10 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       paint: {
         "line-color": fillColour(),
         "line-width": ["case",
-          ["==", ["get", "certainty"], "exact"], ["interpolate", ["linear"], ["zoom"], 3, 1.6, 10, 3],
-          ["interpolate", ["linear"], ["zoom"], 3, 1.1, 10, 2.2],
+          ["==", ["get", "certainty"], "exact"], ["interpolate", ["linear"], ["zoom"], 3, 2.0, 10, 4],
+          ["interpolate", ["linear"], ["zoom"], 3, 1.6, 10, 3.2],
         ],
-        "line-opacity": ["match", ["get", "certainty"], "exact", 1, "approximate", 0.72, "uncertain", 0.82, "reconstructed", 0.9, 0.85],
+        "line-opacity": ["match", ["get", "certainty"], "exact", 1, "approximate", 0.85, "uncertain", 0.9, "reconstructed", 0.95, 0.9],
         "line-dasharray": DASH,
       },
     },
@@ -187,8 +188,10 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       filter: ["==", ["geometry-type"], "LineString"],
       paint: {
         "line-color": ["match", ["get", "layer"], "routes", PALETTE.routes, PALETTE.places],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.9, 12, 2.6],
-        "line-opacity": 0.85,
+        // Routes were thin (0.9 at z5) and hard to see; bump width and opacity so the single
+        // pilot route Tabriz-Ardabil is actually visible.
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.8, 12, 4.5],
+        "line-opacity": 0.95,
         "line-dasharray": DASH,
       },
     },

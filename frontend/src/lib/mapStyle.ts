@@ -117,17 +117,18 @@ export function fallbackStyle(): StyleSpecification {
 /* ------------------------------------------------------------------ data layers */
 
 /** Certainty decides how confident a mark looks. Opacity bumped for reconstructed so
- *  polity extents (all reconstructed in pilot) are actually visible; 0.14 was near-invisible. */
+ *  polity extents (all reconstructed in pilot) are actually visible; 0.14 was near-invisible.
+ *  Further bumped to 0.45 for pilot so user can see them clearly. */
 const FILL_OPACITY = [
   "match", ["get", "certainty"],
-  "exact", 0.42,
-  "approximate", 0.36,
-  "uncertain", 0.28,
-  "reconstructed", 0.32,
-  0.3,
+  "exact", 0.55,
+  "approximate", 0.48,
+  "uncertain", 0.4,
+  "reconstructed", 0.45,
+  0.42,
 ];
 
-const DASH = ["match", ["get", "certainty"], "reconstructed", [2, 2], "uncertain", [1.5, 1.5], [0]];
+const DASH = ["match", ["get", "certainty"], "reconstructed", [4, 3], "uncertain", [2, 2], [0]];
 
 function fillColour(): unknown[] {
   return ["case",
@@ -175,10 +176,10 @@ function atlasLayerSpecs(font: string[]): LayerSpec[] {
       paint: {
         "line-color": fillColour(),
         "line-width": ["case",
-          ["==", ["get", "certainty"], "exact"], ["interpolate", ["linear"], ["zoom"], 3, 2.0, 10, 4],
-          ["interpolate", ["linear"], ["zoom"], 3, 1.6, 10, 3.2],
+          ["==", ["get", "certainty"], "exact"], ["interpolate", ["linear"], ["zoom"], 3, 2.5, 10, 5],
+          ["interpolate", ["linear"], ["zoom"], 3, 2.0, 10, 4],
         ],
-        "line-opacity": ["match", ["get", "certainty"], "exact", 1, "approximate", 0.85, "uncertain", 0.9, "reconstructed", 0.95, 0.9],
+        "line-opacity": ["match", ["get", "certainty"], "exact", 1, "approximate", 0.9, "uncertain", 0.95, "reconstructed", 1, 0.95],
         "line-dasharray": DASH,
       },
     },
